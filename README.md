@@ -7,5 +7,7 @@ A paper discussing the method used for estimating the weights should be released
 
 
 To install the latest GitHub development version, run in R :
+
 install.packages("devtools")
+
 devtools::install_github("AlexiaJM/LEGIT")
