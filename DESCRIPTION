@@ -1,0 +1,29 @@
+Package: LEGIT
+Title: Latent Environmental & Genetic InTeraction (LEGIT) Modelling
+Version: 1.0.0
+Date: 2017-02-13
+Author: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
+Maintainer: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
+Description: Constructs genotype x environment interaction (GxE) models where
+    G is a weighted sum of genetic variants (genetic score) and E is a weighted
+    sum of environments (environmental score). This approach has greatly enhanced
+    predictive power over traditional GxE models which include only a single genetic
+    variant and a single environmental exposure. Gene x gene interactions (GxG)
+    and environment x environment interactions (ExE) can be incorporated into the
+    genetic and environmental scores. Any standard model formula can be used, it
+    doesn't have to be a two-way interaction model. Although this approach was made
+    for GxE modelling, the genetic score doesn't need to contain genetic variables
+    and the environmental score doesn't need to contain environmental variables,
+    therefore this approach is highly flexible. A paper discussing the method used
+    for estimating the weights should be released as pre-print and sent for peer-
+    review before Summer 2017.
+License: GPL-3
+Imports:
+    pROC
+Depends:
+    formula.tools,
+    stats
+RoxygenNote: 5.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
