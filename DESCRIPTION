@@ -18,12 +18,10 @@ Description: Constructs genotype x environment interaction (GxE) models where
     for estimating the weights should be released as pre-print and sent for peer-
     review before Summer 2017.
 License: GPL-3
-Imports:
-    pROC
-Depends:
-    formula.tools,
-    stats
+Imports: pROC
+Depends: formula.tools, stats
 RoxygenNote: 5.0.1
-Suggests: knitr,
-    rmarkdown
+Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2017-02-13 16:06:58 UTC; Alexia

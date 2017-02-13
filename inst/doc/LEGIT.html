@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alexia Jolicoeur-Martineau" />
+
+<meta name="date" content="2017-02-13" />
+
+<title>Latent Environmental &amp; Genetic InTeraction (LEGIT) modelling</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Latent Environmental &amp; Genetic InTeraction (LEGIT) modelling</h1>
+<h4 class="author"><em>Alexia Jolicoeur-Martineau</em></h4>
+<h4 class="date"><em>2017-02-13</em></h4>
+
+
+
+<div id="the-legit-model" class="section level2">
+<h2>The LEGIT model</h2>
+<p>The Latent Environmental &amp; Genetic InTeraction (LEGIT) model is an interaction model with two latent variables: <span class="math inline">\(\mathbf{g}\)</span> a weighted sum of genetic variants (genetic score) and <span class="math inline">\(\mathbf{e}\)</span> a weighted sum of environmental variables (environmental score).</p>
+<p>Assuming <span class="math inline">\(\mathbf{g}_1\)</span>,…,<span class="math inline">\(\mathbf{g}_k\)</span> are <span class="math inline">\(k\)</span> genetic variants of interest, generally represented as the number of dominant alleles (0, 1, 2) or the absence or presence of a dominant allele (0, 1) and <span class="math inline">\(\mathbf{e}_1\)</span>,…,<span class="math inline">\(\mathbf{e}_s\)</span> are <span class="math inline">\(s\)</span> environments of interest, generally represented as ordinal scores (0, 1, 2 …) or continuous variables. We define the genetic score <span class="math inline">\(\mathbf{g}\)</span> and environmental score <span class="math inline">\(\mathbf{e}\)</span> as:</p>
+<p><span class="math display">\[\begin{eqnarray} \mathbf{g}&amp;=&amp;\sum_{i=1}^{k} p_i \mathbf{g}_j \\ \mathbf{e}&amp;=&amp;\sum_{l=1}^{s} q_l \mathbf{e}_l \end{eqnarray}\]</span> where <span class="math inline">\(\|p\|_1=\sum_{i=1}^{k}p_j=1\)</span> and <span class="math inline">\(\|q\|_1= \sum_{l=1}^{s}q_l=1\)</span>. The weights can be interpreted as the relative contributions of each genetic variant or environment.</p>
+<p>The weights of these scores are estimated within a generalized linear model of the form :</p>
+<p><span class="math display">\[\mathbf{E}[\mathbf{y}] = g^{-1}(f(\mathbf{g},\mathbf{e},X|\beta)+X_{covs} \beta_{covs})\]</span> where <span class="math inline">\(g\)</span> is the link function, <span class="math inline">\(f\)</span> is a linear function between <span class="math inline">\(\mathbf{g}\)</span>, <span class="math inline">\(\mathbf{e}\)</span> and other variables from the matrix <span class="math inline">\(X\)</span> and <span class="math inline">\(X_{covs}\)</span> is a matrix of additionnal covariates.</p>
+<p>For a two-way <span class="math inline">\(G\times E\)</span> model, we would define <span class="math inline">\(f\)</span> as:</p>
+<p><span class="math display">\[f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{g}+\beta_{eg} \mathbf{e}\mathbf{g}\]</span></p>
+<p>For a three-way <span class="math inline">\(G\times E \times z\)</span> model, where <span class="math inline">\(z\)</span> is a known variable, we would define <span class="math inline">\(f\)</span> as:</p>
+<p><span class="math display">\[f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{g}+\beta_z \mathbf{z}+\beta_{eg} \mathbf{eg}+\beta_{ez} \mathbf{ez}+\beta_{zg} \mathbf{zg}+\beta_{egz} \mathbf{egz}\]</span></p>
+</div>
+<div id="algorithm" class="section level2">
+<h2>Algorithm</h2>
+<p>Full details of the algorithm will be available when the paper is released as pre-print and sent for peer-review (Coming soon, before Summer 2017).</p>
+</div>
+<div id="implementation" class="section level2">
+<h2>Implementation</h2>
+<p>In the LEGIT package, we include the following main functions:</p>
+<ul>
+<li>LEGIT: Fits a LEGIT model</li>
+<li>LEGIT_cv: Uses cross-validation on a LEGIT model</li>
+<li>stepwise_search: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a LEGIT model</li>
+</ul>
+</div>
+<div id="notes" class="section level2">
+<h2>Notes</h2>
+<ul>
+<li>Interactions inside the genetic and environmental scores must be manually coded as new variables (ex: g1, g2, g1_g2 where g1_g2=g1*g2).</li>
+<li>Default starting point is set to <span class="math inline">\(1/k\)</span> for each of the genetic variants and <span class="math inline">\(1/s\)</span> for each of the environmental variables.</li>
+<li>Only local convergence is guaranteed, therefore it is recommended to try different starting points.</li>
+<li>Experimentally, we rarely ended up stuck in a local optimum but when we did it was when using a starting point which assumed that every genetic variant had a positive weight while some genetic variants had positive weights and some genetic variants had negative weights. Adding genetic variants in a stepwise manner while readjusting the starting point at every step is thus recommended (This is done automatically in the stepwise_search function).</li>
+</ul>
+</div>
+<div id="example-1" class="section level2">
+<h2>Example 1</h2>
+<p>Let’s look at a three-way interaction model with continuous outcome:</p>
+<p><span class="math display">\[\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4\]</span> <span class="math display">\[\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3\]</span> <span class="math display">\[\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3\]</span> <span class="math display">\[\mathbf{\mu} = -2 + 2\mathbf{g} + 3\mathbf{e} + \mathbf{z} + 5\mathbf{ge} + 2\mathbf{gz} - 1.5\mathbf{ez} + 2\mathbf{gez} \\ y \sim Normal(\mu,\sigma=1)\]</span></p>
+<p>We generate N=250 training observations and 100 test observations.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(LEGIT)
+train =<span class="st"> </span><span class="kw">example_3way</span>(<span class="dt">N=</span><span class="dv">250</span>, <span class="dt">sigma=</span><span class="dv">1</span>, <span class="dt">logit=</span><span class="ot">FALSE</span>, <span class="dt">seed=</span><span class="dv">7</span>)
+test =<span class="st"> </span><span class="kw">example_3way</span>(<span class="dt">N=</span><span class="dv">100</span>, <span class="dt">sigma=</span><span class="dv">1</span>, <span class="dt">logit=</span><span class="ot">FALSE</span>, <span class="dt">seed=</span><span class="dv">6</span>)</code></pre></div>
+<p>We fit the model with the default starting point.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fit_default =<span class="st"> </span><span class="kw">LEGIT</span>(train<span class="op">$</span>data, train<span class="op">$</span>G, train<span class="op">$</span>E, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E<span class="op">*</span>z)</code></pre></div>
+<pre><code>## Converged in 11 iterations</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fit_default)</code></pre></div>
+<pre><code>## $fit_main
+## 
+## Call:
+## stats::glm(formula = formula, family = family, data = data, model = FALSE, 
+##     y = FALSE)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -2.94965  -0.62453   0.08363   0.62145   2.65154  
+## 
+## Coefficients: (-7 not defined because of singularities)
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.77075    0.22342  -7.926 9.09e-14 ***
+## G            0.15934    1.12858   0.141    0.888    
+## E           -2.86208    0.27217 -10.516  &lt; 2e-16 ***
+## z            0.94193    0.06704  14.050  &lt; 2e-16 ***
+## G:E         -5.69624    1.38253  -4.120 5.25e-05 ***
+## G:z          2.61973    0.34190   7.662 4.77e-13 ***
+## E:z          1.43411    0.07991  17.947  &lt; 2e-16 ***
+## G:E:z       -1.82548    0.41205  -4.430 1.44e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for gaussian family taken to be 1.065046)
+## 
+##     Null deviance: 2414.03  on 249  degrees of freedom
+## Residual deviance:  250.29  on 235  degrees of freedom
+## AIC: 741.75
+## 
+## Number of Fisher Scoring iterations: 2
+## 
+## 
+## $fit_genes
+## 
+## Call:
+## stats::glm(formula = formula_b, family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -2.95636  -0.63173   0.07961   0.62078   2.65154  
+## 
+## Coefficients: (-9 not defined because of singularities)
+##       Estimate Std. Error t value Pr(&gt;|t|)    
+## g1     0.18333    0.01051  17.447  &lt; 2e-16 ***
+## g2     0.15867    0.01422  11.156  &lt; 2e-16 ***
+## g3    -0.29336    0.01269 -23.115  &lt; 2e-16 ***
+## g4     0.09770    0.01090   8.966  &lt; 2e-16 ***
+## g1_g3  0.06273    0.02247   2.791  0.00568 ** 
+## g2_g3  0.20421    0.02329   8.770 3.68e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for gaussian family taken to be 1.06503)
+## 
+##     Null deviance: 2414.03  on 250  degrees of freedom
+## Residual deviance:  250.28  on 235  degrees of freedom
+## AIC: 741.75
+## 
+## Number of Fisher Scoring iterations: 2
+## 
+## 
+## $fit_env
+## 
+## Call:
+## stats::glm(formula = formula_c, family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Deviance Residuals: 
+##      Min        1Q    Median        3Q       Max  
+## -2.94953  -0.62434   0.08404   0.62125   2.65128  
+## 
+## Coefficients: (-12 not defined because of singularities)
+##    Estimate Std. Error t value Pr(&gt;|t|)    
+## e1  0.43440    0.01486   29.24   &lt;2e-16 ***
+## e2 -0.35307    0.01756  -20.11   &lt;2e-16 ***
+## e3 -0.21253    0.01614  -13.17   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for gaussian family taken to be 1.065045)
+## 
+##     Null deviance: 2414.03  on 250  degrees of freedom
+## Residual deviance:  250.29  on 235  degrees of freedom
+## AIC: 741.75
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+<p>This is very close to the original model. We can now use the test dataset to find the validation <span class="math inline">\(R^2\)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ssres =<span class="st"> </span><span class="kw">sum</span>((test<span class="op">$</span>data<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">predict</span>(fit_default, test<span class="op">$</span>data, test<span class="op">$</span>G, test<span class="op">$</span>E))<span class="op">^</span><span class="dv">2</span>)
+sstotal =<span class="st"> </span><span class="kw">sum</span>((test<span class="op">$</span>data<span class="op">$</span>y <span class="op">-</span><span class="st"> </span><span class="kw">mean</span>(test<span class="op">$</span>data<span class="op">$</span>y))<span class="op">^</span><span class="dv">2</span>)
+R2 =<span class="st"> </span><span class="dv">1</span> <span class="op">-</span><span class="st"> </span>ssres<span class="op">/</span>sstotal
+R2</code></pre></div>
+<pre><code>## [1] 0.8809351</code></pre>
+<p>Now, let’s see what happens if we introduce variables that are not in the model. Let’s add these irrelevant genetic variants:</p>
+<p><span class="math display">\[\mathbf{g'}_b \sim Binomial(n=1,p=.30) \\ b = 1, 2, 3, 4, 5\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">g1_bad =<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">250</span>,<span class="dv">1</span>,.<span class="dv">30</span>)
+g2_bad =<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">250</span>,<span class="dv">1</span>,.<span class="dv">30</span>)
+g3_bad =<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">250</span>,<span class="dv">1</span>,.<span class="dv">30</span>)
+g4_bad =<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">250</span>,<span class="dv">1</span>,.<span class="dv">30</span>)
+g5_bad =<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">250</span>,<span class="dv">1</span>,.<span class="dv">30</span>)
+train<span class="op">$</span>G =<span class="st"> </span><span class="kw">cbind</span>(train<span class="op">$</span>G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)</code></pre></div>
+<p>Let’s do a forward search of the genetic variants using the BIC and see if we can recover the right subset of variables.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">forward_genes_BIC =<span class="st"> </span><span class="kw">stepwise_search</span>(train<span class="op">$</span>data, <span class="dt">genes_extra=</span>train<span class="op">$</span>G, <span class="dt">env_original=</span>train<span class="op">$</span>E, <span class="dt">formula=</span>y <span class="op">~</span><span class="st"> </span>E<span class="op">*</span>G<span class="op">*</span>z, <span class="dt">search_type=</span><span class="st">&quot;forward&quot;</span>, <span class="dt">search=</span><span class="st">&quot;genes&quot;</span>, <span class="dt">search_criterion=</span><span class="st">&quot;BIC&quot;</span>, <span class="dt">interactive_mode=</span><span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## Keeping only variables with p-values smaller than 0.2 and which inclusion decrease the AIC
+## Forward search of the genes to find the model with the lowest BIC
+## 
+## [Iteration: 1]
+## Adding gene: g3 (Criterion before = Inf; after= 1121.89913)
+## [Iteration: 2]
+## Adding gene: g2 (Criterion before = 1121.89913; after= 1039.22899)
+## [Iteration: 3]
+## Adding gene: g1 (Criterion before = 1039.22899; after= 884.9214)
+## [Iteration: 4]
+## Adding gene: g4 (Criterion before = 884.9214; after= 842.92708)
+## [Iteration: 5]
+## Adding gene: g2_g3 (Criterion before = 842.92708; after= 796.03689)
+## [Iteration: 6]
+## Adding gene: g1_g3 (Criterion before = 796.03689; after= 795.10485)
+## [Iteration: 7]
+## No gene added</code></pre>
+<p>We recovered the right subset! Now what if we did a backward search using the AIC?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">backward_genes_AIC =<span class="st"> </span><span class="kw">stepwise_search</span>(train<span class="op">$</span>data, <span class="dt">genes_original=</span>train<span class="op">$</span>G, <span class="dt">env_original=</span>train<span class="op">$</span>E, <span class="dt">formula=</span>y <span class="op">~</span><span class="st"> </span>E<span class="op">*</span>G<span class="op">*</span>z, <span class="dt">search_type=</span><span class="st">&quot;backward&quot;</span>, <span class="dt">search=</span><span class="st">&quot;genes&quot;</span>, <span class="dt">search_criterion=</span><span class="st">&quot;AIC&quot;</span>, <span class="dt">interactive_mode=</span><span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## Dropping only variables with p-values bigger than 0.01 and which removal decrease the AIC
+## Backward search of the genes to find the model with the lowest AIC
+## 
+## [Iteration: 1]
+## Removing gene: g3_bad (Criterion before = 749.77592; after= 747.50098)
+## [Iteration: 2]
+## Removing gene: g5_bad (Criterion before = 747.50098; after= 745.40215)
+## [Iteration: 3]
+## Removing gene: g4_bad (Criterion before = 745.40215; after= 743.57487)
+## [Iteration: 4]
+## Removing gene: g1_bad (Criterion before = 743.57487; after= 741.8472)
+## [Iteration: 5]
+## Removing gene: g2_bad (Criterion before = 741.8472; after= 741.75015)
+## [Iteration: 6]
+## No gene removed</code></pre>
+<p>We deleted the irrevelant genes and obtained the right subset of variables! The stepwise_search function also has an interactive mode where the user decides which variable should be added/dropped at every step. We can only show the first iteration because the algorithm does’nt receive an input from the user in the vignette but normally you can control the variables added or removed from the stepwise search. This is what the interactive mode looks like:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">forward_genes_BIC =<span class="st"> </span><span class="kw">stepwise_search</span>(train<span class="op">$</span>data, <span class="dt">genes_extra=</span>train<span class="op">$</span>G, <span class="dt">env_original=</span>train<span class="op">$</span>E, <span class="dt">formula=</span>y <span class="op">~</span><span class="st"> </span>E<span class="op">*</span>G<span class="op">*</span>z, <span class="dt">search_type=</span><span class="st">&quot;bidirectional-forward&quot;</span>, <span class="dt">search=</span><span class="st">&quot;genes&quot;</span>, <span class="dt">search_criterion=</span><span class="st">&quot;BIC&quot;</span>, <span class="dt">interactive_mode=</span><span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## &lt;&lt;~ Interative mode enabled ~&gt;&gt;
+## Keeping only variables with p-values smaller than 0.2 and which inclusion decrease the AIC
+## Dropping only variables with p-values bigger than 0.01 and which removal decrease the AIC
+## Bidirectional search of the genes to find the model with the lowest BIC
+## 
+## [Iteration: 1]
+##   variable N_old N_new p_value AIC_old  AIC_new BIC_old  BIC_new cv_R2_old
+## 1       g3    NA   250 0.00000     Inf 1086.685     Inf 1121.899        NA
+## 2       g1    NA   250 0.00000     Inf 1093.552     Inf 1128.766        NA
+## 3       g2    NA   250 0.00000     Inf 1135.100     Inf 1170.314        NA
+## 4   g1_bad    NA   250 0.00000     Inf 1155.719     Inf 1190.933        NA
+## 5       g4    NA   250 0.00013     Inf 1164.285     Inf 1199.500        NA
+##   cv_R2_new cv_AUC_old cv_AUC_new
+## 1        NA         NA         NA
+## 2        NA         NA         NA
+## 3        NA         NA         NA
+## 4        NA         NA         NA
+## 5        NA         NA         NA
+## Enter the index of the variable to be added: 
+## No gene added</code></pre>
+<p>Manually forcing <span class="math inline">\(\mathbf{g}_3\)</span> inclusion since the interactive mode cannot progress without a user, we get that the second iteration is:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">forward_genes_BIC =<span class="st"> </span><span class="kw">stepwise_search</span>(train<span class="op">$</span>data, <span class="dt">genes_original=</span>train<span class="op">$</span>G[,<span class="dv">3</span>,<span class="dt">drop=</span><span class="ot">FALSE</span>], <span class="dt">genes_extra=</span>train<span class="op">$</span>G[,<span class="op">-</span><span class="dv">3</span>], <span class="dt">env_original=</span>train<span class="op">$</span>E, <span class="dt">formula=</span>y <span class="op">~</span><span class="st"> </span>E<span class="op">*</span>G<span class="op">*</span>z, <span class="dt">search_type=</span><span class="st">&quot;bidirectional-forward&quot;</span>, <span class="dt">search=</span><span class="st">&quot;genes&quot;</span>, <span class="dt">search_criterion=</span><span class="st">&quot;BIC&quot;</span>, <span class="dt">interactive_mode=</span><span class="ot">TRUE</span>)</code></pre></div>
+<pre><code>## &lt;&lt;~ Interative mode enabled ~&gt;&gt;
+## Keeping only variables with p-values smaller than 0.2 and which inclusion decrease the AIC
+## Dropping only variables with p-values bigger than 0.01 and which removal decrease the AIC
+## Bidirectional search of the genes to find the model with the lowest BIC
+## 
+## [Iteration: 1]
+##   variable N_old N_new  p_value  AIC_old  AIC_new  BIC_old  BIC_new
+## 1       g2   250   250 0.000000 1086.685 1000.493 1121.899 1039.229
+## 2    g2_g3   250   250 0.000000 1086.685 1006.253 1121.899 1044.989
+## 3       g1   250   250 0.000000 1086.685 1013.285 1121.899 1052.021
+## 4    g1_g3   250   250 0.000002 1086.685 1068.051 1121.899 1106.787
+## 5       g4   250   250 0.012411 1086.685 1084.133 1121.899 1122.869
+##   cv_R2_old cv_R2_new cv_AUC_old cv_AUC_new
+## 1        NA        NA         NA         NA
+## 2        NA        NA         NA         NA
+## 3        NA        NA         NA         NA
+## 4        NA        NA         NA         NA
+## 5        NA        NA         NA         NA
+## Enter the index of the variable to be added: 
+## No gene added</code></pre>
+<p>With the interactive mode, you can try alternative pathways, rather than simply adding/dropping the best/worst variable everytime.</p>
+</div>
+<div id="example-2" class="section level2">
+<h2>Example 2</h2>
+<p>Let’s take a quick look at a simple two-way example with binary outcome:</p>
+<p><span class="math display">\[\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4\]</span> <span class="math display">\[\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3\]</span> <span class="math display">\[\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3\]</span> <span class="math display">\[\mathbf{\mu} = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} \\ y \sim Binomial(n=1,p=logit(\mu))\]</span></p>
+<p>We generate N=1000 training observations.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(LEGIT)
+train =<span class="st"> </span><span class="kw">example_2way</span>(<span class="dt">N=</span><span class="dv">1000</span>, <span class="dt">logit=</span><span class="ot">TRUE</span>, <span class="dt">seed=</span><span class="dv">777</span>)</code></pre></div>
+<p>We fit the model with the default starting point.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fit_default =<span class="st"> </span><span class="kw">LEGIT</span>(train<span class="op">$</span>data, train<span class="op">$</span>G, train<span class="op">$</span>E, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="dt">family=</span>binomial)</code></pre></div>
+<pre><code>## Converged in 6 iterations</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fit_default)</code></pre></div>
+<pre><code>## $fit_main
+## 
+## Call:
+## stats::glm(formula = formula, family = family, data = data, model = FALSE, 
+##     y = FALSE)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.2401  -0.5533  -0.1316   0.4363   3.0637  
+## 
+## Coefficients: (-7 not defined because of singularities)
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  -0.9892     0.1065  -9.293  &lt; 2e-16 ***
+## G             2.0863     0.6747   3.092 0.001989 ** 
+## E             3.2313     0.2148  15.042  &lt; 2e-16 ***
+## G:E           4.3265     1.1960   3.617 0.000298 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1351.50  on 999  degrees of freedom
+## Residual deviance:  692.69  on 989  degrees of freedom
+## AIC: 714.69
+## 
+## Number of Fisher Scoring iterations: 6
+## 
+## 
+## $fit_genes
+## 
+## Call:
+## stats::glm(formula = formula_b, family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.3976  -0.5512  -0.1208   0.4385   3.0640  
+## 
+## Coefficients: (-5 not defined because of singularities)
+##       Estimate Std. Error z value Pr(&gt;|z|)    
+## g1     0.12059    0.07512   1.605  0.10842    
+## g2     0.08314    0.06927   1.200  0.23005    
+## g3    -0.28041    0.05142  -5.454 4.94e-08 ***
+## g4     0.02208    0.05359   0.412  0.68030    
+## g1_g3  0.06894    0.12845   0.537  0.59146    
+## g2_g3  0.42484    0.15154   2.804  0.00505 ** 
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1351.50  on 1000  degrees of freedom
+## Residual deviance:  692.69  on  989  degrees of freedom
+## AIC: 714.69
+## 
+## Number of Fisher Scoring iterations: 6
+## 
+## 
+## $fit_env
+## 
+## Call:
+## stats::glm(formula = formula_c, family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.3965  -0.5513  -0.1277   0.4389   3.0637  
+## 
+## Coefficients: (-8 not defined because of singularities)
+##    Estimate Std. Error z value Pr(&gt;|z|)    
+## e1 -0.43085    0.02905 -14.832   &lt;2e-16 ***
+## e2  0.35751    0.02613  13.681   &lt;2e-16 ***
+## e3  0.21164    0.02156   9.814   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1351.50  on 1000  degrees of freedom
+## Residual deviance:  692.69  on  989  degrees of freedom
+## AIC: 714.69
+## 
+## Number of Fisher Scoring iterations: 6</code></pre>
+<p>We are a little off, especially with regards to the weights of the genetic variants. This is because there is substantial loss of information with binary outcomes. To assess the quality of the fit, we are going to do a 5-Folds cross-validation.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cv_5folds_bin =<span class="st"> </span><span class="kw">LEGIT_cv</span>(train<span class="op">$</span>data, train<span class="op">$</span>G, train<span class="op">$</span>E, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="dt">cv_iter=</span><span class="dv">1</span>, <span class="dt">cv_folds=</span><span class="dv">5</span>, <span class="dt">classification=</span><span class="ot">TRUE</span>, <span class="dt">family=</span>binomial, <span class="dt">seed=</span><span class="dv">777</span>)
+pROC<span class="op">::</span><span class="kw">plot.roc</span>(cv_5folds_bin<span class="op">$</span>roc_curve[[<span class="dv">1</span>]])</code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<pre><code>## 
+## Call:
+## roc.default(response = y_test, predictor = pred)
+## 
+## Data: pred in 593 controls (y_test 0) &lt; 407 cases (y_test 1).
+## Area under the curve: 0.9145</code></pre>
+<p>Although the weights of the genetic variants are a bit off, the model predictive power is good.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

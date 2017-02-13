@@ -1,0 +1,139 @@
+---
+title: "Latent Environmental & Genetic InTeraction (LEGIT) modelling"
+author: "Alexia Jolicoeur-Martineau"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{LEGIT}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## The LEGIT model
+
+The Latent Environmental & Genetic InTeraction (LEGIT) model is an interaction model with two latent variables: $\mathbf{g}$ a weighted sum of genetic variants (genetic score) and $\mathbf{e}$ a weighted sum of environmental variables (environmental score). 
+
+Assuming $\mathbf{g}_1$,...,$\mathbf{g}_k$ are $k$ genetic variants of interest, generally represented as the number of dominant alleles (0, 1, 2) or the absence or presence of a dominant allele (0, 1) and $\mathbf{e}_1$,...,$\mathbf{e}_s$ are $s$ environments of interest, generally represented as ordinal scores (0, 1, 2 ...) or continuous variables. We define the genetic score $\mathbf{g}$ and environmental score $\mathbf{e}$ as: 
+
+
+$$\begin{eqnarray} \mathbf{g}&=&\sum_{i=1}^{k} p_i \mathbf{g}_j \\ \mathbf{e}&=&\sum_{l=1}^{s} q_l \mathbf{e}_l \end{eqnarray}$$
+where $\|p\|_1=\sum_{i=1}^{k}p_j=1$ and $\|q\|_1= \sum_{l=1}^{s}q_l=1$. The weights can be interpreted as the relative contributions of each genetic variant or environment.
+
+The weights of these scores are estimated within a generalized linear model of the form :
+
+$$\mathbf{E}[\mathbf{y}] = g^{-1}(f(\mathbf{g},\mathbf{e},X|\beta)+X_{covs} \beta_{covs})$$
+where $g$ is the link function, $f$ is a linear function between $\mathbf{g}$, $\mathbf{e}$ and other variables from the matrix $X$ and $X_{covs}$ is a matrix of additionnal covariates.
+
+For a two-way $G\times E$ model, we would define $f$ as:
+
+$$f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{g}+\beta_{eg} \mathbf{e}\mathbf{g}$$
+
+For a three-way $G\times E \times z$ model, where $z$ is a known variable, we would define $f$ as:
+
+$$f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{g}+\beta_z \mathbf{z}+\beta_{eg} \mathbf{eg}+\beta_{ez} \mathbf{ez}+\beta_{zg} \mathbf{zg}+\beta_{egz} \mathbf{egz}$$
+
+## Algorithm
+
+Full details of the algorithm will be available when the paper is released as pre-print and sent for peer-review (Coming soon, before Summer 2017).
+
+## Implementation
+
+In the LEGIT package, we include the following main functions:
+
+* LEGIT: Fits a LEGIT model
+* LEGIT_cv: Uses cross-validation on a LEGIT model
+* stepwise_search: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a LEGIT model
+
+## Notes
+
+- Interactions inside the genetic and environmental scores must be manually coded as new variables (ex: g1, g2, g1_g2 where g1_g2=g1*g2).
+- Default starting point is set to $1/k$ for each of the genetic variants and $1/s$ for each of the environmental variables.
+- Only local convergence is guaranteed, therefore it is recommended to try different starting points. 
+- Experimentally, we rarely ended up stuck in a local optimum but when we did it was when using a starting point which assumed that every genetic variant had a positive weight while some genetic variants had positive weights and some genetic variants had negative weights. Adding genetic variants in a stepwise manner while readjusting the starting point at every step is thus recommended (This is done automatically in the stepwise_search function).
+
+## Example 1
+
+Let's look at a three-way interaction model with continuous outcome:
+
+$$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
+$$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
+$$\mathbf{\mu} = -2 + 2\mathbf{g} + 3\mathbf{e} + \mathbf{z} + 5\mathbf{ge} + 2\mathbf{gz} - 1.5\mathbf{ez} + 2\mathbf{gez} \\ y \sim Normal(\mu,\sigma=1)$$
+
+We generate N=250 training observations and 100 test observations.
+
+```{r message=FALSE}
+library(LEGIT)
+train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
+test = example_3way(N=100, sigma=1, logit=FALSE, seed=6)
+```
+
+We fit the model with the default starting point.
+```{r}
+fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E*z)
+summary(fit_default)
+```
+This is very close to the original model. We can now use the test dataset to find the validation $R^2$.
+```{r}
+ssres = sum((test$data$y - predict(fit_default, test$data, test$G, test$E))^2)
+sstotal = sum((test$data$y - mean(test$data$y))^2)
+R2 = 1 - ssres/sstotal
+R2
+```
+
+Now, let's see what happens if we introduce variables that are not in the model. Let's add these irrelevant genetic variants:
+
+$$\mathbf{g'}_b \sim Binomial(n=1,p=.30) \\ b = 1, 2, 3, 4, 5$$
+```{r}
+g1_bad = rbinom(250,1,.30)
+g2_bad = rbinom(250,1,.30)
+g3_bad = rbinom(250,1,.30)
+g4_bad = rbinom(250,1,.30)
+g5_bad = rbinom(250,1,.30)
+train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+```
+Let's do a forward search of the genetic variants using the BIC and see if we can recover the right subset of variables.
+```{r}
+forward_genes_BIC = stepwise_search(train$data, genes_extra=train$G, env_original=train$E, formula=y ~ E*G*z, search_type="forward", search="genes", search_criterion="BIC", interactive_mode=FALSE)
+```
+We recovered the right subset! Now what if we did a backward search using the AIC?
+```{r}
+backward_genes_AIC = stepwise_search(train$data, genes_original=train$G, env_original=train$E, formula=y ~ E*G*z, search_type="backward", search="genes", search_criterion="AIC", interactive_mode=FALSE)
+```
+We deleted the irrevelant genes and obtained the right subset of variables! The stepwise_search function also has an interactive mode where the user decides which variable should be added/dropped at every step. We can only show the first iteration because the algorithm does'nt receive an input from the user in the vignette but normally you can control the variables added or removed from the stepwise search. This is what the interactive mode looks like:
+```{r}
+forward_genes_BIC = stepwise_search(train$data, genes_extra=train$G, env_original=train$E, formula=y ~ E*G*z, search_type="bidirectional-forward", search="genes", search_criterion="BIC", interactive_mode=TRUE)
+```
+Manually forcing $\mathbf{g}_3$ inclusion since the interactive mode cannot progress without a user, we get that the second iteration is:
+```{r}
+forward_genes_BIC = stepwise_search(train$data, genes_original=train$G[,3,drop=FALSE], genes_extra=train$G[,-3], env_original=train$E, formula=y ~ E*G*z, search_type="bidirectional-forward", search="genes", search_criterion="BIC", interactive_mode=TRUE)
+```
+With the interactive mode, you can try alternative pathways, rather than simply adding/dropping the best/worst variable everytime.
+
+## Example 2
+
+Let's take a quick look at a simple two-way example with binary outcome:
+
+$$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
+$$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
+$$\mathbf{\mu} = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} \\ y \sim Binomial(n=1,p=logit(\mu))$$
+
+We generate N=1000 training observations.
+
+```{r message=FALSE}
+library(LEGIT)
+train = example_2way(N=1000, logit=TRUE, seed=777)
+```
+
+We fit the model with the default starting point.
+```{r}
+fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E, family=binomial)
+summary(fit_default)
+```
+We are a little off, especially with regards to the weights of the genetic variants. This is because there is substantial loss of information with binary outcomes. To assess the quality of the fit, we are going to do a 5-Folds cross-validation.
+```{r}
+cv_5folds_bin = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, cv_iter=1, cv_folds=5, classification=TRUE, family=binomial, seed=777)
+pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
+```
+Although the weights of the genetic variants are a bit off, the model predictive power is good.
