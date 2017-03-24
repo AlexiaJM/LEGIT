@@ -22,4 +22,3 @@ Shows the summary for all parts (main, genetic, environmental) of the LEGIT mode
 fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E)
 summary(fit_default)
 }
-

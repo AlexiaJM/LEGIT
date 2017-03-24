@@ -36,4 +36,3 @@ Simulated example of a 2 way interaction GxE model.
 example_2way(5,1,logit=FALSE)
 example_2way(5,0,logit=TRUE)
 }
-

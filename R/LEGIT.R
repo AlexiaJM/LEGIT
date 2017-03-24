@@ -47,8 +47,22 @@
 #' @export
 "example_3way"
 
+#' @title Longitudinal folds
+#' @description Function to create folds adequately for longitudinal datasets by forcing every observation with the same id to be in the same fold. Can be used with LEGIT_cv to make sure that the cross-validation folds are appropriate when using longitudinal data.
+#' @param cv_iter Number of cross-validation iterations (Default = 1).
+#' @param cv_folds Number of cross-validation folds (Default = 10).
+#' @param id Factor vector containing the id number of each observation.
+#' @return Returns a list of vectors containing the fold number for each observation
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	# Assuming it's longitudinal with 4 timepoints, even though it's not
+#'	id = factor(rep(1:125,each=4))
+#'	fit_cv = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, folds=longitudinal_folds(1,10, id))
+#' @export
+"longitudinal_folds"
+
 #' @title Latent Environmental & Genetic InTeraction (LEGIT) model
-#' @description Constructs a generalized linear model (glm) with a weighted latent environmental score and weighted latent genetic score.
+#' @description Constructs a generalized linear model (glm) with a weighted latent environmental score and weighted latent genetic score using alternating optimization.
 #' @param data data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.
 #' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
@@ -72,6 +86,7 @@
 #'	summary(fit_default)
 #'	summary(fit_best)
 #' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
 #' @export
 "LEGIT"
 
@@ -113,6 +128,7 @@
 #' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
 #' @param cv_iter Number of cross-validation iterations (Default = 5).
 #' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
 #' @param classification Set to TRUE if you are doing classification (binary outcome).
 #' @param start_genes Optional starting points for genetic score (must be same length as the number of columns of \code{genes}).
 #' @param start_env Optional starting points for environmental score (must be same length as the number of columns of \code{env}).
@@ -178,6 +194,7 @@
 #' @param max_steps Maximum number of steps taken (Default = 50).
 #' @param cv_iter Number of cross-validation iterations (Default = 5).
 #' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
 #' @param classification Set to TRUE if you are doing classification (binary outcome).
 #' @param start_genes Optional starting points for genetic score (must be same length as the number of columns of \code{genes}).
 #' @param start_env Optional starting points for environmental score (must be same length as the number of columns of \code{env}).
@@ -263,6 +280,18 @@ example_3way = function(N, sigma=2.5, logit=FALSE, seed=NULL){
 	return(list(data=data.frame(y,y_true,z),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(5,2,3,1,5,1.5,2,2)))
 }
 
+longitudinal_folds = function(cv_iter=1, cv_folds=10, id){
+	folds = vector("list", cv_iter)
+	for (i in 1:cv_iter){
+		s = sample(levels(id))
+	 	id_new = cut(1:length(s),breaks=cv_folds,labels=FALSE)
+	 	folds[[i]] = rep(NA, length(id))
+	 	for (j in 1:cv_folds){
+	 		folds[[i]][id %in% s[id_new==j]] = j
+	 	}
+	}
+ 	return(folds)
+}
 
 LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, print=TRUE)
 {
@@ -570,7 +599,7 @@ summary.LEGIT = function(object, ...){
 	})
 }
 
-LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL){
+LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL){
 
 	# getting right formats
 	data = data.frame(data)
@@ -593,16 +622,28 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, classifi
 	residuals = rep(0,dim(data)[1])
 	pearson_residuals = rep(0,dim(data)[1])
 
+	if (!is.null(folds)){
+			cv_iter = length(folds)	
+	}
+
 	for (j in 1:cv_iter){
 		if (!is.null(seed)) set.seed(seed*j)
 		# Folds
-		s = sample(NROW(data))
-		data_n = data[s,, drop=FALSE]
-		genes_n = genes[s,, drop=FALSE]
-		env_n = env[s,, drop=FALSE]
-		id = cut(seq(1,NROW(data_n)),breaks=cv_folds,labels=FALSE)
+		if (is.null(folds)){
+			s = sample(NROW(data))
+			data_n = data[s,, drop=FALSE]
+			genes_n = genes[s,, drop=FALSE]
+			env_n = env[s,, drop=FALSE]
+			id = cut(seq(1,NROW(data_n)),breaks=cv_folds,labels=FALSE)
+		}
+		else{
+			s = NROW(data)
+			data_n = data
+			genes_n = genes
+			env_n = env
+			id = folds[[j]]
+		}
 		list = 1:cv_folds
-
 		pred=c()
 		y_test=c()
 
@@ -653,7 +694,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, classifi
 }
 
 
-forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
+forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	# How much genes or env to add
 	#print(head(data))
 	#print(dim(data))
@@ -775,15 +816,15 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		if (!empty_start_dataset) fit_cv = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		if (!empty_start_dataset) fit_cv = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
 		for (j in 1:elements_N){
-			if (search=="genes") fit_cv_with = LEGIT_cv(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-			if (search=="env") fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+			if (search=="genes") fit_cv_with = LEGIT_cv(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+			if (search=="env") fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, seed=current_seed)
 			if (empty_start_dataset) fit_cv_without = NULL
 			else{
 				if (search=="genes") comp_with = stats::complete.cases(data,genes_current,genes_toadd[,j,drop=FALSE],env_current)
 				if (search=="env") comp_with = stats::complete.cases(data,genes_current,env_toadd[,j,drop=FALSE],env_current)
-				if (sum(comp_without) != sum(comp_with)) fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				if (sum(comp_without) != sum(comp_with)) fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
 				else fit_cv_without = fit_cv
 			}
 			if (search_criterion=="cv"){
@@ -873,7 +914,7 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 }
 
 
-backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
+backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_current)
 	if (search=="env") elements_N = NCOL(env_current)
@@ -969,14 +1010,14 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
 		for (j in 1:elements_N){
 			# Only do this if not labelled as good
 			if (!good[j]){
 				if (search=="genes") comp_without = stats::complete.cases(data,genes_current[,-j,drop=FALSE],env_current)
 				if (search=="env") comp_without = stats::complete.cases(data,genes_current,env_current[,-j,drop=FALSE])
-				if (search=="genes") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-				if (search=="env") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				if (search=="genes") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				if (search=="env") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, seed=current_seed)
 				if (search_criterion=="cv"){
 					criterion_before[j] = mean(fit_cv_with$R2_cv)
 					criterion_after[j] = mean(fit_cv_without$R2_cv)
@@ -1058,7 +1099,7 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 }
 
 
-stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="genes", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
+stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="genes", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
 	if (search_criterion=="AIC") string_choice="lowest AIC"
@@ -1115,7 +1156,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		if (print) cat("\n")
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd, env_toadd=env_toadd, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+			results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd, env_toadd=env_toadd, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 			if (is.null(results)) break
 			# Resetting parameters based on iteration results
 			empty_start_dataset = FALSE
@@ -1154,7 +1195,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		if (print) cat("\n")
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_dropped, env_current=env_current, env_dropped=env_dropped, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+			results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_dropped, env_current=env_current, env_dropped=env_dropped, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 			if (is.null(results)) break
 			# Resetting parameters based on iteration results
 			fit = results$fit
@@ -1235,7 +1276,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
 			if (direction=="forward"){
-				results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd_ordrop, env_toadd=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+				results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd_ordrop, env_toadd=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 				if (is.null(results)) forward_failed=TRUE
 				else{
 					forward_failed=FALSE
@@ -1267,7 +1308,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			if (direction=="backward"){
 				# Can't backward if only one remaining variable
 				if (!((NCOL(genes_current)<=1 && search=="genes") || (NCOL(env_current)<=1 && search=="env"))){
-					results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_toadd_ordrop, env_current=env_current, env_dropped=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+					results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_toadd_ordrop, env_current=env_current, env_dropped=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 					if (is.null(results)) backward_failed=TRUE
 					else{
 						backward_failed=FALSE

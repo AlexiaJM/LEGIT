@@ -5,8 +5,9 @@
 \title{Cross-validation for the LEGIT model}
 \usage{
 LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
-  classification = FALSE, start_genes = NULL, start_env = NULL,
-  eps = 0.001, maxiter = 50, family = gaussian, seed = NULL)
+  folds = NULL, classification = FALSE, start_genes = NULL,
+  start_env = NULL, eps = 0.001, maxiter = 50, family = gaussian,
+  seed = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.}
@@ -20,6 +21,8 @@ LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
 \item{cv_iter}{Number of cross-validation iterations (Default = 5).}
 
 \item{cv_folds}{Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.}
+
+\item{folds}{Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.}
 
 \item{classification}{Set to TRUE if you are doing classification (binary outcome).}
 
@@ -62,4 +65,3 @@ pROC::plot.roc(cv_5folds_bin$roc_curve[[3]])
 pROC::plot.roc(cv_5folds_bin$roc_curve[[4]])
 }
 }
-

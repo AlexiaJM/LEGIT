@@ -31,4 +31,3 @@ ssres = sum((test$data$y - predict(fit, test$data, test$G, test$E))^2)
 sstotal = sum((test$data$y - mean(test$data$y))^2)
 R2 = 1 - ssres/sstotal
 }
-

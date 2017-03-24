@@ -32,7 +32,7 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
 Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 }
 \description{
-Constructs a generalized linear model (glm) with a weighted latent environmental score and weighted latent genetic score.
+Constructs a generalized linear model (glm) with a weighted latent environmental score and weighted latent genetic score using alternating optimization.
 }
 \examples{
 train = example_2way(500, 1, seed=777)
@@ -46,4 +46,6 @@ fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E*z)
 summary(fit_default)
 summary(fit_best)
 }
-
+\references{
+Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.05633.
+}
