@@ -1,5 +1,8 @@
-## ----message=FALSE-------------------------------------------------------
+## ------------------------------------------------------------------------
 library(LEGIT)
+example_3way(N=5, sigma=1, logit=FALSE, seed=7)
+
+## ----message=FALSE-------------------------------------------------------
 train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
 test = example_3way(N=100, sigma=1, logit=FALSE, seed=6)
 

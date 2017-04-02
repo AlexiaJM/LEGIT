@@ -16,7 +16,8 @@ The Latent Environmental & Genetic InTeraction (LEGIT) model is an interaction m
 Assuming $\mathbf{g}_1$,...,$\mathbf{g}_k$ are $k$ genetic variants of interest, generally represented as the number of dominant alleles (0, 1, 2) or the absence or presence of a dominant allele (0, 1) and $\mathbf{e}_1$,...,$\mathbf{e}_s$ are $s$ environments of interest, generally represented as ordinal scores (0, 1, 2 ...) or continuous variables. We define the genetic score $\mathbf{g}$ and environmental score $\mathbf{e}$ as: 
 
 
-$$\begin{eqnarray} \mathbf{g}&=&\sum_{i=1}^{k} p_i \mathbf{g}_j \\ \mathbf{e}&=&\sum_{l=1}^{s} q_l \mathbf{e}_l \end{eqnarray}$$
+$$\mathbf{g}=\sum_{i=1}^{k} p_i \mathbf{g}_j $$ 
+$$\mathbf{e}=\sum_{l=1}^{s} q_l \mathbf{e}_l $$
 where $\|p\|_1=\sum_{i=1}^{k}p_j=1$ and $\|q\|_1= \sum_{l=1}^{s}q_l=1$. The weights can be interpreted as the relative contributions of each genetic variant or environment.
 
 The weights of these scores are estimated within a generalized linear model of the form :
@@ -34,7 +35,7 @@ $$f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{
 
 ## Algorithm
 
-Full details of the algorithm will be available when the paper is released as pre-print and sent for peer-review (Coming soon, before Summer 2017).
+Full details of the algorithm are available on [arXiv](arxiv.org/abs/1703.08111).
 
 ## Implementation
 
@@ -57,13 +58,20 @@ Let's look at a three-way interaction model with continuous outcome:
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
 $$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
-$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
-$$\mathbf{\mu} = -2 + 2\mathbf{g} + 3\mathbf{e} + \mathbf{z} + 5\mathbf{ge} + 2\mathbf{gz} - 1.5\mathbf{ez} + 2\mathbf{gez} \\ y \sim Normal(\mu,\sigma=1)$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$ 
+$$ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
+$$\mathbf{\mu} = -2 + 2\mathbf{g} + 3\mathbf{e} + \mathbf{z} + 5\mathbf{ge} + 2\mathbf{gz} - 1.5\mathbf{ez} + 2\mathbf{gez} $$ 
+$$ y \sim Normal(\mu,\sigma=1)$$
+
+Let's load the package and look at the dataset.
+```{r}
+library(LEGIT)
+example_3way(N=5, sigma=1, logit=FALSE, seed=7)
+```
+Currently "data" contains the outcome, the true outcome without the noise and the covariate $z$. This dataset should always contain the outcome and all covariates (except for the genes and environments from $\mathbf{g}$ and $\mathbf{e}$)."G" contains the genetic variants and "E" contains the environments. This is all you need to fit a LEGIT model.
 
 We generate N=250 training observations and 100 test observations.
-
 ```{r message=FALSE}
-library(LEGIT)
 train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
 test = example_3way(N=100, sigma=1, logit=FALSE, seed=6)
 ```
@@ -116,8 +124,10 @@ Let's take a quick look at a simple two-way example with binary outcome:
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
 $$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
-$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \\ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
-$$\mathbf{\mu} = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} \\ y \sim Binomial(n=1,p=logit(\mu))$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$ 
+$$ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
+$$\mathbf{\mu} = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} $$
+$$ y \sim Binomial(n=1,p=logit(\mu))$$
 
 We generate N=1000 training observations.
 
