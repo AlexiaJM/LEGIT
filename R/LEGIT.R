@@ -642,6 +642,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 			genes_n = genes
 			env_n = env
 			id = folds[[j]]
+			cv_folds = length(levels(factor(id)))
 		}
 		list = 1:cv_folds
 		pred=c()
