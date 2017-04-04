@@ -9,9 +9,9 @@ forward_step(empty_start_dataset, fit, data, formula,
   genes_toadd = NULL, env_toadd = NULL, search = "genes",
   search_criterion = "AIC", p_threshold = 0.2, exclude_worse_AIC = TRUE,
   max_steps = 50, cv_iter = 5, cv_folds = 10, folds = NULL,
-  classification = FALSE, start_genes = NULL, start_env = NULL,
-  eps = 0.01, maxiter = 25, family = gaussian, seed = NULL,
-  print = TRUE)
+  Huber_p = 1, classification = FALSE, start_genes = NULL,
+  start_env = NULL, eps = 0.01, maxiter = 25, family = gaussian,
+  seed = NULL, print = TRUE)
 }
 \arguments{
 \item{empty_start_dataset}{If TRUE, the initial dataset is empty.}

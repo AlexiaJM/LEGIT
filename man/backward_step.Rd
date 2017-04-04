@@ -8,9 +8,10 @@ backward_step(fit, data, formula, interactive_mode = FALSE,
   genes_current = NULL, env_current = NULL, genes_dropped = NULL,
   env_dropped = NULL, search = "genes", search_criterion = "AIC",
   p_threshold = 0.2, exclude_worse_AIC = TRUE, max_steps = 50,
-  cv_iter = 5, cv_folds = 10, folds = NULL, classification = FALSE,
-  start_genes = NULL, start_env = NULL, eps = 0.01, maxiter = 25,
-  family = gaussian, seed = NULL, print = TRUE)
+  cv_iter = 5, cv_folds = 10, folds = NULL, Huber_p = 1,
+  classification = FALSE, start_genes = NULL, start_env = NULL,
+  eps = 0.01, maxiter = 25, family = gaussian, seed = NULL,
+  print = TRUE)
 }
 \arguments{
 \item{fit}{Current best fit.}

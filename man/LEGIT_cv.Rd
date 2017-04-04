@@ -5,7 +5,7 @@
 \title{Cross-validation for the LEGIT model}
 \usage{
 LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
-  folds = NULL, classification = FALSE, start_genes = NULL,
+  folds = NULL, Huber_p = 1, classification = FALSE, start_genes = NULL,
   start_env = NULL, eps = 0.001, maxiter = 50, family = gaussian,
   seed = NULL)
 }
@@ -24,6 +24,8 @@ LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
 
 \item{folds}{Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.}
 
+\item{Huber_p}{Parameter controlling the Huber cross-validation error (Default =1).}
+
 \item{classification}{Set to TRUE if you are doing classification (binary outcome).}
 
 \item{start_genes}{Optional starting points for genetic score (must be same length as the number of columns of \code{genes}).}
@@ -39,7 +41,7 @@ LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
 \item{seed}{Seed for cross-validation folds.}
 }
 \value{
-If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration.
+If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration, and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration. The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 }
 \description{
 Uses cross-validation on the LEGIT model. Note that this is not a very fast implementation since it was written in R.
@@ -64,4 +66,7 @@ pROC::plot.roc(cv_5folds_bin$roc_curve[[2]])
 pROC::plot.roc(cv_5folds_bin$roc_curve[[3]])
 pROC::plot.roc(cv_5folds_bin$roc_curve[[4]])
 }
+}
+\references{
+Denis Heng-Yan Leung. \emph{Cross-validation in nonparametric regression with outliers.} Annals of Statistics (2005): 2291-2310.
 }

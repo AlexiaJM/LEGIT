@@ -146,4 +146,5 @@ We are a little off, especially with regards to the weights of the genetic varia
 cv_5folds_bin = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, cv_iter=1, cv_folds=5, classification=TRUE, family=binomial, seed=777)
 pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
 ```
+
 Although the weights of the genetic variants are a bit off, the model predictive power is good.

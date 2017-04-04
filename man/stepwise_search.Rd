@@ -10,7 +10,7 @@ stepwise_search(data, formula, interactive_mode = FALSE,
   search = "genes", search_criterion = "AIC",
   forward_exclude_p_bigger = 0.2, backward_exclude_p_smaller = 0.01,
   exclude_worse_AIC = TRUE, max_steps = 50, cv_iter = 5, cv_folds = 10,
-  folds = NULL, classification = FALSE, start_genes = NULL,
+  folds = NULL, Huber_p = 1, classification = FALSE, start_genes = NULL,
   start_env = NULL, eps = 0.01, maxiter = 25, family = gaussian,
   seed = NULL, print = TRUE)
 }
@@ -29,11 +29,11 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 
 \item{env_extra}{data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). If not NULL, \code{genes_extra} should be NULL.}
 
-\item{search_type}{If \code{search_type="forward"}, uses a forward search. If \code{search_type="bidirectional"}, uses bidirectional forward search. If \code{search_type="backward"}, uses backward search. For now only \code{search_type="forward"} is implemented (Default = "forward").}
+\item{search_type}{If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).}
 
 \item{search}{If \code{search="genes"}, uses a stepwise search for the genetic score variables \code{genes_extra}, forcing \code{genes_original} to be included in the genetic score. If \code{search="env"}, uses a stepwise search for the environmental score variables \code{env_extra}, forcing \code{env_original} to be included in the genetic score (Default = "genes").}
 
-\item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \code{search_criterion="cv_AUC"}, uses the cross-validated AUC (Default = "AIC").}
+\item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.}
 
 \item{forward_exclude_p_bigger}{If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20).}
 
@@ -48,6 +48,8 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 \item{cv_folds}{Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.}
 
 \item{folds}{Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.}
+
+\item{Huber_p}{Parameter controlling the Huber cross-validation error (Default =1).}
 
 \item{classification}{Set to TRUE if you are doing classification (binary outcome).}
 
