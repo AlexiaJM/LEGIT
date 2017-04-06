@@ -15,7 +15,7 @@ stepwise_search(data, formula, interactive_mode = FALSE,
   seed = NULL, print = TRUE)
 }
 \arguments{
-\item{data}{data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.}
+\item{data}{data.frame of the dataset to be used.}
 
 \item{formula}{Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).}
 

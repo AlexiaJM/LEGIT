@@ -10,7 +10,7 @@ LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
   seed = NULL)
 }
 \arguments{
-\item{data}{data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.}
+\item{data}{data.frame of the dataset to be used.}
 
 \item{genes}{data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).}
 

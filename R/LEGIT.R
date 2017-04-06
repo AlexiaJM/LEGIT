@@ -63,7 +63,7 @@
 
 #' @title Latent Environmental & Genetic InTeraction (LEGIT) model
 #' @description Constructs a generalized linear model (glm) with a weighted latent environmental score and weighted latent genetic score using alternating optimization.
-#' @param data data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.
+#' @param data data.frame of the dataset to be used. 
 #' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
@@ -93,7 +93,7 @@
 #' @title Predictions of LEGIT fits
 #' @description Predictions of LEGIT fits.
 #' @param object An object of class "LEGIT", usually, a result of a call to LEGIT.
-#' @param data data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.
+#' @param data data.frame of the dataset to be used.
 #' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param ... Further arguments passed to or from other methods.
@@ -122,7 +122,7 @@
 
 #' @title Cross-validation for the LEGIT model
 #' @description Uses cross-validation on the LEGIT model. Note that this is not a very fast implementation since it was written in R.
-#' @param data data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.
+#' @param data data.frame of the dataset to be used.
 #' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
@@ -180,7 +180,7 @@
 
 #' @title Stepwise search for the best subset of genetic variants or environments with the LEGIT model
 #' @description Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). For now, only \code{search_type="forward"} is implemented. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
-#' @param data data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.
+#' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
 #' @param interactive_mode If TRUE, uses interactive mode. In interactive mode, at each iteration, the user is shown the AIC, BIC, p-value and also the cross-validation \eqn{R^2} if \code{search_criterion="cv"} and the cross-validation AUC if \code{search_criterion="cv_AUC"} for the best 5 variables. The user must then enter a number between 1 and 5 to select the variable to be added, entering anything else will stop the search.
 #' @param genes_original data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
@@ -308,7 +308,11 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
 
 	# getting right formats
-	data = data.frame(data)
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	data$G=0
+	data$E=0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
 	genes = as.matrix(genes, drop=FALSE)
 	if (is.null(colnames(genes))){
 		if (print) cat("You have not specified column names for genes, they will be named gene1, gene2, ...\n")
@@ -320,6 +324,9 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 		colnames(env) = paste0("env",1:NCOL(env))
 	}
 	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data) || sum(apply(genes,2,is.numeric)) != NCOL(genes) || sum(apply(env,2,is.numeric)) != NCOL(env)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, gene, env)")
 
 	# remove missing data
 	comp = stats::complete.cases(data,genes,env)
@@ -605,7 +612,11 @@ summary.LEGIT = function(object, ...){
 LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL){
 
 	# getting right formats
-	data = data.frame(data)
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	data$G=0
+	data$E=0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
 	genes = as.matrix(genes, drop=FALSE)
 	env = as.matrix(env, drop=FALSE)
 	formula = stats::as.formula(formula)
@@ -1167,6 +1178,12 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 	else if (search_criterion=="cv_L1") string_choice="lowest cross-validation L1-norm error"
 	else if (search_criterion=="cv_AUC") string_choice="biggest cross-validated area under the curve"
 	else stop("Not a valid search_criterion, use: AIC, BIC, cv or cv_AUC")
+
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	data$G=0
+	data$E=0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
 
 	comp = stats::complete.cases(data, genes_original, env_original, genes_extra, env_extra)
 	if (sum(comp)!=length(comp) && print) cat("Note: Missing data was found. This will increase computing time in forward steps \n and could lead to an incorrect subset of variable if the sample size change too much. \n")

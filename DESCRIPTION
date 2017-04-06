@@ -25,4 +25,4 @@ RoxygenNote: 6.0.1
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2017-04-04 19:13:50 UTC; ajolicoe
+Packaged: 2017-04-06 12:45:30 UTC; Alexia

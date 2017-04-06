@@ -8,7 +8,7 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
   eps = 0.001, maxiter = 50, family = gaussian, print = TRUE)
 }
 \arguments{
-\item{data}{data.frame of the dataset to be used. Do not include elements that are in the datasets \code{genes} and \code{env} and do not include manually coded interactions.}
+\item{data}{data.frame of the dataset to be used.}
 
 \item{genes}{data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).}
 
