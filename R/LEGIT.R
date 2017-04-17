@@ -79,6 +79,9 @@
 #' @param cv_iter Number of cross-validation iterations (Default = 1).
 #' @param cv_folds Number of cross-validation folds (Default = 10).
 #' @param id Factor vector containing the id number of each observation.
+#' @param formula Optional Model formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "formula" here if you have missing data).
+#' @param data Optional data.frame used for the formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "data" here if you have missing data).
+#' @param data_needed Optional data.frame with variables that have to be included (Put "cbind(genes,env)"" or "latent_var" here if you have missing data).
 #' @return Returns a list of vectors containing the fold number for each observation
 #' @examples
 #'	train = example_2way(500, 1, seed=777)
@@ -440,8 +443,30 @@ example_3way_3latent = function(N, sigma=1, logit=FALSE, seed=NULL){
 	return(list(data=data.frame(y,y_true),latent_var=list(G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),Z=data.frame(z1,z2,z3)),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2),coef_Z=c(.15,.75,.10), coef_main=c(5,2,3,1,5,1.5,2,2)))
 }
 
-longitudinal_folds = function(cv_iter=1, cv_folds=10, id){
+longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NULL, data_needed=NULL){
 	if (cv_folds > length(unique(id))) stop("cv_folds must be smaller than the number of unique id")
+	# in IMLEGIT, data_needed would be latent_var which is a list and we need to unlist it if that's the case
+	if (!is.null(data_needed)) if(class(data_needed)=="list") data_needed = do.call(cbind.data.frame, data_needed)
+	if (!is.null(data) && !is.null(formula)){
+		# Extracting only the variables available from the formula
+		formula = as.formula(formula)
+		formula_full = stats::terms(formula,simplify=TRUE)
+		formula_outcome = get.vars(formula)[1]
+		formula_elem_ = attributes(formula_full)$term.labels
+		vars_names = get.vars(formula)[get.vars(formula) %in% names(data)]
+		if (!is.null(data_needed)){
+			vars_names = c(vars_names,names(data_needed))
+			data = data.frame(data,data_needed)
+		}
+		vars_names[-length(vars_names)] = paste0(vars_names[-length(vars_names)], " + ")
+		formula_n = paste0(formula_outcome, " ~ ", paste0(vars_names,collapse=""))
+
+		data = stats::model.frame(formula_n, data, na.action=na.pass)
+		id = id[stats::complete.cases(data)]
+	}
+	else{
+		if (!is.null(data_needed)) id = id[stats::complete.cases(data_needed)]
+	}
 	folds = vector("list", cv_iter)
 	for (i in 1:cv_iter){
 		s = sample(sort(unique(id)))
@@ -1124,12 +1149,12 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 
 		for (i in list){
 			# Train and test datasets
-			data_train = subset(data_n, id %in% list[-i], drop = FALSE)
-			genes_train = subset(genes_n, id %in% list[-i], drop = FALSE)
-	 		env_train = subset(env_n, id %in% list[-i], drop = FALSE)
-	 		data_test = subset(data_n, id %in% list[i], drop = FALSE)
-	 		genes_test = subset(genes_n, id %in% list[i], drop = FALSE)
-	 		env_test = subset(env_n, id %in% list[i], drop = FALSE)
+			data_train = subset(data_n, id != i, drop = FALSE)
+			genes_train = subset(genes_n, id != i, drop = FALSE)
+	 		env_train = subset(env_n, id != i, drop = FALSE)
+	 		data_test = subset(data_n, id == i, drop = FALSE)
+	 		genes_test = subset(genes_n, id == i, drop = FALSE)
+	 		env_test = subset(env_n, id == i, drop = FALSE)
 	 		y_test_new = data_test[,formula_outcome]
 
 	 		# Fit model and add predictions
@@ -1276,12 +1301,12 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 
 		for (i in list){
 			# Train and test datasets
-			data_train = subset(data_n, id %in% list[-i], drop = FALSE)
+			data_train = subset(data_n, id != i, drop = FALSE)
 			latent_var_train = latent_var_new
-			for (l in 1:k) latent_var_train[[l]] = subset(latent_var_new[[l]], id %in% list[-i], drop = FALSE)
-	 		data_test = subset(data_n, id %in% list[i], drop = FALSE)
+			for (l in 1:k) latent_var_train[[l]] = subset(latent_var_new[[l]], id != i, drop = FALSE)
+	 		data_test = subset(data_n, id == i, drop = FALSE)
 	 		latent_var_test = latent_var_new
-	 		for (l in 1:k) latent_var_test[[l]] = subset(latent_var_new[[l]], id %in% list[i], drop = FALSE)
+	 		for (l in 1:k) latent_var_test[[l]] = subset(latent_var_new[[l]], id == i, drop = FALSE)
 	 		y_test_new = data_test[,formula_outcome]
 
 	 		# Fit model and add predictions

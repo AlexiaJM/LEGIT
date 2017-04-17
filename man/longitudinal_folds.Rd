@@ -4,7 +4,8 @@
 \alias{longitudinal_folds}
 \title{Longitudinal folds}
 \usage{
-longitudinal_folds(cv_iter = 1, cv_folds = 10, id)
+longitudinal_folds(cv_iter = 1, cv_folds = 10, id, formula = NULL,
+  data = NULL, data_needed = NULL)
 }
 \arguments{
 \item{cv_iter}{Number of cross-validation iterations (Default = 1).}
@@ -12,6 +13,12 @@ longitudinal_folds(cv_iter = 1, cv_folds = 10, id)
 \item{cv_folds}{Number of cross-validation folds (Default = 10).}
 
 \item{id}{Factor vector containing the id number of each observation.}
+
+\item{formula}{Optional Model formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "formula" here if you have missing data).}
+
+\item{data}{Optional data.frame used for the formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "data" here if you have missing data).}
+
+\item{data_needed}{Optional data.frame with variables that have to be included (Put "cbind(genes,env)"" or "latent_var" here if you have missing data).}
 }
 \value{
 Returns a list of vectors containing the fold number for each observation

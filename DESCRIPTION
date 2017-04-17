@@ -13,7 +13,7 @@ Description: Constructs genotype x environment interaction (GxE) models where
     originally made for GxE modelling, it is flexible and does not require the use of 
     genetic and environmental variables. It can also handle more than 2 latent variables 
     (rather than just G and E) and 3-way interactions or more. The LEGIT model produces 
-    highly interpretable results and is very parameter-efficient thus it can be even be 
+    highly interpretable results and is very parameter-efficient thus it can even be 
     used with small sample sizes (n < 250).
 License: GPL-3
 Imports: pROC
@@ -22,4 +22,4 @@ RoxygenNote: 6.0.1
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2017-04-17 17:42:58 UTC; Alexia
+Packaged: 2017-04-17 20:50:22 UTC; Alexia
