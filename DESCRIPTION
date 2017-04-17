@@ -1,23 +1,20 @@
 Package: LEGIT
 Title: Latent Environmental & Genetic InTeraction (LEGIT) Model
-Version: 1.0.3
-Date: 2017-04-04
+Version: 1.0.4
+Date: 2017-04-16
 Author: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
 Maintainer: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
 Description: Constructs genotype x environment interaction (GxE) models where
     G is a weighted sum of genetic variants (genetic score) and E is a weighted
     sum of environments (environmental score) using the alternating optimization algorithm 
-    by Jolicoeur-Martineau et al. (2017) <arXiv:1703.08111>. Alternating optimization is 
-    an iterative process where the genetic score weights, the environmental score weights, 
-    and the main model parameters are estimated in turn assuming the other parameters to 
-    be constant. This approach has greatly enhanced predictive power over traditional GxE 
-    models which include only a single genetic variant and a single environmental 
-    exposure. Gene x gene interactions (GxG) and environment x environment interactions 
-    (ExE) can be incorporated into the genetic and environmental scores. Any standard 
-    model formula can be used, it doesn't have to be a two-way interaction model. 
-    Although this approach was made for GxE modelling, the genetic score doesn't need to 
-    contain genetic variables and the environmental score doesn't need to contain 
-    environmental variables, therefore this approach is highly flexible.
+    by Jolicoeur-Martineau et al. (2017) <arXiv:1703.08111>. This approach has greatly 
+    enhanced predictive power over traditional GxE models which include only a single 
+    genetic variant and a single environmental exposure. Although this approach was 
+    originally made for GxE modelling, it is flexible and does not require the use of 
+    genetic and environmental variables. It can also handle more than 2 latent variables 
+    (rather than just G and E) and 3-way interactions or more. The LEGIT model produces 
+    highly interpretable results and is very parameter-efficient thus it can be even be 
+    used with small sample sizes (n < 250).
 License: GPL-3
 Imports: pROC
 Depends: formula.tools, stats
@@ -25,4 +22,4 @@ RoxygenNote: 6.0.1
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2017-04-06 12:45:30 UTC; Alexia
+Packaged: 2017-04-17 17:42:58 UTC; Alexia

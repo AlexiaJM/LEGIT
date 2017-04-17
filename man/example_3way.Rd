@@ -2,7 +2,7 @@
 % Please edit documentation in R/LEGIT.R
 \name{example_3way}
 \alias{example_3way}
-\title{Simulated example of a 3 way interaction GxE model}
+\title{Simulated example of a 3 way interaction GxExz model}
 \usage{
 example_3way(N, sigma = 2.5, logit = FALSE, seed = NULL)
 }
@@ -16,10 +16,10 @@ example_3way(N, sigma = 2.5, logit = FALSE, seed = NULL)
 \item{seed}{RNG seed.}
 }
 \value{
-Returns a list containing, in the following order: data.frame with the observed outcome (with noise), the true outcome (without noise) and \eqn{z}, data.frame of the genetic variants, data.frame of the environments, vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+Returns a list containing, in the following order: data.frame with the observed outcome (with noise), the true outcome (without noise) and \eqn{z}, data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
 }
 \description{
-Simulated example of a 3 way interaction GxE model. 
+Simulated example of a 3 way interaction GxExz model (where G and E are latent variables). 
 \deqn{g_j \sim Binomial(n=1,p=.30)}
 \deqn{j = 1, 2, 3, 4}
 \deqn{e_l \sim Normal(\mu=0,\sigma=1.5)}

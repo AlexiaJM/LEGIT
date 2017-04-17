@@ -16,10 +16,10 @@ example_2way(N, sigma = 1, logit = FALSE, seed = NULL)
 \item{seed}{RNG seed.}
 }
 \value{
-Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants, data.frame of the environments, vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
 }
 \description{
-Simulated example of a 2 way interaction GxE model. 
+Simulated example of a 2 way interaction GxE model (where G and E are latent variables). 
 \deqn{g_j \sim Binomial(n=1,p=.30)}
 \deqn{j = 1, 2, 3, 4}
 \deqn{e_l \sim Normal(\mu=0,\sigma=1.5)}

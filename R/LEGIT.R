@@ -1,5 +1,5 @@
 #' @title Simulated example of a 2 way interaction GxE model.
-#' @description Simulated example of a 2 way interaction GxE model. 
+#' @description Simulated example of a 2 way interaction GxE model (where G and E are latent variables). 
 #' \deqn{g_j \sim Binomial(n=1,p=.30)}
 #' \deqn{j = 1, 2, 3, 4}
 #' \deqn{e_l \sim Normal(\mu=0,\sigma=1.5)}
@@ -15,15 +15,15 @@
 #' @param sigma Standard deviation of the gaussian noise (if \code{logit}=FALSE).
 #' @param logit If TRUE, the outcome is transformed to binary with a logit link.
 #' @param seed RNG seed.
-#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants, data.frame of the environments, vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
 #' @examples
 #'	example_2way(5,1,logit=FALSE)
 #'	example_2way(5,0,logit=TRUE)
 #' @export
 "example_2way"
 
-#' @title Simulated example of a 3 way interaction GxE model
-#' @description Simulated example of a 3 way interaction GxE model. 
+#' @title Simulated example of a 3 way interaction GxExz model
+#' @description Simulated example of a 3 way interaction GxExz model (where G and E are latent variables). 
 #' \deqn{g_j \sim Binomial(n=1,p=.30)}
 #' \deqn{j = 1, 2, 3, 4}
 #' \deqn{e_l \sim Normal(\mu=0,\sigma=1.5)}
@@ -40,12 +40,39 @@
 #' @param sigma Standard deviation of the gaussian noise (if \code{logit}=FALSE).
 #' @param logit If TRUE, the outcome is transformed to binary with a logit link.
 #' @param seed RNG seed.
-#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise), the true outcome (without noise) and \eqn{z}, data.frame of the genetic variants, data.frame of the environments, vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise), the true outcome (without noise) and \eqn{z}, data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
 #' @examples
 #'	example_3way(5,2.5,logit=FALSE)
 #'	example_3way(5,0,logit=TRUE)
 #' @export
 "example_3way"
+
+#' @title Simulated example of a 3 way interaction GxExZ model
+#' @description Simulated example of a 3 way interaction GxExZ model (where G, E and Z are latent variables). 
+#' \deqn{g_j \sim Binomial(n=1,p=.30)}
+#' \deqn{j = 1, 2, 3, 4}
+#' \deqn{e_k \sim Normal(\mu=0,\sigma=1.5)}
+#' \deqn{k = 1, 2, 3}
+#' \deqn{z_l \sim Normal(\mu=3,\sigma=1)}
+#' \deqn{l = 1, 2, 3}
+#' \deqn{g = .2g_1 + .15g_2 - .3g_3 + .1g_4 + .05g_1g_3 + .2g_2g_3}
+#' \deqn{e = -.45e_1 + .35e_2 + .2e_3}
+#' \deqn{z = .15z_1 + .60z_2 + .25z_3}
+#' \deqn{\mu = -2 + 2g + 3e + z + 5ge - 1.5ez + 2gz + 2gez}
+#' \tabular{cc}{
+#' \eqn{y \sim Normal(\mu=\mu,\sigma=\code{sigma})} if \code{logit}=FALSE \cr
+#' \eqn{y \sim Binomial(n=1,p=logit(\mu))} if \code{logit}=TRUE
+#' }
+#' @param N Sample size.
+#' @param sigma Standard deviation of the gaussian noise (if \code{logit}=FALSE).
+#' @param logit If TRUE, the outcome is transformed to binary with a logit link.
+#' @param seed RNG seed.
+#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), list containing the data.frame of the genetic variants (G), the data.frame of the \eqn{e} environments (E) and the data.frame of the \eqn{z} environments (Z), vector of the true genetic coefficients, vector of the true \eqn{e} environmental coefficients, vector of the true \eqn{z} environmental coefficients, vector of the true main model coefficients
+#' @examples
+#'	example_3way_3latent(5,1,logit=FALSE)
+#'	example_3way_3latent(5,0,logit=TRUE)
+#' @export
+"example_3way_3latent"
 
 #' @title Longitudinal folds
 #' @description Function to create folds adequately for longitudinal datasets by forcing every observation with the same id to be in the same fold. Can be used with LEGIT_cv to make sure that the cross-validation folds are appropriate when using longitudinal data.
@@ -90,6 +117,35 @@
 #' @export
 "LEGIT"
 
+#' @title Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model
+#' @description Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that the stepwise search has not been implemented yet for IMLEGIT models.
+#' @param data data.frame of the dataset to be used. 
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ... (See examples below for more details)
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
+#' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
+#'	list(train$coef_G, train$coef_E))
+#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#'	train = example_3way_3latent(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
+#'	list(train$coef_G, train$coef_E, train$coef_Z))
+#'	fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"IMLEGIT"
+
 #' @title Predictions of LEGIT fits
 #' @description Predictions of LEGIT fits.
 #' @param object An object of class "LEGIT", usually, a result of a call to LEGIT.
@@ -100,13 +156,31 @@
 #' @return Returns a vector with the predicted values.
 #' @examples
 #'	train = example_2way(250, 1, seed=777)
-#'	test = example_2way(100, 1, seed=777)
+#'	test = example_2way(100, 1, seed=666)
 #'	fit = LEGIT(train$data, train$G, train$E, y ~ G*E)
 #'	ssres = sum((test$data$y - predict(fit, test$data, test$G, test$E))^2)
 #'	sstotal = sum((test$data$y - mean(test$data$y))^2)
 #'	R2 = 1 - ssres/sstotal
 #' @export
 "predict.LEGIT"
+
+#' @title Predictions of IMLEGIT fits
+#' @description Predictions of IMLEGIT fits.
+#' @param object An object of class "IMLEGIT", usually, a result of a call to IMLEGIT.
+#' @param data data.frame of the dataset to be used.
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...
+#' @param ... Further arguments passed to or from other methods.
+#' @return Returns a vector with the predicted values.
+#' @examples
+#'	train = example_2way(250, 1, seed=777)
+#'	test = example_2way(100, 1, seed=666)
+#'	fit = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
+#'	ssres = sum((test$data$y - predict(fit, test$data, list(G=test$G, E=test$E)))^2)
+#'	sstotal = sum((test$data$y - mean(test$data$y))^2)
+#'	R2 = 1 - ssres/sstotal
+#'	R2
+#' @export
+"predict.IMLEGIT"
 
 #' @title Summarizing LEGIT fits
 #' @description Shows the summary for all parts (main, genetic, environmental) of the LEGIT model.
@@ -119,6 +193,18 @@
 #'	summary(fit_default)
 #' @export
 "summary.LEGIT"
+
+#' @title Summarizing IMLEGIT fits
+#' @description Shows the summary for all parts (main and latent variables) of the LEGIT model.
+#' @param object An object of class "IMLEGIT", usually, a result of a call to LEGIT.
+#' @param ... Further arguments passed to or from other methods.
+#' @return Returns a list of objects of class "summary.glm" containing the summary of each parts (main and latent variables) of the model.
+#' @examples
+#' 	train = example_2way(250, 1, seed=777)
+#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
+#'	summary(fit_default)
+#' @export
+"summary.IMLEGIT"
 
 #' @title Cross-validation for the LEGIT model
 #' @description Uses cross-validation on the LEGIT model. Note that this is not a very fast implementation since it was written in R.
@@ -137,6 +223,7 @@
 #' @param family Outcome distribution and link function (Default = gaussian).
 #' @param seed Seed for cross-validation folds.
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param id Optional id of observations, can be a vector or data.frame (only used when returning list of possible outliers).
 #' @return If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration, and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration. The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @examples
 #'	\dontrun{
@@ -161,6 +248,47 @@
 #' @references Denis Heng-Yan Leung. \emph{Cross-validation in nonparametric regression with outliers.} Annals of Statistics (2005): 2291-2310.
 #' @export
 "LEGIT_cv"
+
+#' @title Cross-validation for the IMLEGIT model
+#' @description Uses cross-validation on the IMLEGIT model. Note that this is not a very fast implementation since it was written in R.
+#' @param data data.frame of the dataset to be used.
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param classification Set to TRUE if you are doing classification (binary outcome).
+#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param seed Seed for cross-validation folds.
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param id Optional id of observations, can be a vector or data.frame (only used when returning list of possible outliers).
+#' @return If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration, and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration. The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @examples
+#'	\dontrun{
+#'	train = example_3way_3latent(250, 1, seed=777)
+#'	# Cross-validation 4 times with 5 Folds
+#'	cv_5folds = IMLEGIT_cv(train$data, train$latent_var, y ~ G*E*Z, cv_iter=4, cv_folds=5)
+#'	cv_5folds
+#'	# Leave-one-out cross-validation (Note: very slow)
+#'	cv_loo = IMLEGIT_cv(train$data, train$latent_var, y ~ G*E*Z, cv_iter=1, cv_folds=250)
+#'	cv_loo
+#'	# Cross-validation 4 times with 5 Folds (binary outcome)
+#'	train_bin = example_2way(500, 2.5, logit=TRUE, seed=777)
+#'	cv_5folds_bin = IMLEGIT_cv(train_bin$data, list(G=train_bin$G, E=train_bin$E), y ~ G*E, 
+#'	cv_iter=4, cv_folds=5, classification=TRUE, family=binomial)
+#'	cv_5folds_bin
+#'	par(mfrow=c(2,2))
+#'	pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
+#'	pROC::plot.roc(cv_5folds_bin$roc_curve[[2]])
+#'	pROC::plot.roc(cv_5folds_bin$roc_curve[[3]])
+#'	pROC::plot.roc(cv_5folds_bin$roc_curve[[4]])
+#'	}
+#' @references Denis Heng-Yan Leung. \emph{Cross-validation in nonparametric regression with outliers.} Annals of Statistics (2005): 2291-2310.
+#' @export
+"IMLEGIT_cv"
 
 #' Internal function that does the forward step for the stepwise function.
 #' @param empty_start_dataset If TRUE, the initial dataset is empty.
@@ -283,10 +411,40 @@ example_3way = function(N, sigma=2.5, logit=FALSE, seed=NULL){
 	return(list(data=data.frame(y,y_true,z),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(5,2,3,1,5,1.5,2,2)))
 }
 
+example_3way_3latent = function(N, sigma=1, logit=FALSE, seed=NULL){
+	set.seed(seed)
+	g1 = rbinom(N,1,.30)
+	g2 = rbinom(N,1,.30)
+	g3 = rbinom(N,1,.30)
+	g4 = rbinom(N,1,.30)
+	g1_g3 = g1*g3
+	g2_g3 = g2*g3
+	e1 = rnorm(N,0,1.5)
+	e2 = rnorm(N,0,1.5)
+	e3 = rnorm(N,0,1.5)
+	z1 = rnorm(N,3,1)
+	z2 = rnorm(N,3,1)
+	z3 = rnorm(N,3,1)
+	g = (.2*g1 + .15*g2 - .3*g3 + .1*g4 + .05*g1_g3 + .2*g2_g3)
+	e = -.45*e1 + .35*e2 + .2*e3
+	z = .15*z1 + .75*z2 + .10*z3
+	y_true = -2 + 2*g + 3*e + z + 5*g*e - 1.5*z*e + 2*z*g + 2*z*g*e
+	if (logit){
+		y_true = 1/(1+exp(-(y_true)))
+		y = rbinom(N,1,y_true)
+	}
+	else{
+		eps = rnorm(N,0,sigma)
+		y = y_true + eps
+	}
+	return(list(data=data.frame(y,y_true),latent_var=list(G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),Z=data.frame(z1,z2,z3)),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2),coef_Z=c(.15,.75,.10), coef_main=c(5,2,3,1,5,1.5,2,2)))
+}
+
 longitudinal_folds = function(cv_iter=1, cv_folds=10, id){
+	if (cv_folds > length(unique(id))) stop("cv_folds must be smaller than the number of unique id")
 	folds = vector("list", cv_iter)
 	for (i in 1:cv_iter){
-		s = sample(levels(id))
+		s = sample(sort(unique(id)))
 	 	id_new = cut(1:length(s),breaks=cv_folds,labels=FALSE)
 	 	folds[[i]] = rep(NA, length(id))
 	 	for (j in 1:cv_folds){
@@ -501,7 +659,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	data[,colnames(env)] = data[,colnames(env)]*sum(abs(stats::coef(fit_c)))
 	fit_c = stats::glm(formula_c, data=data, family=family, y=FALSE, model=FALSE)
 
-	if (!(((fit_a$deviance-fit_b$deviance)/fit_a$deviance)<.01 && ((fit_a$deviance-fit_b$deviance)/fit_a$deviance)<.01)) warning("Deviance differs by more than 1% between model parts. Make sure that everything was set up properly and try increasing the number of iterations (maxiter).")
+	if (!(abs((fit_a$deviance-fit_b$deviance)/fit_a$deviance))<.01 && abs(((fit_a$deviance-fit_c$deviance)/fit_c$deviance))<.01) warning("Deviance differs by more than 1% between model parts. Make sure that everything was set up properly and try increasing the number of iterations (maxiter).")
 
 	#Change some arguments so that we get the right AIC, BIC and dispersion for the model
 	true_aic = fit_a$aic + 2*(fit_b$rank - 1) + 2*(fit_c$rank - 1)
@@ -523,12 +681,215 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	return(result)
 }
 
+IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=50, family=gaussian, print=TRUE)
+{
+	# Setting up latent_var and checks
+	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
+	k = length(latent_var)
+	if (k==0) stop("latent_var cannot be an empty list")
+	if (is.null(names(latent_var))){
+		if (print) cat("You have not specified names for the latent variables, assigning names to latent_var is highly recommended to prevent confusion. For now, they will be named L1, L2, ...\n")
+		names(latent_var) = paste0("L",1:k)
+	}
+	for (i in 1:k){
+		latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+		if (sum(colnames(latent_var[[i]])=="") > 0){
+			if (print) cat(paste0("You have not specified column names for certain elements in ",names(latent_var)[i], ", elements of this latent variable will be named ",names(latent_var)[i],1,", ",names(latent_var)[i],2," ...\n"))
+			colnames(latent_var[[i]]) = paste0(names(latent_var)[i],1:NCOL(latent_var[[i]]))
+		}
+	}
+
+	# More checks
+	if (maxiter <= 0) warning("maxiter must be > 0")
+	if (k > 1) for (i in 1:(k-1)) if (NROW(latent_var[[i]]) != NROW(latent_var[[i+1]])) stop("Some datasets in latent_var don't have the same number of observations")
+	if(!is.null(start_latent_var)){
+		if (class(start_latent_var)!="list") stop("start_latent_var must be a lit of vectors (or NULL)")
+		if (k!=length(start_latent_var)) stop("start_latent_var must have the same size as latent_var")
+		for (i in 1:k){
+			if (!is.null(latent_var[[i]])){
+				if (NCOL(latent_var[[i]])!=length(start_latent_var[[i]])) stop("All elements of start_latent_var must either be NULL or have the same length as the number of the elements in its associated latent variable")
+			}
+		}
+	}
+	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
+
+	# getting right formats
+	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+	for (i in 1:k) if (sum(apply(latent_var[[i]],2,is.numeric)) != NCOL(latent_var[[i]])) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+
+	# remove missing data
+	comp = stats::complete.cases(data,latent_var[[1]])
+	if (k > 1) for (i in 2:k) comp = comp & stats::complete.cases(latent_var[[i]])
+	data = data[comp,, drop=FALSE]
+	for (i in 1:k) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	#Adding empty variables in main dataset for latent_var
+	for (i in 1:k){
+		data[,colnames(latent_var[[i]])]=0
+		data[,paste0("R0_",i)]=0
+	}
+
+	# Setting up initial weighted latent_var
+	weights_latent_var_old = vector("list", k)
+	weights_latent_var = vector("list", k)
+	if (is.null(start_latent_var)){
+		for (i in 1:k) weights_latent_var[[i]] = rep(1/dim(latent_var[[i]])[2],dim(latent_var[[i]])[2])
+	}
+	else{
+		for (i in 1:k){
+			if (sum(abs(start_latent_var[[i]]))==0) weights_latent_var[[i]] = rep(1/dim(latent_var[[i]])[2],dim(latent_var[[i]])[2])
+			else weights_latent_var[[i]] = start_latent_var[[i]]/sum(abs(start_latent_var[[i]]))
+		}		
+	}
+	for (i in 1:k) data[,names(latent_var)[i]] = latent_var[[i]]%*%weights_latent_var[[i]]
+
+	# Lists needed for later
+	index_with_latent_var = vector("list", k)
+	formula_withoutlatent_var  = vector("list", k)
+	formula_withlatent_var  = vector("list", k)
+	formula_step  = vector("list", k)
+	fit_ = list()
+
+	# Deconstructing formula into parts (With latent_var and without latent_var)
+	formula_full = stats::terms(formula,simplify=TRUE)
+	formula_outcome = get.vars(formula)[1]
+	formula_elem_ = attributes(formula_full)$term.labels
+	# Adding white spaces before and after to recognize a "E" as opposed to another string like "Elephant"
+	formula_elem = paste("", formula_elem_,"")
+	for (i in 1:k) index_with_latent_var[[i]] = grepl(paste0(" ",names(latent_var)[i]," "),formula_elem, fixed=TRUE) | grepl(paste0(" ",names(latent_var)[i],":"),formula_elem, fixed=TRUE) | grepl(paste0(":",names(latent_var)[i],":"),formula_elem, fixed=TRUE) | grepl(paste0(":",names(latent_var)[i]," "),formula_elem, fixed=TRUE)
+	data_expanded = stats::model.matrix(formula, data=data)
+	if (colnames(data_expanded)[1] == "(Intercept)"){
+		formula_elem = c("1",formula_elem)
+		for (i in 1:k) index_with_latent_var[[i]] = c(FALSE,index_with_latent_var[[i]])
+	}
+
+	for (i in 1:k){
+		## Formulas for reparametrizations in each steps
+		formula_elem_withoutlatent_var = formula_elem[!index_with_latent_var[[i]]]
+		formula_elem_withoutlatent_var[-length(formula_elem_withoutlatent_var)] = paste0(formula_elem_withoutlatent_var[-length(formula_elem_withoutlatent_var)], " + ")
+		formula_withoutlatent_var[[i]] = paste0(formula_outcome, " ~ ", paste0(formula_elem_withoutlatent_var,collapse=""))
+		if (formula_elem[1] != "1") formula_withoutlatent_var[[i]] = paste0(formula_withoutlatent_var[[i]], " - 1")
+		formula_withoutlatent_var[[i]] = stats::as.formula(formula_withoutlatent_var[[i]])
+
+		formula_elem_withlatent_var = formula_elem[index_with_latent_var[[i]]]
+		# Remove G elements from formula because we want (b1 + b2*E + ...)*G rather than b1*G + b2*E*G + ...
+		formula_elem_withlatent_var = gsub(paste0(" ",names(latent_var)[i]," "),"1",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(" ",names(latent_var)[i],":"),"",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(":",names(latent_var)[i],":"),":",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(":",names(latent_var)[i]," "),"",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var[-length(formula_elem_withlatent_var)] = paste0(formula_elem_withlatent_var[-length(formula_elem_withlatent_var)], " + ")
+		formula_withlatent_var[[i]] = paste0(formula_outcome, " ~ ", paste0(formula_elem_withlatent_var,collapse=""))
+		if (!(grepl("1",formula_elem_withlatent_var, fixed=TRUE) && TRUE)) formula_withlatent_var[[i]] = paste0(formula_withlatent_var[[i]], " - 1")
+		formula_withlatent_var[[i]] = stats::as.formula(formula_withlatent_var[[i]])
+
+		# Making formula for step i
+		latent_var_names = colnames(latent_var[[i]])
+		latent_var_names[-length(latent_var[[i]])] = paste0(colnames(latent_var[[i]])[-length(latent_var[[i]])], " + ")
+		formula_step[[i]] = paste0(formula_outcome, " ~ ", paste0(latent_var_names,collapse=""))
+		formula_step[[i]] = paste0(formula_step[[i]], " offset(R0_",i,") - 1")
+		formula_step[[i]] = stats::as.formula(formula_step[[i]])
+	}
+
+	for (j in 1:maxiter){
+		## Step a : fit main model
+		fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
+		conv_latent_var = TRUE
+		for (i in 1:k){
+			if (NCOL(latent_var[[i]])>1){
+				# Reparametrizing variables for step i (estimating i-th latent_var)
+				data_expanded_withoutlatent_var = stats::model.matrix(formula_withoutlatent_var[[i]], data=data)
+				data[,paste0("R0_",i)] = data_expanded_withoutlatent_var%*%stats::coef(fit_a)[!index_with_latent_var[[i]]]
+				data_expanded_withlatent_var = stats::model.matrix(formula_withlatent_var[[i]], data=data)
+				R1 = data_expanded_withlatent_var%*%stats::coef(fit_a)[index_with_latent_var[[i]]]
+				R1_latent_var = latent_var[[i]]*as.vector(R1)
+				data[,colnames(latent_var[[i]])]=R1_latent_var
+
+				## Step i-th : fit model for i-th latent_var
+				fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+				weights_latent_var_ = stats::coef(fit_[[names(latent_var)[i]]])
+
+				# Updating latent_var estimates and checking convergence
+				weights_latent_var_old[[i]] = weights_latent_var[[i]]
+				weights_latent_var[[i]] = weights_latent_var_/sum(abs(weights_latent_var_))
+				data[,names(latent_var)[i]] = latent_var[[i]]%*%weights_latent_var[[i]]
+				if(sqrt(sum((weights_latent_var_old[[i]]-weights_latent_var[[i]])^2)) < eps) conv_latent_var = conv_latent_var & TRUE
+				else conv_latent_var = FALSE
+			}
+			else conv_latent_var = conv_latent_var & TRUE
+		}
+		if (conv_latent_var) break
+	}
+
+	# Rerunning last time and scaling to return as results
+	fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
+
+	warn = FALSE
+	total_rank = 0
+	for (i in 1:k){
+		# Reparametrizing variables for step i (estimating i-th latent_var)
+		data_expanded_withoutlatent_var = stats::model.matrix(formula_withoutlatent_var[[i]], data=data)
+		data[,paste0("R0_",i)] = data_expanded_withoutlatent_var%*%stats::coef(fit_a)[!index_with_latent_var[[i]]]
+		data_expanded_withlatent_var = stats::model.matrix(formula_withlatent_var[[i]], data=data)
+		R1 = data_expanded_withlatent_var%*%stats::coef(fit_a)[index_with_latent_var[[i]]]
+		R1_latent_var = latent_var[[i]]*as.vector(R1)
+		data[,colnames(latent_var[[i]])]=R1_latent_var
+
+		fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+		data[,colnames(latent_var[[i]])] = data[,colnames(latent_var[[i]])]*sum(abs(stats::coef(fit_[[names(latent_var)[i]]])))
+		fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+		if (abs(((fit_a$deviance-fit_[[names(latent_var)[i]]]$deviance)/fit_a$deviance))>=.01 && !warn){
+			warning("Deviance differs by more than 1% between model parts. Make sure that everything was set up properly and try increasing the number of iterations (maxiter).")
+			warn = TRUE
+		}
+		total_rank = total_rank + fit_[[names(latent_var)[i]]]$rank - 1
+	}
+
+	#Change some arguments so that we get the right AIC, BIC and dispersion for the model
+	true_aic = fit_a$aic + 2*(total_rank)
+	true_rank = fit_a$rank + total_rank
+	true_bic = true_aic - 2*true_rank + log(fit_a$df.null+1)*true_rank
+	true_df.residual = (fit_a$df.null+1) - true_rank
+	true_null.deviance = fit_a$null.deviance
+
+	# print convergences stuff;
+	if (conv_latent_var){
+		if (print) cat(paste0("Converged in ",j, " iterations\n"))
+	} 
+	else{
+		warning(paste0("Did not reach convergence in maxiter iterations. Try increasing maxiter or make eps smaller."))
+	}
+
+	result = list(fit_main = fit_a, fit_latent_var = fit_, true_model_parameters=list(AIC = true_aic, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance))
+	class(result) <- "IMLEGIT"
+	return(result)
+}
+
 predict.LEGIT = function(object, data, genes, env, ...){
 	data = data.frame(data)
 	genes = as.matrix(genes, drop=FALSE)
 	env = as.matrix(env, drop=FALSE)
 	data$G = genes%*%stats::coef(object[[2]])
 	data$E = env%*%stats::coef(object[[3]])
+	return(stats::predict.glm(object[[1]], newdata=data, ...))
+}
+
+predict.IMLEGIT = function(object, data, latent_var, ...){
+	data = data.frame(data)
+	k = length(latent_var)
+	for (i in 1:k) latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+	if (is.null(names(latent_var))){
+		cat("You have not specified names for the latent variables, assigning names to latent_var is highly recommended to prevent confusion. For now, they will be named L1, L2, ...\n")
+		names(latent_var) = paste0("L",1:k)
+	}
+	for (i in 1:k) data[,names(latent_var)[i]] = latent_var[[i]]%*%stats::coef(object[[2]][[i]])
 	return(stats::predict.glm(object[[1]], newdata=data, ...))
 }
 
@@ -609,7 +970,91 @@ summary.LEGIT = function(object, ...){
 	})
 }
 
-LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL){
+summary.IMLEGIT = function(object, ...){
+	newobject = list(fit_main=object$fit_main)
+	for (i in 1:length(object$fit_latent_var)) newobject[[names(object$fit_latent_var)[i]]] = object$fit_latent_var[[i]]
+	lapply(newobject,function(object_current, dispersion = NULL, correlation = FALSE, symbolic.cor = FALSE, ...){
+		# Using the right values
+		object_current$aic = object$true_model_parameters$AIC
+		object_current$rank = object$true_model_parameters$rank
+		object_current$df.residual = object$true_model_parameters$df.residual
+		object_current$null.deviance = object$true_model_parameters$null.deviance
+	    est.disp <- FALSE
+	    df.r <- object_current$df.residual
+	    if (is.null(dispersion)) 
+	        dispersion <- if (object_current$family$family %in% c("poisson", "binomial")) 1
+	        else if (df.r > 0) {
+	            est.disp <- TRUE
+	            if (any(object_current$weights == 0)) 
+	                warning("observations with zero weight not used for calculating dispersion")
+	            sum((object_current$weights * object_current$residuals^2)[object_current$weights > 
+	                0])/df.r
+	        }
+	        else {
+	            est.disp <- TRUE
+	            NaN
+	        }
+	    aliased <- is.na(stats::coef(object_current))
+	    p <- object_current$qr$rank
+	    if (p > 0) {
+	        p1 <- 1L:p
+	        coef.p <- object_current$coefficients[object_current$qr$pivot[p1]]
+	        covmat.unscaled <- chol2inv(object_current$qr$qr)
+	        dimnames(covmat.unscaled) <- list(names(coef.p), names(coef.p))
+	        covmat <- dispersion * covmat.unscaled
+	        var.cf <- diag(covmat)
+	        s.err <- sqrt(var.cf)
+	        tvalue <- coef.p/s.err
+	        dn <- c("Estimate", "Std. Error")
+	        if (!est.disp) {
+	            pvalue <- 2 * pnorm(-abs(tvalue))
+	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
+	                "z value", "Pr(>|z|)"))
+	        }
+	        else if (df.r > 0) {
+	            pvalue <- 2 * stats::pt(-abs(tvalue), df.r)
+	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
+	                "t value", "Pr(>|t|)"))
+	        }
+	        else {
+	            coef.table <- cbind(coef.p, NaN, NaN, NaN)
+	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
+	                "t value", "Pr(>|t|)"))
+	        }
+	        df.f <- NCOL(object_current$qr$qr)
+	    }
+	    else {
+	        coef.table <- matrix(, 0L, 4L)
+	        dimnames(coef.table) <- list(NULL, c("Estimate", "Std. Error", 
+	            "t value", "Pr(>|t|)"))
+	        covmat.unscaled <- covmat <- matrix(, 0L, 0L)
+	        df.f <- length(aliased)
+	    }
+	    keep <- match(c("call", "terms", "family", "deviance", "aic", 
+	        "contrasts", "df.residual", "null.deviance", "df.null", 
+	        "iter", "na.action"), names(object_current), 0L)
+	    ans <- c(object_current[keep], list(deviance.resid = stats::residuals(object_current, 
+	        type = "deviance"), coefficients = coef.table, aliased = aliased, 
+	        dispersion = dispersion, df = c(object_current$rank, df.r, df.f), 
+	        cov.unscaled = covmat.unscaled, cov.scaled = covmat))
+	    if (correlation && p > 0) {
+	        dd <- sqrt(diag(covmat.unscaled))
+	        ans$correlation <- covmat.unscaled/outer(dd, dd)
+	        ans$symbolic.cor <- symbolic.cor
+	    }
+	    class(ans) <- "summary.glm"
+	    return(ans)
+	})
+}
+
+LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL, id=NULL){
+
+	# Renaming it because there is already an id variable
+	if (!is.null(id)) obs_id = id
+	else obs_id = NULL
+	id = NULL
 
 	# getting right formats
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -618,14 +1063,29 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	data$E=0
 	data = stats::model.frame(formula, data=data, na.action=na.pass)
 	genes = as.matrix(genes, drop=FALSE)
+	if (is.null(colnames(genes))){
+		if (print) cat("You have not specified column names for genes, they will be named gene1, gene2, ...\n")
+		colnames(genes) = paste0("gene",1:NCOL(genes))
+	}
 	env = as.matrix(env, drop=FALSE)
+	if (is.null(colnames(env))){
+		if (print) cat("You have not specified column names for env, they will be named env1, env2, ...\n")
+		colnames(env) = paste0("env",1:NCOL(env))
+	}
 	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data) || sum(apply(genes,2,is.numeric)) != NCOL(genes) || sum(apply(env,2,is.numeric)) != NCOL(env)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, gene, env)")
 
 	# remove missing data
 	comp = stats::complete.cases(data,genes,env)
 	data = data[comp,, drop=FALSE]
 	genes = genes[comp,, drop=FALSE]
 	env = env[comp,, drop=FALSE]
+	if (!is.null(obs_id)){
+		if (!is.null(dim(obs_id))) obs_id = obs_id[comp,,drop=FALSE]
+		else obs_id = obs_id[comp]
+	}
 	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
 
 	formula_outcome = get.vars(formula)[1]
@@ -638,9 +1098,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	residuals = rep(0,dim(data)[1])
 	pearson_residuals = rep(0,dim(data)[1])
 
-	if (!is.null(folds)){
-			cv_iter = length(folds)	
-	}
+	if (!is.null(folds)) cv_iter = length(folds)	
 
 	for (j in 1:cv_iter){
 		if (!is.null(seed)) set.seed(seed*j)
@@ -651,27 +1109,27 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 			genes_n = genes[s,, drop=FALSE]
 			env_n = env[s,, drop=FALSE]
 			id = cut(seq(1,NROW(data_n)),breaks=cv_folds,labels=FALSE)
+			list = 1:cv_folds
 		}
 		else{
-			s = NROW(data)
+			s = 1:NROW(data)
 			data_n = data
 			genes_n = genes
 			env_n = env
 			id = folds[[j]]
-			cv_folds = length(levels(factor(id)))
+			list = unique(id)
 		}
-		list = 1:cv_folds
 		pred=c()
 		y_test=c()
 
-		for (i in 1:cv_folds){
+		for (i in list){
 			# Train and test datasets
 			data_train = subset(data_n, id %in% list[-i], drop = FALSE)
 			genes_train = subset(genes_n, id %in% list[-i], drop = FALSE)
 	 		env_train = subset(env_n, id %in% list[-i], drop = FALSE)
-	 		data_test = subset(data_n, id %in% c(i), drop = FALSE)
-	 		genes_test = subset(genes_n, id %in% c(i), drop = FALSE)
-	 		env_test = subset(env_n, id %in% c(i), drop = FALSE)
+	 		data_test = subset(data_n, id %in% list[i], drop = FALSE)
+	 		genes_test = subset(genes_n, id %in% list[i], drop = FALSE)
+	 		env_test = subset(env_n, id %in% list[i], drop = FALSE)
 	 		y_test_new = data_test[,formula_outcome]
 
 	 		# Fit model and add predictions
@@ -709,13 +1167,176 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	pearson_residuals = pearson_residuals/cv_iter
 
 	possible_outliers = abs(residuals)>2.5 | abs(pearson_residuals)>2.5
-	possible_outliers_data = cbind(rownames(data)[possible_outliers],residuals[possible_outliers],pearson_residuals[possible_outliers])
-	colnames(possible_outliers_data)=c("Observation","Standardized_residual","Standardized_pearson_residual")
+	if (is.null(obs_id)) possible_outliers_data = cbind(rownames(data)[possible_outliers],residuals[possible_outliers],pearson_residuals[possible_outliers])
+	else{
+		if (!is.null(dim(obs_id))) obs_id = obs_id[possible_outliers,,drop=FALSE]
+		else obs_id = obs_id[possible_outliers]
+		possible_outliers_data = cbind(obs_id,residuals[possible_outliers],pearson_residuals[possible_outliers])
+	}
+	if (NCOL(possible_outliers_data)==3){
+		if (is.null(obs_id)) colnames(possible_outliers_data) = c("Observation","Standardized_residual","Standardized_pearson_residual")
+		else colnames(possible_outliers_data) = c("ID","Standardized_residual","Standardized_pearson_residual")
+	}
+	else{
+		if (!is.null(colnames(obs_id))) colnames(possible_outliers_data) = c(colnames(obs_id),"Standardized_residual","Standardized_pearson_residual")
+		else colnames(possible_outliers_data) = c(rep("ID",NCOL(obs_id)),"Standardized_residual","Standardized_pearson_residual")
+	}
 
 	if (classification) return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, AUC=AUC, best_threshold=best_threshold, roc_curve = roc_curve, possible_outliers = possible_outliers_data))
 	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
 }
 
+IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL, id=NULL){
+
+	# Renaming it because there is already an id variable
+	if (!is.null(id)) obs_id = id
+	else obs_id = NULL
+	id = NULL
+
+	# Setting up latent_var and checks
+	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
+	k = length(latent_var)
+	if (k==0) stop("latent_var cannot be an empty list")
+	if (is.null(names(latent_var))){
+		cat("You have not specified names for the latent variables, assigning names to latent_var is highly recommended to prevent confusion. For now, they will be named L1, L2, ...\n")
+		names(latent_var) = paste0("L",1:k)
+	}
+	for (i in 1:k){
+		latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+		if (sum(colnames(latent_var[[i]])=="") > 0){
+			if (print) cat(paste0("You have not specified column names for certain elements in ",names(latent_var)[i], ", elements of this latent variable will be named ",names(latent_var)[i],1,", ",names(latent_var)[i],2," ...\n"))
+			colnames(latent_var[[i]]) = paste0(names(latent_var)[i],1:NCOL(latent_var[[i]]))
+		}
+	}
+
+	# More checks
+	if (maxiter <= 0) warning("maxiter must be > 0")
+	if (k > 1) for (i in 1:(k-1)) if (NROW(latent_var[[i]]) != NROW(latent_var[[i+1]])) stop("Some datasets in latent_var don't have the same number of observations")
+	if(!is.null(start_latent_var)){
+		if (class(start_latent_var)!="list") stop("start_latent_var must be a lit of vectors (or NULL)")
+		if (k!=length(start_latent_var)) stop("start_latent_var must have the same size as latent_var")
+		for (i in 1:k){
+			if (!is.null(latent_var[[i]])){
+				if (NCOL(latent_var[[i]])!=length(start_latent_var[[i]])) stop("All elements of start_latent_var must either be NULL or have the same length as the number of the elements in its associated latent variable")
+			}
+		}
+	}
+	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
+
+	# getting right formats
+	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+	for (i in 1:k) if (sum(apply(latent_var[[i]],2,is.numeric)) != NCOL(latent_var[[i]])) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+
+	# remove missing data
+	comp = stats::complete.cases(data,latent_var[[1]])
+	if (k > 1) for (i in 2:k) comp = comp & stats::complete.cases(latent_var[[i]])
+	data = data[comp,, drop=FALSE]
+	for (i in 1:k) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	formula_outcome = get.vars(formula)[1]
+	R2_cv = c()
+	Huber_cv = c()
+	L1_cv = c()
+	AUC = c()
+	best_threshold = c()
+	roc_curve = list()
+	residuals = rep(0,dim(data)[1])
+	pearson_residuals = rep(0,dim(data)[1])
+
+	if (!is.null(folds)) cv_iter = length(folds)	
+
+	for (j in 1:cv_iter){
+		if (!is.null(seed)) set.seed(seed*j)
+		# Folds
+		if (is.null(folds)){
+			s = sample(NROW(data))
+			data_n = data[s,, drop=FALSE]
+			latent_var_new = latent_var
+			for (l in 1:k) latent_var_new[[l]] = latent_var_new[[l]][s,, drop=FALSE]
+			id = cut(seq(1,NROW(data_n)),breaks=cv_folds,labels=FALSE)
+			list = 1:cv_folds
+		}
+		else{
+			s = 1:NROW(data)
+			data_n = data
+			latent_var_new = latent_var
+			id = folds[[j]]
+			list = unique(id)
+		}
+		pred=c()
+		y_test=c()
+
+		for (i in list){
+			# Train and test datasets
+			data_train = subset(data_n, id %in% list[-i], drop = FALSE)
+			latent_var_train = latent_var_new
+			for (l in 1:k) latent_var_train[[l]] = subset(latent_var_new[[l]], id %in% list[-i], drop = FALSE)
+	 		data_test = subset(data_n, id %in% list[i], drop = FALSE)
+	 		latent_var_test = latent_var_new
+	 		for (l in 1:k) latent_var_test[[l]] = subset(latent_var_new[[l]], id %in% list[i], drop = FALSE)
+	 		y_test_new = data_test[,formula_outcome]
+
+	 		# Fit model and add predictions
+	 		fit_train = IMLEGIT(data=data_train, latent_var=latent_var_train, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			pred_new = predict(fit_train, data=data_test,latent_var=latent_var_test,type="response")
+			pred = c(pred,pred_new)
+			y_test = c(y_test, y_test_new)
+		}
+
+		# Cross-validated R2
+		ssres = sum((pred-y_test)^2)
+		sstotal = sum((y_test-mean(y_test))^2)
+		R2_cv = c(R2_cv, 1 - ssres/sstotal)
+		# Outlier-resistant cross-validation criterion
+		L1_cv = c(L1_cv, sum(abs(pred-y_test))/length(pred))
+		Huber_index = abs(pred-y_test) > Huber_p
+		Huber_cv_err = (((pred-y_test)^2)/2)
+		Huber_cv_err[Huber_index] = (Huber_p*abs(pred-y_test)-(Huber_p^2)/2)[Huber_index]
+		Huber_cv = c(Huber_cv, sum(Huber_cv_err)/length(pred))
+
+		#Cross-validated confusion matrix and ROC curve
+		if (classification){
+			roc_curve_n = pROC::roc(y_test,pred)
+			roc_curve = append(roc_curve, list(roc_curve_n))
+			AUC = c(AUC, pROC::auc(roc_curve_n))
+			best_threshold =  rbind(pROC::coords(roc_curve_n, "best"),best_threshold)
+		}
+
+		#Residuals (To detect outliers)
+		residuals = residuals + scale(pred-y_test)[s]
+		if(class(family)=="function") pearson_residuals = pearson_residuals + scale((pred-y_test)/sqrt(family()$variance(pred)))[s]
+		else pearson_residuals = pearson_residuals + scale((pred-y_test)/sqrt(family$variance(pred)))[s]
+	}
+	residuals = residuals/cv_iter
+	pearson_residuals = pearson_residuals/cv_iter
+
+	possible_outliers = abs(residuals)>2.5 | abs(pearson_residuals)>2.5
+	if (is.null(obs_id)) possible_outliers_data = cbind(rownames(data)[possible_outliers],residuals[possible_outliers],pearson_residuals[possible_outliers])
+	else{
+		if (!is.null(dim(obs_id))) obs_id = obs_id[possible_outliers,,drop=FALSE]
+		else obs_id = obs_id[possible_outliers]
+		possible_outliers_data = cbind(obs_id,residuals[possible_outliers],pearson_residuals[possible_outliers])
+	}
+	if (NCOL(possible_outliers_data)==3){
+		if (is.null(obs_id)) colnames(possible_outliers_data) = c("Observation","Standardized_residual","Standardized_pearson_residual")
+		else colnames(possible_outliers_data) = c("ID","Standardized_residual","Standardized_pearson_residual")
+	}
+	else{
+		if (!is.null(colnames(obs_id))) colnames(possible_outliers_data) = c(colnames(obs_id),"Standardized_residual","Standardized_pearson_residual")
+		else colnames(possible_outliers_data) = c(rep("ID",NCOL(obs_id)),"Standardized_residual","Standardized_pearson_residual")
+	}
+
+	if (classification) return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, AUC=AUC, best_threshold=best_threshold, roc_curve = roc_curve, possible_outliers = possible_outliers_data))
+	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
+}
 
 forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	# How much genes or env to add
