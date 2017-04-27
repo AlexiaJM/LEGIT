@@ -1,7 +1,7 @@
 # LEGIT
 
 [![](http://cranlogs.r-pkg.org/badges/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
-[![](http://cranlogs.r-pkg.org/badges/grand-total/BayesTreePrior)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
+[![](http://cranlogs.r-pkg.org/badges/grand-total/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
 
 This is a R implementation of the Latent Environmental &amp; Genetic InTeraction (LEGIT) model. 
 
