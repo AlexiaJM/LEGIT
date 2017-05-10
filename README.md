@@ -36,4 +36,6 @@ Here is an example with 3 latent variables and a 3-way interaction (see: https:/
 
 **References**
 
-The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here : https://arxiv.org/abs/1703.08111
+https://arxiv.org/abs/1703.08111
+
+https://ajolicoeur.wordpress.com/legit/
