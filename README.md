@@ -17,15 +17,15 @@ A vignette explaining how to use the software is available here: https://rawgit.
 
 **How to install**
 
-* To install the latest stable version, run in R :
+To install the latest stable version, run in R :
 
-install.packages("LEGIT")
+* install.packages("LEGIT")
 
-* To install the latest GitHub development version, run in R :
+To install the latest GitHub development version, run in R :
 
-install.packages("devtools")
+* install.packages("devtools")
 
-devtools::install_github("AlexiaJM/LEGIT")
+* devtools::install_github("AlexiaJM/LEGIT")
 
 **References**
 
