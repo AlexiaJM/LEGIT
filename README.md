@@ -26,7 +26,7 @@ To install the latest GitHub development version, run in R :
 * install.packages("devtools")
 * devtools::install_github("AlexiaJM/LEGIT")
 
-**Example**
+**Examples**
 
 Here is an example with 2 latent variables and a 2-way interaction (see: https://arxiv.org/abs/1703.08111) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_2way.png)
