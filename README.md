@@ -13,7 +13,7 @@ The LEGIT model is an interaction model with two latent variables: a weighted su
 
 **How to use**
 
-A vignette explaining how to use the software is available here: https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/LEGIT.html
+A vignette explaining how to use the software is available here : https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/LEGIT.html
 
 **How to install**
 
@@ -36,4 +36,4 @@ Here is an example from the paper of a LEGIT model with 3 latent variables and a
 
 **References**
 
-The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here: https://arxiv.org/abs/1703.08111
+The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here : https://arxiv.org/abs/1703.08111
