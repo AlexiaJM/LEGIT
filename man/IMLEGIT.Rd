@@ -28,7 +28,7 @@ IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
 Returns an object of the class "IMLEGIT" which is list containing, in the following order: a glm fit of the main model, a list of the glm fits of the latent variables and a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 }
 \description{
-Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that the stepwise search has not been implemented yet for IMLEGIT models.
+Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables.
 }
 \examples{
 train = example_2way(500, 1, seed=777)

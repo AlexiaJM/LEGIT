@@ -22,4 +22,4 @@ RoxygenNote: 6.0.1
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2017-05-10 21:02:25 UTC; Alexia
+Packaged: 2017-05-10 21:08:42 UTC; Alexia
