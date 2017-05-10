@@ -301,29 +301,13 @@
 #' @keywords internal
 "forward_step"
 
-#' Internal function that does the forward step for the stepwise function.
+#' Internal function that does the backward step for the stepwise function.
 #' @param empty_start_dataset If TRUE, the initial dataset is empty.
 #' @param fit Current best fit.
 #' @param ... Same parameters as in the stepwise function.
-#' @return Returns fit, start_latent_var, latent_var_current and latent_var_toadd.
-#' @keywords internal
-"forward_step_IM"
-
-#' Internal function that does the backward step for the stepwise IM function.
-#' @param empty_start_dataset If TRUE, the initial dataset is empty.
-#' @param fit Current best fit.
-#' @param ... Same parameters as in the stepwise function.
-#' @return Returns fit, start_genes, start_env and genes_current, genes_dropped if search="genes" or env_current and env_dropped if search="env".
+#' @return Returns fit, start_genes, start_env and genes_current, genes_toadd if search="genes" or env_current and env_toadd if search="env".
 #' @keywords internal
 "backward_step"
-
-#' Internal function that does the backward step for the stepwise IM function.
-#' @param empty_start_dataset If TRUE, the initial dataset is empty.
-#' @param fit Current best fit.
-#' @param ... Same parameters as in the stepwise function.
-#' @return Returns fit, start_latent_var, latent_var_current and latent_var_dropped.
-#' @keywords internal
-"backward_step_IM"
 
 #' @title Stepwise search for the best subset of genetic variants or environments with the LEGIT model
 #' @description Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). For now, only \code{search_type="forward"} is implemented. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
@@ -332,10 +316,10 @@
 #' @param interactive_mode If TRUE, uses interactive mode. In interactive mode, at each iteration, the user is shown the AIC, BIC, p-value and also the cross-validation \eqn{R^2} if \code{search_criterion="cv"} and the cross-validation AUC if \code{search_criterion="cv_AUC"} for the best 5 variables. The user must then enter a number between 1 and 5 to select the variable to be added, entering anything else will stop the search.
 #' @param genes_original data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env_original data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
-#' @param genes_extra data.frame of the additionnal variables to try including inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). Set to NULL if using a backward search.
-#' @param env_extra data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). Set to NULL if using a backward search.
+#' @param genes_extra data.frame of the additionnal variables to try including inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). If not NULL, \code{env_extra} should be NULL.
+#' @param env_extra data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). If not NULL, \code{genes_extra} should be NULL.
 #' @param search_type If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).
-#' @param search If \code{search="genes"}, uses a stepwise search for the genetic score variables. If \code{search="env"}, uses a stepwise search for the environmental score variables. If \code{search="both"}, uses a stepwise search for both the gene and environmental score variables (Default = "both").
+#' @param search If \code{search="genes"}, uses a stepwise search for the genetic score variables \code{genes_extra}, forcing \code{genes_original} to be included in the genetic score. If \code{search="env"}, uses a stepwise search for the environmental score variables \code{env_extra}, forcing \code{env_original} to be included in the genetic score (Default = "genes").
 #' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param forward_exclude_p_bigger If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20).
 #' @param backward_exclude_p_smaller If p-value < \code{backward_exclude_p_smaller}, we do not consider the variable for removal in the backward steps (Default = .01).
@@ -353,7 +337,6 @@
 #' @param seed Seed for cross-validation folds.
 #' @param print If TRUE, print all the steps and notes/warnings. Highly recommended unless you are batch running multiple stepwise searchs. (Default=TRUE).
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
-#' @param remove_miss If TRUE, remove missing data completely, otherwise missing data is only removed when adding or dropping a variable (Default = FALSE).
 #' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 #' @examples
 #'	\dontrun{
@@ -379,89 +362,6 @@
 #'	}
 #' @export
 "stepwise_search"
-
-#' @title Stepwise search for the best subset of elements in the latent variables with the IMLEGIT model
-#' @description Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). For now, only \code{search_type="forward"} is implemented. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
-#' @param data data.frame of the dataset to be used.
-#' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
-#' @param interactive_mode If TRUE, uses interactive mode. In interactive mode, at each iteration, the user is shown the AIC, BIC, p-value and also the cross-validation \eqn{R^2} if \code{search_criterion="cv"} and the cross-validation AUC if \code{search_criterion="cv_AUC"} for the best 5 variables. The user must then enter a number between 1 and 5 to select the variable to be added, entering anything else will stop the search.
-#' @param latent_var_original list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...
-#' @param latent_var_extra list of data.frame (with the same structure as latent_var_original) containing the additionnal elements to try including inside the latent variables. Set to NULL if using a backward search.
-#' @param search_type If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).
-#' @param search If \code{search=0}, uses a stepwise search for all latent variables. Otherwise, if search = i, uses a stepwise search on the i-th latent variable (Default = 0).
-#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
-#' @param forward_exclude_p_bigger If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20).
-#' @param backward_exclude_p_smaller If p-value < \code{backward_exclude_p_smaller}, we do not consider the variable for removal in the backward steps (Default = .01).
-#' @param exclude_worse_AIC If AIC with variable > AIC without variable, we ignore the variable (Default = TRUE).
-#' @param max_steps Maximum number of steps taken (Default = 50).
-#' @param cv_iter Number of cross-validation iterations (Default = 5).
-#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
-#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
-#' @param classification Set to TRUE if you are doing classification (binary outcome).
-#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
-#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
-#' @param maxiter Maximum number of iterations.
-#' @param family Outcome distribution and link function (Default = gaussian).
-#' @param seed Seed for cross-validation folds.
-#' @param print If TRUE, print all the steps and notes/warnings. Highly recommended unless you are batch running multiple stepwise searchs. (Default=TRUE).
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
-#' @param remove_miss If TRUE, remove missing data completely, otherwise missing data is only removed when adding or dropping a variable (Default = FALSE).
-#' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
-#' @examples
-#'	\dontrun{
-#'	## Example
-#'	train = example_3way_3latent(250, 1, seed=777)
-#'	# Forward search for genes based on BIC (in interactive mode)
-#'	forward_genes_BIC = stepwise_search_IM(train$data, 
-#'	latent_var_original=list(G=NULL, E=train$latent_var$E, Z=train$latent_var$Z),
-#'	latent_var_extra=list(G=train$latent_var$G,E=NULL,Z=NULL), 
-#'	formula=y ~ E*G*Z,search_type="forward", search=1, search_criterion="BIC",
-#'	interactive_mode=TRUE)
-#'	# Bidirectional-backward search for everything based on AIC
-#'	bidir_backward_AIC = stepwise_search_IM(train$data, latent_var_extra=NULL, 
-#'	latent_var_original=train$latent_var,
-#'	formula=y ~ E*G*Z,search_type="bidirectional-backward", search=0, search_criterion="AIC")
-#'	}
-#' @export
-"stepwise_search_IM"
-
-#' @title Bootstrap variable selection (for IMLEGIT)
-#' @description Creates bootstrap samples, run stepwise search on all of them and then report the percentage of times that each variables were selected. This is very computationnaly demanding. With sample sample sizes, variable selection can be somewhat unstable and bootstrapping can be used to give us an idea of the degree of certitude that a variable should be included or not.
-#' @param data data.frame of the dataset to be used.
-#' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
-#' @param bootstrap_iter number of bootstrap samples (Default = 1000).
-#' @param bootstrap_size Optional size of the bootstrapped samples (Default = number of observations).
-#' @param bootstrap_group Optional vector which represent the group associated with each observation. Sampling will be done by group instead of by observations (very important if you have longitudinal data). The sample sizes of the bootstrap samples might differ by up to "\code{bootstrap_size} - maximum group size" observations.
-#' @param latent_var_original list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...
-#' @param latent_var_extra list of data.frame (with the same structure as latent_var_original) containing the additionnal elements to try including inside the latent variables. Set to NULL if using a backward search.
-#' @param search_type If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).
-#' @param search If \code{search=0}, uses a stepwise search for all latent variables. Otherwise, if search = i, uses a stepwise search on the i-th latent variable (Default = 0).
-#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
-#' @param forward_exclude_p_bigger If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20).
-#' @param backward_exclude_p_smaller If p-value < \code{backward_exclude_p_smaller}, we do not consider the variable for removal in the backward steps (Default = .01).
-#' @param exclude_worse_AIC If AIC with variable > AIC without variable, we ignore the variable (Default = TRUE).
-#' @param max_steps Maximum number of steps taken (Default = 50).
-#' @param cv_iter Number of cross-validation iterations (Default = 5).
-#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
-#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
-#' @param classification Set to TRUE if you are doing classification (binary outcome).
-#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
-#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
-#' @param maxiter Maximum number of iterations.
-#' @param family Outcome distribution and link function (Default = gaussian).
-#' @param seed Seed for bootstrap.
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
-#' @param progress If TRUE, shows the progress done (Default=TRUE).
-#' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).
-#' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
-#' @examples
-#'	\dontrun{
-#'	## Example
-#'	}
-#' @references Peter C Austin and Jack V Tu. \emph{Bootstrap Methods for Developing Predictive Models} (2012). dx.doi.org/10.1198/0003130043277.
-#' @references Mark Reiser, Lanlan Yao, Xiao Wang, Jeanne Wilcox and Shelley Gray. \emph{A Comparison of Bootstrap Confidence Intervals for Multi-level Longitudinal Data Using Monte-Carlo Simulation} (2017). 10.1007/978-981-10-3307-0_17.
-#' @export
-"bootstrap_var_select"
 
 example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 	set.seed(seed)
@@ -579,7 +479,7 @@ longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NUL
  	return(folds)
 }
 
-LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, print=TRUE)
+LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, print=TRUE)
 {
 	if (maxiter <= 0) warning("maxiter must be > 0")
 	if(!is.null(start_genes)){
@@ -806,7 +706,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	return(result)
 }
 
-IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, print=TRUE)
+IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=50, family=gaussian, print=TRUE)
 {
 	# Setting up latent_var and checks
 	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
@@ -881,7 +781,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	formula_withoutlatent_var  = vector("list", k)
 	formula_withlatent_var  = vector("list", k)
 	formula_step  = vector("list", k)
-	fit_ = vector("list", k)
+	fit_ = list()
 
 	# Deconstructing formula into parts (With latent_var and without latent_var)
 	formula_full = stats::terms(formula,simplify=TRUE)
@@ -938,8 +838,8 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 				data[,colnames(latent_var[[i]])]=R1_latent_var
 
 				## Step i-th : fit model for i-th latent_var
-				fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
-				weights_latent_var_ = stats::coef(fit_[[i]])
+				fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+				weights_latent_var_ = stats::coef(fit_[[names(latent_var)[i]]])
 
 				# Updating latent_var estimates and checking convergence
 				weights_latent_var_old[[i]] = weights_latent_var[[i]]
@@ -967,14 +867,14 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 		R1_latent_var = latent_var[[i]]*as.vector(R1)
 		data[,colnames(latent_var[[i]])]=R1_latent_var
 
-		fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
-		data[,colnames(latent_var[[i]])] = data[,colnames(latent_var[[i]])]*sum(abs(stats::coef(fit_[[i]])))
-		fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
-		if (abs(((fit_a$deviance-fit_[[i]]$deviance)/fit_a$deviance))>=.01 && !warn){
+		fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+		data[,colnames(latent_var[[i]])] = data[,colnames(latent_var[[i]])]*sum(abs(stats::coef(fit_[[names(latent_var)[i]]])))
+		fit_[[names(latent_var)[i]]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+		if (abs(((fit_a$deviance-fit_[[names(latent_var)[i]]]$deviance)/fit_a$deviance))>=.01 && !warn){
 			warning("Deviance differs by more than 1% between model parts. Make sure that everything was set up properly and try increasing the number of iterations (maxiter).")
 			warn = TRUE
 		}
-		total_rank = total_rank + fit_[[i]]$rank - 1
+		total_rank = total_rank + fit_[[names(latent_var)[i]]]$rank - 1
 	}
 
 	#Change some arguments so that we get the right AIC, BIC and dispersion for the model
@@ -1097,7 +997,7 @@ summary.LEGIT = function(object, ...){
 
 summary.IMLEGIT = function(object, ...){
 	newobject = list(fit_main=object$fit_main)
-	for (i in 1:length(object$fit_latent_var)) newobject[[i+1]] = object$fit_latent_var[[i]]
+	for (i in 1:length(object$fit_latent_var)) newobject[[names(object$fit_latent_var)[i]]] = object$fit_latent_var[[i]]
 	lapply(newobject,function(object_current, dispersion = NULL, correlation = FALSE, symbolic.cor = FALSE, ...){
 		# Using the right values
 		object_current$aic = object$true_model_parameters$AIC
@@ -1174,7 +1074,7 @@ summary.IMLEGIT = function(object, ...){
 	})
 }
 
-LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, seed=NULL, id=NULL){
+LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL, id=NULL){
 
 	# Renaming it because there is already an id variable
 	if (!is.null(id)) obs_id = id
@@ -1311,7 +1211,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
 }
 
-IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, seed=NULL, id=NULL){
+IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=50, family=gaussian, seed=NULL, id=NULL){
 
 	# Renaming it because there is already an id variable
 	if (!is.null(id)) obs_id = id
@@ -1463,15 +1363,17 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
 }
 
-forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
+forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	# How much genes or env to add
+	#print(head(data))
+	#print(dim(data))
+	#print(head(env_current))
+	#print(dim(env_current))
+	#print(head(env_toadd))
+	#print(dim(env_toadd))
 	if (search=="genes") elements_N = NCOL(genes_toadd)
 	if (search=="env") elements_N = NCOL(env_toadd)
-	if (elements_N == 0){
-		if (search=="genes" && print) cat("No gene added\n")
-		if (search=="env" && print) cat("No environment added\n")
-		return(NULL)
-	}
+	if (elements_N == 0) return(NULL)
 	# Vector which says which extra variables are "good" (worth exploring)
 	good = rep(TRUE, elements_N)
 	# Vector which says how much the criterion changed from including the variable
@@ -1557,12 +1459,12 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 			if (empty_start_dataset) best_var = which.min(criterion_after)
 			else best_var = which.min(criterion_diff)
 			if (search=="genes"){
-				if (print) cat(paste0("Adding gene: ",colnames(genes_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
+				if (print) cat(paste0("Adding gene: ",colnames(genes_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after= ",round(criterion_after[best_var],5),")\n"))
 				genes_current = cbind(genes_current, genes_toadd[,best_var, drop=FALSE])
 				genes_toadd = genes_toadd[,-best_var, drop=FALSE]
 			}
 			if (search=="env"){
-				if (print) cat(paste0("Adding environment: ",colnames(env_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
+				if (print) cat(paste0("Adding environment: ",colnames(env_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after= ",round(criterion_after[best_var],5),")\n"))
 				env_current = cbind(env_current, env_toadd[,best_var, drop=FALSE])
 				env_toadd = env_toadd[,-best_var, drop=FALSE]						
 			}
@@ -1649,12 +1551,12 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 			if (search_criterion=="cv_Huber" || search_criterion=="cv_L1") best_var = which.min(criterion_diff)
 			else best_var = which.max(criterion_diff)
 			if (search=="genes"){
-				if (print) cat(paste0("Adding gene: ",colnames(genes_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
+				if (print) cat(paste0("Adding gene: ",colnames(genes_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after= ",round(criterion_after[best_var],5),")\n"))
 				genes_current = cbind(genes_current, genes_toadd[,best_var, drop=FALSE])
 				genes_toadd = genes_toadd[,-best_var, drop=FALSE]
 			}
 			if (search=="env"){
-				if (print) cat(paste0("Adding environment: ",colnames(env_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
+				if (print) cat(paste0("Adding environment: ",colnames(env_toadd)[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after= ",round(criterion_after[best_var],5),")\n"))
 				env_current = cbind(env_current, env_toadd[,best_var, drop=FALSE])
 				env_toadd = env_toadd[,-best_var, drop=FALSE]				
 			}
@@ -1678,8 +1580,7 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 		rownames(interactive)=1:interactive_n
 		interactive = format(interactive,scientific=FALSE)
 		print(interactive)
-		if (search=="genes") input_user = readline(prompt="Enter the index of the gene to be added: ")
-		if (search=="env") input_user = readline(prompt="Enter the index of the environment to be added: ")
+		input_user = readline(prompt="Enter the index of the variable to be added: ")
 		if (sum(input_user == rownames(interactive))==0){
 			if (search=="genes" && print) cat("No gene added\n")
 			if (search=="env" && print) cat("No environment added\n")
@@ -1707,243 +1608,12 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 	if (search=="env") return(list(fit=fit, start_genes=start_genes,start_env=start_env,env_current=env_current,env_toadd=env_toadd))
 }
 
-forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_toadd=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
-	k = length(latent_var_current)
-	# How much genes or env to add
-	elements_N = NCOL(latent_var_toadd[[search]])
-	if (elements_N == 0){
-		if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was added\n"))
-		return(NULL)
-	}
-	# Vector which says which extra variables are "good" (worth exploring)
-	good = rep(TRUE, elements_N)
-	# Vector which says how much the criterion changed from including the variable
-	criterion_before = rep(NA, elements_N)
-	criterion_after = rep(NA, elements_N)
-	criterion_diff = rep(NA, elements_N)
-	# In interactive model, we must keep track of every AIC, BIC, p-value, Cross-validated R2 and AUC to show the user at every iteration
-	if (interactive_mode) interactive = data.frame(variable=colnames(latent_var_toadd[[search]]), N_old=rep(NA, elements_N), N_new=rep(NA, elements_N), p_value=rep(NA, elements_N),AIC_old=rep(NA, elements_N),AIC_new=rep(NA, elements_N),BIC_old=rep(NA, elements_N),BIC_new=rep(NA, elements_N),cv_R2_old=rep(NA, elements_N),cv_R2_new=rep(NA, elements_N),cv_AUC_old=rep(NA, elements_N),cv_AUC_new=rep(NA, elements_N),cv_Huber_old=rep(NA, elements_N),cv_Huber_new=rep(NA, elements_N),cv_L1_old=rep(NA, elements_N),cv_L1_new=rep(NA, elements_N))
-	# Complete dataset
-	if (NCOL(latent_var_current[[1]])==0) latent_var_current_nomiss = NULL
-	else latent_var_current_nomiss = latent_var_current[[1]]
-	comp_without = stats::complete.cases(data,latent_var_current_nomiss)
-	if (k > 1) for (i in 2:k){
-		if (NCOL(latent_var_current[[i]])==0) latent_var_current_nomiss = NULL
-		else latent_var_current_nomiss = latent_var_current[[i]]
-		comp_without = comp_without & stats::complete.cases(latent_var_current_nomiss)
-	}
 
-	# Non-cross-validated models
-	for (j in 1:elements_N){
-		# Running IMLEGIT with new variable
-		latent_var_new = latent_var_current
-		if (is.null(latent_var_current[[search]])) latent_var_new[[search]] = latent_var_toadd[[search]][,j,drop=FALSE]
-		else latent_var_new[[search]] = cbind(latent_var_current[[search]],latent_var_toadd[[search]][,j,drop=FALSE])
-		start_latent_var_new = start_latent_var
-		start_latent_var_new[[search]] = c(start_latent_var[[search]],0)
-		fit_with = IMLEGIT(data=data, latent_var=latent_var_new, formula=formula, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-		# p-values
-		p_value = stats::coef(summary(fit_with)[[search+1]])[,4]
-		good[j] = p_value[length(p_value)] <= p_threshold
-		if (empty_start_dataset) fit_without = NULL
-		else if (fit$fit_main$df.null != fit_with$fit_main$df.null){
-			# Removing observations missing the new variable and rerunnning model without the variable (Note : with and without is confusing here)
-			comp_with = comp_without & stats::complete.cases(latent_var_toadd[[search]][,j,drop=FALSE])
-			data_with = data[comp_with,, drop=FALSE]
-			latent_var_with = latent_var_current
-			for (i in 1:k) latent_var_with[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-			fit_without = IMLEGIT(data=data_with, latent_var=latent_var_with, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-		}
-		else fit_without = fit
-
-		if (exclude_worse_AIC && !empty_start_dataset){
-			if (fit_with$true_model_parameters$AIC <= fit_without$true_model_parameters$AIC) good[j]=good[j] && TRUE
-		}
-		if (search_criterion=="AIC"){
-			if (empty_start_dataset) criterion_before[j] = Inf
-			else criterion_before[j] = fit_without$true_model_parameters$AIC
-			criterion_after[j] = fit_with$true_model_parameters$AIC
-			criterion_diff[j] = criterion_after[j] - criterion_before[j]
-		}
-		if (search_criterion=="BIC"){
-			if (empty_start_dataset) criterion_before[j] = Inf
-			else criterion_before[j] = fit_without$true_model_parameters$BIC
-			criterion_after[j] = fit_with$true_model_parameters$BIC
-			criterion_diff[j] = criterion_after[j] - criterion_before[j]
-		} 
-		# Keep p-value, AIC and BIC if in interactive model
-		if (interactive_mode){
-			if (empty_start_dataset) interactive$N_old[j] = NA
-			else interactive$N_old[j] = sum(comp_without)
-			interactive$N_new[j] = fit_with$true_model_parameters$df.residual + fit_with$true_model_parameters$rank
-
-			interactive$p_value[j] = round(p_value[length(p_value)],6)
-
-			if (empty_start_dataset) interactive$AIC_old[j] = Inf
-			else interactive$AIC_old[j] = fit_without$true_model_parameters$AIC
-			interactive$AIC_new[j] = fit_with$true_model_parameters$AIC
-
-			if (empty_start_dataset) interactive$BIC_old[j] = Inf
-			else interactive$BIC_old[j] = fit_without$true_model_parameters$BIC
-			interactive$BIC_new[j] = fit_with$true_model_parameters$BIC
-		}
-	}
-	if (sum(good)==0){
-		if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was added\n"))
-		return(NULL)
-	}
-	# Only do this if NOT in interactive mode, otherwise at the end of the algorithm, we show the the data.frame interactive and let the user choose
-	if (!interactive_mode){
-		if (search_criterion=="AIC" || search_criterion=="BIC"){
-			if (min(criterion_diff,na.rm=TRUE) > 0){
-				if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was added\n"))
-				return(NULL)
-			}
-			if (empty_start_dataset) best_var = which.min(criterion_after)
-			else best_var = which.min(criterion_diff)
-			if (print) cat(paste0("Adding element from ", names(latent_var_current)[search], ": ",colnames(latent_var_toadd[[search]])[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
-			latent_var_current[[search]] = cbind(latent_var_current[[search]], latent_var_toadd[[search]][,best_var, drop=FALSE])
-			latent_var_toadd[[search]] = latent_var_toadd[[search]][,-best_var, drop=FALSE]						
-		}
-	}
-	# Cross-validated models
-	if (search_criterion == "cv" || search_criterion == "cv_AUC" || search_criterion=="cv_Huber" || search_criterion=="cv_L1"){
-		# Dropping variables with p < threshold and worse AIC
-		if (interactive_mode) interactive = interactive[good,]
-		latent_var_toadd = latent_var_toadd[[search]][,good, drop=FALSE]
-		elements_N = NCOL(latent_var_toadd[[search]])
-		# Vector which says how much the criterion changed from including the variable
-		criterion_before = rep(NA, elements_N)
-		criterion_after = rep(NA, elements_N)
-		criterion_diff = rep(NA, elements_N)
-		# Set seed
-		if (!is.null(seed)) current_seed = seed
-		else current_seed = NULL
-		if (!empty_start_dataset) fit_cv = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-		for (j in 1:elements_N){
-			# Running IMLEGIT with new variable
-			latent_var_new = latent_var_current
-			if (is.null(latent_var_current[[search]])) latent_var_new[[search]] = latent_var_toadd[[search]][,j,drop=FALSE]
-			latent_var_new[[search]] = cbind(latent_var_current[[search]],latent_var_toadd[[search]][,j,drop=FALSE])
-			start_latent_var_new = start_latent_var
-			start_latent_var_new[[search]] = c(start_latent_var[[search]],0)
-			fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_new, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-			if (empty_start_dataset) fit_cv_without = NULL
-			else{
-				# If new variable has new missing data: Remove observations missing the new variable and rerun model without the variable (Note : with and without is confusing here)
-				comp_with = comp_without & stats::complete.cases(latent_var_toadd[[search]][,j,drop=FALSE])
-				if (sum(comp_without) != sum(comp_with)){
-					data_with = data[comp_with,, drop=FALSE]
-					latent_var_with = latent_var_current
-					for (i in 1:k) latent_var_with[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-					fit_cv_without = IMLEGIT_cv(data=data_with, latent_var=latent_var_with, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-				}
-				else fit_cv_without = fit_cv
-			}
-			if (search_criterion=="cv"){
-				if (empty_start_dataset) criterion_before[j] = 0
-				else criterion_before[j] = mean(fit_cv_without$R2_cv)
-				criterion_after[j] = mean(fit_cv_with$R2_cv)
-				criterion_diff[j] = criterion_after[j] - criterion_before[j]
-			} 
-			if (search_criterion=="cv_Huber"){
-				if (empty_start_dataset) criterion_before[j] = Inf
-				else criterion_before[j] = mean(fit_cv_without$Huber_cv)
-				criterion_after[j] = mean(fit_cv_with$Huber_cv)
-				criterion_diff[j] = criterion_after[j] - criterion_before[j]
-			} 
-			if (search_criterion=="cv_L1"){
-				if (empty_start_dataset) criterion_before[j] = Inf
-				else criterion_before[j] = mean(fit_cv_without$L1_cv)
-				criterion_after[j] = mean(fit_cv_with$L1_cv)
-				criterion_diff[j] = criterion_after[j] - criterion_before[j]
-			} 
-			if (search_criterion=="cv_AUC"){
-				if (empty_start_dataset) criterion_before[j] = 0
-				else criterion_before[j] = mean(fit_cv_without$AUC)
-				criterion_after[j] = mean(fit_cv_with$AUC)
-				criterion_diff[j] = criterion_after[j] - criterion_before[j]
-			}
-			# Keep cross-validation R2 and AUC in interactive model
-			if (interactive_mode){
-				if (empty_start_dataset) interactive$cv_R2_old[j] = 0
-				else interactive$cv_R2_old[j] = mean(fit_cv_without$R2_cv)
-				interactive$cv_R2_new[j] = mean(fit_cv_with$R2_cv)
-
-				if (empty_start_dataset) interactive$cv_L1_old[j] = Inf
-				else interactive$cv_L1_old[j] = mean(fit_cv_without$L1_cv)
-				interactive$cv_L1_new[j] = mean(fit_cv_with$L1_cv)
-
-				if (empty_start_dataset) interactive$cv_Huber_old[j] = Inf
-				else interactive$cv_Huber_old[j] = mean(fit_cv_without$Huber_cv)
-				interactive$cv_Huber_new[j] = mean(fit_cv_with$Huber_cv)
-
-				if(classification){
-					if (empty_start_dataset) interactive$cv_AUC_old[j] = 0
-					else interactive$cv_AUC_old[j] = mean(fit_cv_without$AUC)
-					interactive$cv_AUC_new[j] = mean(fit_cv_with$AUC)
-				}
-			}
-		}
-		# Only do this if NOT in interactive mode, otherwise at the end of the algorithm, we show the the data.frame interactive and let the user choose
-		if (!interactive_mode){
-			if ((max(criterion_diff,na.rm=TRUE) < 0 && !(search_criterion=="cv_Huber" || search_criterion=="cv_L1")) || (min(criterion_diff,na.rm=TRUE) > 0 && (search_criterion=="cv_Huber" || search_criterion=="cv_L1"))){
-				if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was added\n"))
-				return(NULL)
-			}
-			if (search_criterion=="cv_Huber" || search_criterion=="cv_L1") best_var = which.min(criterion_diff)
-			else best_var = which.max(criterion_diff)
-			if (print) cat(paste0("Adding element from ", names(latent_var_current)[search], ": ",colnames(latent_var_toadd[[search]])[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
-			latent_var_current[[search]] = cbind(latent_var_current[[search]], latent_var_toadd[[search]][,best_var, drop=FALSE])
-			latent_var_toadd[[search]] = latent_var_toadd[[search]][,-best_var, drop=FALSE]							
-		}
-	}
-	if (interactive_mode){
-		interactive_n = min(5,elements_N)
-		if (search_criterion=="AIC" && empty_start_dataset) neworder = order(interactive$AIC_new, decreasing=FALSE)
-		if (search_criterion=="AIC" && !empty_start_dataset) neworder = order(interactive$AIC_new - interactive$AIC_old, decreasing=FALSE)
-		if (search_criterion=="BIC" && empty_start_dataset) neworder = order(interactive$BIC_new, decreasing=FALSE)
-		if (search_criterion=="BIC" && !empty_start_dataset) neworder = order(interactive$BIC_new - interactive$BIC_old, decreasing=FALSE)
-		if (search_criterion=="cv" && empty_start_dataset) neworder = order(interactive$cv_R2_new, decreasing=TRUE)
-		if (search_criterion=="cv" && !empty_start_dataset) neworder = order(interactive$cv_R2_new - interactive$cv_R2_old, decreasing=TRUE)
-		if (search_criterion=="cv_Huber" && empty_start_dataset) neworder = order(interactive$cv_Huber_new, decreasing=FALSE)
-		if (search_criterion=="cv_Huber" && !empty_start_dataset) neworder = order(interactive$cv_Huber_new - interactive$cv_Huber_old, decreasing=FALSE)
-		if (search_criterion=="cv_L1" && empty_start_dataset) neworder = order(interactive$cv_L1_new, decreasing=FALSE)
-		if (search_criterion=="cv_L1" && !empty_start_dataset) neworder = order(interactive$cv_L1_new - interactive$cv_L1_old, decreasing=FALSE)
-		if (search_criterion=="cv_AUC" && empty_start_dataset) neworder = order(interactive$cv_AUC_new, decreasing=TRUE)
-		if (search_criterion=="cv_AUC" && !empty_start_dataset) neworder = order(interactive$cv_AUC_new - interactive$cv_AUC_old, decreasing=TRUE)
-		interactive = interactive[neworder[1:interactive_n],]
-		rownames(interactive)=1:interactive_n
-		interactive = format(interactive,scientific=FALSE)
-		print(interactive)
-		input_user = readline(prompt=paste0("Enter the index of the element from ", names(latent_var_current)[search], " to be added: "))
-		if (sum(input_user == rownames(interactive))==0){
-			if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was added\n"))
-			return(NULL)
-		}
-		best_var = neworder[1:interactive_n][input_user == rownames(interactive)]
-		if (print) cat(paste0("Adding element from ", names(latent_var_current)[search], ": ",colnames(latent_var_toadd[[search]])[best_var], " (Criterion before = ",round(criterion_before[best_var],5), "; after = ",round(criterion_after[best_var],5),")\n"))
-		latent_var_current[[search]] = cbind(latent_var_current[[search]], latent_var_toadd[[search]][,best_var, drop=FALSE])
-		latent_var_toadd[[search]] = latent_var_toadd[[search]][,-best_var, drop=FALSE]						
-
-	}
-	# Updated model and coefficients
-	start_latent_var[[search]] = c(start_latent_var[[search]],0)
-	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-	for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-	return(list(fit=fit, start_latent_var=start_latent_var, latent_var_current=latent_var_current,latent_var_toadd=latent_var_toadd))
-}
-
-
-backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
+backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_current)
 	if (search=="env") elements_N = NCOL(env_current)
-	if (elements_N == 0){
-		if (search=="genes" && print) cat("No gene removed\n")
-		if (search=="env" && print) cat("No environment removed\n")
-		return(NULL)
-	}
+	if (elements_N == 0) return(NULL)
 	# Vector which says which variables are "good" (worth keeping)
 	good = rep(FALSE, elements_N)
 	# Vector which says how much the criterion changed from excluding the variable
@@ -1958,8 +1628,7 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 	# we need to always use this sample as it could be different when removing a variable
 	comp_with = stats::complete.cases(data,genes_current,env_current)
 	fit_with = fit
-	if (search=="genes") p_value = stats::coef(summary(fit_with)$fit_genes)[,4]
-	if (search=="env") p_value = stats::coef(summary(fit_with)$fit_env)[,4]
+	p_value = stats::coef(summary(fit_with)$fit_genes)[,4]
 	# Non-cross-validated models
 	for (j in 1:elements_N){
 		if (search=="genes"){
@@ -2014,12 +1683,12 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 			}
 			worst_var = which.min(criterion_diff)
 			if (search=="genes"){
-				if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+				if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 				genes_dropped = cbind(genes_dropped, genes_current[,worst_var, drop=FALSE])
 				genes_current = genes_current[,-worst_var, drop=FALSE]
 			}
 			if (search=="env"){
-				if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+				if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 				env_dropped = cbind(env_dropped, env_current[,worst_var, drop=FALSE])
 				env_current = env_current[,-worst_var, drop=FALSE]
 			}
@@ -2092,12 +1761,12 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 			if (search_criterion=="cv_Huber" || search_criterion=="cv_L1") worst_var = which.min(criterion_diff)
 			else worst_var = which.max(criterion_diff)
 			if (search=="genes"){
-				if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+				if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 				genes_dropped = cbind(genes_dropped, genes_current[,worst_var, drop=FALSE])
 				genes_current = genes_current[,-worst_var, drop=FALSE]
 			}
 			if (search=="env"){
-				if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+				if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 				env_dropped = cbind(env_dropped, env_current[,worst_var, drop=FALSE])
 				env_current = env_current[,-worst_var, drop=FALSE]
 			}
@@ -2116,8 +1785,7 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 		rownames(interactive)=1:interactive_n
 		interactive = format(interactive,scientific=FALSE)
 		print(interactive)
-		if (search=="genes") input_user = readline(prompt="Enter the index of the gene to be removed: ")
-		if (search=="env") input_user = readline(prompt="Enter the index of the environment to be removed: ")
+		input_user = readline(prompt="Enter the index of the variable to be removed: ")
 		if (sum(input_user == rownames(interactive))==0){
 			if (search=="genes" && print) cat("No gene removed\n")
 			if (search=="env" && print) cat("No environment removed\n")
@@ -2125,12 +1793,12 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 		}
 		worst_var = neworder[1:interactive_n][input_user == rownames(interactive)]
 		if (search=="genes"){
-			if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+			if (print) cat(paste0("Removing gene: ",colnames(genes_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 			genes_dropped = cbind(genes_dropped, genes_current[,worst_var, drop=FALSE])
 			genes_current = genes_current[,-worst_var, drop=FALSE]
 		}
 		if (search=="env"){
-			if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
+			if (print) cat(paste0("Removing environment: ",colnames(env_current)[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after= ",round(criterion_after[worst_var],5),")\n"))
 			env_dropped = cbind(env_dropped, env_current[,worst_var, drop=FALSE])
 			env_current = env_current[,-worst_var, drop=FALSE]
 		}
@@ -2145,207 +1813,8 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 	if (search=="env") return(list(fit=fit, start_genes=start_genes,start_env=start_env,env_current=env_current,env_dropped=env_dropped))
 }
 
-backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_dropped=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
-	k = length(latent_var_current)
-	# How much genes or env to add
-	elements_N = NCOL(latent_var_current[[search]])
-	if (elements_N == 0){
-		if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
-		return(NULL)
-	}
-	# Vector which says which variables are "good" (worth keeping)
-	good = rep(FALSE, elements_N)
-	# Vector which says how much the criterion changed from excluding the variable
-	criterion_before = rep(NA, elements_N)
-	criterion_after = rep(NA, elements_N)
-	criterion_diff = rep(NA, elements_N)
-	# In interactive model, we must keep track of every AIC, BIC, p-value, Cross-validated R2 and AUC to show the user at every iteration
-	if (interactive_mode) interactive = data.frame(variable=colnames(latent_var_current[[search]]), N_old=rep(NA, elements_N), N_new=rep(NA, elements_N), p_value=rep(NA, elements_N),AIC_old=rep(NA, elements_N),AIC_new=rep(NA, elements_N),BIC_old=rep(NA, elements_N),BIC_new=rep(NA, elements_N),cv_R2_old=rep(NA, elements_N),cv_R2_new=rep(NA, elements_N),cv_AUC_old=rep(NA, elements_N),cv_AUC_new=rep(NA, elements_N),cv_Huber_old=rep(NA, elements_N),cv_Huber_new=rep(NA, elements_N),cv_L1_old=rep(NA, elements_N),cv_L1_new=rep(NA, elements_N))
-	# we need to always use this sample as it could be different when removing a variable
-	comp_with = stats::complete.cases(data,latent_var_current[[1]])
-	if (k > 1) for (i in 2:k){
-		comp_with = comp_with & stats::complete.cases(latent_var_current[[i]])
-	}
-	fit_with = fit
-	p_value = stats::coef(summary(fit_with)[[search+1]])[,4]
-	# Non-cross-validated models
-	for (j in 1:elements_N){
-		# Compelte dataset without variable
-		if (search == 1) comp_without = stats::complete.cases(data,latent_var_current[[1]][,-j,drop=FALSE])
-		else comp_without = stats::complete.cases(data,latent_var_current[[1]])
-		if (k > 1) for (i in 2:k){
-			if (search == i) comp_without = comp_without & stats::complete.cases(latent_var_current[[i]][,-j,drop=FALSE])
-			else comp_without = comp_without & stats::complete.cases(latent_var_current[[i]])
-		}
-		latent_var_without = latent_var_current
-		for (i in 1:k){
-			if (i == search) latent_var_without[[i]] = latent_var_current[[i]][comp_with,-j, drop=FALSE]
-			else latent_var_without[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-		}
-		start_latent_var_without = start_latent_var
-		start_latent_var_without[[search]] = start_latent_var[[search]][-j]
-		fit_without = IMLEGIT(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-		good[j] = p_value[j] <= p_threshold
 
-		if (exclude_worse_AIC){
-			if (fit_with$true_model_parameters$AIC <= fit_without$true_model_parameters$AIC) good[j]= good[j] || TRUE
-		}
-		if (search_criterion=="AIC"){
-			criterion_before[j] = fit_with$true_model_parameters$AIC
-			criterion_after[j] = fit_without$true_model_parameters$AIC
-			criterion_diff[j] = criterion_after[j] - criterion_before[j]
-		}
-		if (search_criterion=="BIC"){
-			criterion_before[j] = fit_with$true_model_parameters$BIC
-			criterion_after[j] = fit_without$true_model_parameters$BIC
-			criterion_diff[j] = criterion_after[j] - criterion_before[j]
-		}
-		# Keep p-value, AIC and BIC if in interactive model
-		if (interactive_mode){
-			interactive$N_old[j] = sum(comp_with)
-			interactive$N_new[j] = sum(comp_without)
-
-			interactive$p_value[j] = round(p_value[j],6)
-
-			interactive$AIC_old[j] = fit_with$true_model_parameters$AIC
-			interactive$AIC_new[j] = fit_without$true_model_parameters$AIC
-
-			interactive$BIC_old[j] = fit_with$true_model_parameters$BIC
-			interactive$BIC_new[j] = fit_without$true_model_parameters$BIC
-		}
-	}
-	if (sum(!good)==0){
-		if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
-		return(NULL)
-	}
-	# Only do this if NOT in interactive mode, otherwise at the end of the algorithm, we show the the data.frame interactive and let the user choose
-	if (!interactive_mode){
-		if (search_criterion=="AIC" || search_criterion=="BIC"){
-			if (min(criterion_diff,na.rm=TRUE) > 0){
-				if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
-				return(NULL)
-			}
-			worst_var = which.min(criterion_diff)
-			if (print) cat(paste0("Removing element from ", names(latent_var_current)[search], ": ",colnames(latent_var_current[[search]])[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
-			latent_var_dropped[[search]] = cbind(latent_var_dropped[[search]], latent_var_current[[search]][,worst_var, drop=FALSE])
-			latent_var_current[[search]] = latent_var_current[[search]][,-worst_var, drop=FALSE]
-		}
-	}
-	# Cross-validated models
-	if (search_criterion == "cv" || search_criterion == "cv_AUC" || search_criterion =="cv_Huber" || search_criterion =="cv_L1"){
-		# Not looking at variables that labelled as good
-		elements_N_cv = sum(!good)
-		# Vector which says how much the criterion changed from removing the variable
-		criterion_before = rep(NA, elements_N)
-		criterion_after = rep(NA, elements_N)
-		criterion_diff = rep(NA, elements_N)
-		# Set seed
-		if (!is.null(seed)) current_seed = seed
-		else current_seed = NULL
-		fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-		for (j in 1:elements_N){
-			# Only do this if not labelled as good
-			if (!good[j]){
-				# Compelte dataset without variable
-				if (search == 1) comp_without = stats::complete.cases(data,latent_var_current[[1]][,-j,drop=FALSE])
-				else comp_without = stats::complete.cases(data,latent_var_current[[1]])
-				if (k > 1) for (i in 2:k){
-					if (search == i) comp_without = comp_without & stats::complete.cases(latent_var_current[[i]][,-j,drop=FALSE])
-					else comp_without = comp_without & stats::complete.cases(latent_var_current[[i]])
-				}
-				latent_var_without = latent_var_current
-				for (i in 1:k){
-					if (i == search) latent_var_without[[i]] = latent_var_current[[i]][comp_with,-j, drop=FALSE]
-					else latent_var_without[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-				}
-				start_latent_var_without = start_latent_var
-				start_latent_var_without[[search]] = start_latent_var[[search]][-j]
-
-				fit_cv_without = IMLEGIT_cv(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-				if (search_criterion=="cv"){
-					criterion_before[j] = mean(fit_cv_with$R2_cv)
-					criterion_after[j] = mean(fit_cv_without$R2_cv)
-					criterion_diff[j] = criterion_after[j] - criterion_before[j]
-				} 
-				if (search_criterion=="cv_Huber"){
-					criterion_before[j] = mean(fit_cv_with$Huber_cv)
-					criterion_after[j] = mean(fit_cv_without$Huber_cv)
-					criterion_diff[j] = criterion_after[j] - criterion_before[j]
-				}
-				if (search_criterion=="cv_L1"){
-					criterion_before[j] = mean(fit_cv_with$L1_cv)
-					criterion_after[j] = mean(fit_cv_without$L1_cv)
-					criterion_diff[j] = criterion_after[j] - criterion_before[j]
-				}
-				if (search_criterion=="cv_AUC"){
-					criterion_before[j] = mean(fit_cv_with$AUC)
-					criterion_after[j] = mean(fit_cv_without$AUC)
-					criterion_diff[j] = criterion_after[j] - criterion_before[j]
-				}
-				# Keep cross-validation R2 and AUC in interactive model
-				if (interactive_mode){
-					interactive$cv_R2_old[j] = mean(fit_cv_with$R2_cv)
-					interactive$cv_R2_new[j] = mean(fit_cv_without$R2_cv)
-
-					interactive$cv_Huber_old[j] = mean(fit_cv_with$Huber_cv)
-					interactive$cv_Huber_new[j] = mean(fit_cv_without$Huber_cv)
-
-					interactive$cv_L1_old[j] = mean(fit_cv_with$L1_cv)
-					interactive$cv_L1_new[j] = mean(fit_cv_without$L1_cv)
-
-					if(classification){
-						interactive$cv_AUC_old[j] = mean(fit_cv_with$AUC)
-						interactive$cv_AUC_new[j] = mean(fit_cv_without$AUC)
-					}
-				}
-			}
-		}
-		# Only do this if NOT in interactive mode, otherwise at the end of the algorithm, we show the the data.frame interactive and let the user choose
-		if (!interactive_mode){
-			if ((max(criterion_diff,na.rm=TRUE) < 0 && !(search_criterion=="cv_Huber" || search_criterion=="cv_L1")) || (min(criterion_diff,na.rm=TRUE) > 0 && (search_criterion=="cv_Huber" || search_criterion=="cv_L1"))){
-				if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
-				return(NULL)
-			}
-			if (search_criterion=="cv_Huber" || search_criterion=="cv_L1") worst_var = which.min(criterion_diff)
-			else worst_var = which.max(criterion_diff)
-			if (print) cat(paste0("Removing element from ", names(latent_var_current)[search], ": ",colnames(latent_var_current[[search]])[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
-			latent_var_dropped[[search]] = cbind(latent_var_dropped[[search]], latent_var_current[[search]][,worst_var, drop=FALSE])
-			latent_var_current[[search]] = latent_var_current[[search]][,-worst_var, drop=FALSE]
-		}
-	}
-	if (interactive_mode){
-		if (search_criterion=="cv") interactive_n = min(5,elements_N_cv)
-		else interactive_n = min(5,elements_N)
-		if (search_criterion=="AIC") neworder = order(interactive$AIC_new - interactive$AIC_old, decreasing=FALSE)
-		if (search_criterion=="BIC") neworder = order(interactive$BIC_new - interactive$BIC_old, decreasing=FALSE)
-		if (search_criterion=="cv") neworder = order(interactive$cv_R2_new - interactive$cv_R2_old, decreasing=TRUE)
-		if (search_criterion=="cv_Huber") neworder = order(interactive$cv_Huber_new - interactive$cv_Huber_old, decreasing=FALSE)
-		if (search_criterion=="cv_L1") neworder = order(interactive$cv_L1_new - interactive$cv_L1_old, decreasing=FALSE)
-		if (search_criterion=="cv_AUC") neworder = order(interactive$cv_AUC_new - interactive$cv_AUC_old, decreasing=TRUE)
-		interactive = interactive[neworder[1:interactive_n],]
-		rownames(interactive)=1:interactive_n
-		interactive = format(interactive,scientific=FALSE)
-		print(interactive)
-		input_user = readline(prompt=paste0("Enter the index of the element from ", names(latent_var_current)[search], " to be removed: "))
-		if (sum(input_user == rownames(interactive))==0){
-			if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
-			return(NULL)
-		}
-		worst_var = neworder[1:interactive_n][input_user == rownames(interactive)]
-		if (print) cat(paste0("Removing element from ", names(latent_var_current)[search], ": ",colnames(latent_var_current[[search]])[worst_var], " (Criterion before = ",round(criterion_before[worst_var],5), "; after = ",round(criterion_after[worst_var],5),")\n"))
-		latent_var_dropped[[search]] = cbind(latent_var_dropped[[search]], latent_var_current[[search]][,worst_var, drop=FALSE])
-		latent_var_current[[search]] = latent_var_current[[search]][,-worst_var, drop=FALSE]
-
-	}
-	# Updated model and coefficients
-	start_latent_var[[search]] = start_latent_var[[search]][-worst_var]
-	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-	for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-	return(list(fit=fit, start_latent_var=start_latent_var,latent_var_current=latent_var_current,latent_var_dropped=latent_var_dropped))
-}
-
-
-stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="both", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE, remove_miss=FALSE){
+stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="genes", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 50, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE){
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
 	if (search_criterion=="AIC") string_choice="lowest AIC"
@@ -2363,22 +1832,13 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 	data = stats::model.frame(formula, data=data, na.action=na.pass)
 
 	comp = stats::complete.cases(data, genes_original, env_original, genes_extra, env_extra)
-	if (remove_miss){
-		data = data[comp,, drop=FALSE]
-		if (!is.null(genes_original)) genes_original = genes_original[comp,, drop=FALSE]
-		if (!is.null(genes_extra)) genes_extra = genes_extra[comp,, drop=FALSE]
-		if (!is.null(env_original)) env_original = env_original[comp,, drop=FALSE]
-		if (!is.null(env_extra)) env_extra = env_extra[comp,, drop=FALSE]
-		if (dim(data)[1] <= 0) stop("no valid observation without missing values")
-	}
-	else if (sum(comp)!=length(comp) && print) cat("Note: Missing data was found. This will increase computing time in forward steps \n and could lead to an incorrect subset of variable if the sample size change too much. \n")
+	if (sum(comp)!=length(comp) && print) cat("Note: Missing data was found. This will increase computing time in forward steps \n and could lead to an incorrect subset of variable if the sample size change too much. \n")
 
 	if (interactive_mode && print) cat("<<~ Interative mode enabled ~>>\n")
 
 	# If true, then we start with no genes or envand must find the best one first
 	if ((is.null(genes_original) && search=="genes") || (is.null(env_original) && search=="env")) empty_start_dataset = TRUE
 	else empty_start_dataset = FALSE
-	if ((is.null(genes_original) || is.null(env_original)) && search=="both") stop("To do a stepwise search on both G and E, you must start with at least a single variable in G and in E. Please set genes_original and env_original.")
 
 	# Setting up initial weighted scores
 	if (is.null(genes_original) && search=="genes") start_genes = c()
@@ -2386,9 +1846,6 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 
 	if (is.null(env_original) && search=="env") start_env = c()
 	else if (is.null(start_env)) start_env = rep(1/dim(env_original)[2],dim(env_original)[2])
-
-	if (is.null(start_genes) && search=="both") start_genes = rep(1/dim(genes_original)[2],dim(genes_original)[2])
-	if (is.null(start_env) && search=="both") start_env = rep(1/dim(env_original)[2],dim(env_original)[2])
 
 	fit = NULL
 
@@ -2401,7 +1858,6 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			if (search_criterion=="cv_AUC") classification=TRUE
 			if (search=="genes") cat(paste0("Forward search of the genes to find the model with the ", string_choice,"\n"))
 			if (search=="env") cat(paste0("Forward search of the environments to find the model with the ", string_choice,"\n"))
-			if (search=="both") cat(paste0("Forward search of the genes and environments to find the model with the ", string_choice,"\n"))
 		}
 		genes_current = genes_original
 		env_current = env_original
@@ -2416,57 +1872,27 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			if (is.null(genes_original)) genes_current = genes_extra[,-c(1:NCOL(genes_extra))]
 			if (is.null(env_original)) env_current = env_extra[,-c(1:NCOL(env_extra))]
 		}
-		genes_toadd = NULL
-		env_toadd = NULL
-		if (search=="genes" || search=="both") genes_toadd = genes_extra
-		if (search=="env" || search=="both") env_toadd = env_extra
+		if (search=="genes") genes_toadd = genes_extra
+		else genes_toadd = NULL
+		if (search=="env") env_toadd = env_extra
+		else env_toadd = NULL
 		if (print) cat("\n")
-
-		if (search=="both"){
-			G_conv = FALSE
-			E_conv = FALSE
-			# Starts looking at genes when search="both"
-			search_current = "genes"
-		}
-		else search_current = search
-		# Overall convergence (equal to G_conv && E_conv if search=both)
-		conv = FALSE
-
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd, env_toadd=env_toadd, search=search_current, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-			if (is.null(results)){
-				if (search=="both"){
-					if (search_current == "genes"){
-						search_current = "env"
-						G_conv = TRUE
-						if (E_conv) conv = TRUE
-					}
-					else{
-						search_current = "genes"
-						E_conv = TRUE
-						if (G_conv) conv = TRUE
-					}
-				}
-				else conv = TRUE
-				if (conv) break
+			results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd, env_toadd=env_toadd, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+			if (is.null(results)) break
+			# Resetting parameters based on iteration results
+			empty_start_dataset = FALSE
+			fit = results$fit
+			start_genes=results$start_genes
+			start_env=results$start_env
+			if (search=="genes"){
+				genes_current=results$genes_current
+				genes_toadd=results$genes_toadd
 			}
-			else{
-				if (search_current == "genes") E_conv = FALSE
-				if (search_current == "env") G_conv = FALSE
-				# Resetting parameters based on iteration results
-				empty_start_dataset = FALSE
-				fit = results$fit
-				start_genes=results$start_genes
-				start_env=results$start_env
-				if (search_current=="genes"){
-					genes_current=results$genes_current
-					genes_toadd=results$genes_toadd
-				}
-				if (search_current=="env"){
-					env_current=results$env_current
-					env_toadd=results$env_toadd
-				}
+			if (search=="env"){
+				env_current=results$env_current
+				env_toadd=results$env_toadd
 			}
 		}
 	}
@@ -2479,7 +1905,6 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			if (search_criterion=="cv_AUC") classification=TRUE
 			if (search=="genes") cat(paste0("Backward search of the genes to find the model with the ", string_choice,"\n"))
 			if (search=="env") cat(paste0("Backward search of the environments to find the model with the ", string_choice,"\n"))
-			if (search=="both") cat(paste0("Backward search of the genes and environments to find the model with the ", string_choice,"\n"))
 		}
 		genes_current = genes_original
 		env_current = env_original
@@ -2491,71 +1916,31 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		genes_dropped = genes_original[,-c(1:NCOL(genes_original))]
 		env_dropped = env_original[,-c(1:NCOL(env_original))]
 		if (print) cat("\n")
-
-		if (search=="both"){
-			G_conv = FALSE
-			E_conv = FALSE
-			# Starts looking at genes when search="both"
-			search_current = "genes"
-		}
-		else search_current = search
-		# Overall convergence (equal to G_conv && E_conv if search=both)
-		conv = FALSE
-
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_dropped, env_current=env_current, env_dropped=env_dropped, search=search_current, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-			if (is.null(results)){
-				if (search=="both"){
-					if (search_current == "genes"){
-						search_current = "env"
-						G_conv = TRUE
-						if (E_conv) conv = TRUE
-					}
-					else{
-						search_current = "genes"
-						E_conv = TRUE
-						if (G_conv) conv = TRUE
-					}
+			results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_dropped, env_current=env_current, env_dropped=env_dropped, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+			if (is.null(results)) break
+			# Resetting parameters based on iteration results
+			fit = results$fit
+			start_genes=results$start_genes
+			start_env=results$start_env
+			if (search=="genes"){
+				genes_current=results$genes_current
+				if (NCOL(genes_current)==1){
+					if (print) cat("Only one gene remaining, stopping the algorithm\n")
+					break
 				}
-				else conv = TRUE
-				if (conv) break
+				# Only for bidirectional
+				genes_dropped=results$genes_dropped
 			}
-			else{
-				if (search_current == "genes") E_conv = FALSE
-				if (search_current == "env") G_conv = FALSE
-				# Resetting parameters based on iteration results
-				fit = results$fit
-				start_genes=results$start_genes
-				start_env=results$start_env
-				if (search_current=="genes"){
-					genes_current=results$genes_current
-					# Only used in bidirectionnal
-					genes_dropped=results$genes_dropped
-					if (NCOL(genes_current)==1){
-						if(search=="both"){
-							search_current = "env"
-							G_conv = TRUE
-							if (E_conv) conv = TRUE
-						}
-						else conv = TRUE
-						if (conv) break
-					}
+			if (search=="env"){
+				env_current=results$env_current
+				if (NCOL(env_current)==1){
+					if (print) cat("Only one environment remaining, stopping the algorithm\n")
+					break
 				}
-				if (search_current=="env"){
-					env_current=results$env_current
-					# Only used in bidirectionnal
-					env_dropped=results$env_dropped
-					if (NCOL(env_current)==1){
-						if(search=="both"){
-							search_current = "genes"
-							E_conv = TRUE
-							if (G_conv) conv = TRUE
-						}
-						else conv = TRUE
-						if (conv) break
-					}
-				}
+				# Only for bidirectional
+				env_dropped=results$env_dropped
 			}
 		}
 	}
@@ -2571,7 +1956,6 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			if (search_criterion=="cv_AUC") classification=TRUE
 			if (search=="genes") cat(paste0("Bidirectional search of the genes to find the model with the ", string_choice,"\n"))
 			if (search=="env") cat(paste0("Bidirectional search of the environments to find the model with the ", string_choice,"\n"))
-			if (search=="both") cat(paste0("Bidirectional search of the genes and environments to find the model with the ", string_choice,"\n"))
 		}
 		if (search_type == "bidirectional-forward"){
 			genes_current = genes_original
@@ -2587,10 +1971,10 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 				if (is.null(genes_original)) genes_current = genes_extra[,-c(1:NCOL(genes_extra))]
 				if (is.null(env_original)) env_current = env_extra[,-c(1:NCOL(env_extra))]
 			}
-			genes_toadd_ordrop = NULL
-			env_toadd_ordrop = NULL
-			if (search=="genes" || search=="both") genes_toadd_ordrop = genes_extra
-			if (search=="env" || search=="both") env_toadd_ordrop = env_extra
+			if (search=="genes") genes_toadd_ordrop = genes_extra
+			else genes_toadd_ordrop = NULL
+			if (search=="env") env_toadd_ordrop = env_extra
+			else env_toadd_ordrop = NULL
 			direction="forward"
 			forward_failed=FALSE
 			# Count as failed because we can't backward if forward doesn't work
@@ -2612,32 +1996,19 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			backward_failed=FALSE
 		}
 		if (print) cat("\n")
-
-		if (search=="both"){
-			G_conv = FALSE
-			E_conv = FALSE
-			# Starts looking at genes when search="both"
-			search_current = "genes"
-		}
-		else search_current = search
-		# Overall convergence (equal to G_conv && E_conv if search=both)
-		conv = FALSE
-
 		for (i in 1:max_steps){
 			if (print) cat(paste0("[Iteration: ",i,"]\n"))
 			if (direction=="forward"){
-				results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd_ordrop, env_toadd=env_toadd_ordrop, search=search_current, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+				results = forward_step(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, env_current=env_current, genes_toadd=genes_toadd_ordrop, env_toadd=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 				if (is.null(results)) forward_failed=TRUE
 				else{
-					if (search_current == "genes") E_conv = FALSE
-					if (search_current == "env") G_conv = FALSE
 					forward_failed=FALSE
 					# Resetting parameters based on iteration results
 					empty_start_dataset = FALSE
 					fit = results$fit
 					start_genes=results$start_genes
 					start_env=results$start_env
-					if (search_current=="genes"){
+					if (search=="genes"){
 						genes_current=results$genes_current
 						genes_toadd_ordrop=results$genes_toadd
 						if (NCOL(genes_toadd_ordrop)==0){
@@ -2645,7 +2016,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 							forward_failed=TRUE
 						}
 					}
-					if (search_current=="env"){
+					if (search=="env"){
 						env_current=results$env_current
 						env_toadd_ordrop=results$env_toadd
 						if (NCOL(env_toadd_ordrop)==0){
@@ -2656,47 +2027,20 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 				}
 				direction="backward"
 			}
-			if (forward_failed && backward_failed){
-				if (search=="both"){
-					backward_failed = FALSE
-					forward_failed = FALSE
-					if (search_current == "genes"){
-						search_current = "env"
-						# Count as a fail
-						if (NCOL(env_current)==1) backward_failed=TRUE
-						if (NCOL(env_toadd_ordrop)==0) forward_failed=TRUE
-						G_conv = TRUE
-						if (E_conv) conv = TRUE
-					}
-					else{
-						search_current = "genes"
-						# Count as a fail
-						if (NCOL(genes_current)==1) backward_failed=TRUE
-						if (NCOL(genes_toadd_ordrop)==0) forward_failed=TRUE
-						E_conv = TRUE
-						if (G_conv) conv = TRUE
-					}
-					if (search_type == "bidirectional-forward") direction="forward"
-					if (search_type == "bidirectional-backward") direction="backward"
-				}
-				else conv = TRUE
-				if (conv) break
-			}
+			if (forward_failed && backward_failed) break
 			if (direction=="backward"){
 				# Can't backward if only one remaining variable
-				if (!((NCOL(genes_current)<=1 && search_current=="genes") || (NCOL(env_current)<=1 && search_current=="env"))){
-					results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_toadd_ordrop, env_current=env_current, env_dropped=env_toadd_ordrop, search=search_current, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
+				if (!((NCOL(genes_current)<=1 && search=="genes") || (NCOL(env_current)<=1 && search=="env"))){
+					results = backward_step(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, genes_current=genes_current, genes_dropped=genes_toadd_ordrop, env_current=env_current, env_dropped=env_toadd_ordrop, search=search, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
 					if (is.null(results)) backward_failed=TRUE
 					else{
-						if (search_current == "genes") E_conv = FALSE
-						if (search_current == "env") G_conv = FALSE
 						backward_failed=FALSE
 						# Resetting parameters based on iteration results
 						fit = results$fit
 						start_genes=results$start_genes
 						start_env=results$start_env
 						one_remain=FALSE
-						if (search_current=="genes"){
+						if (search=="genes"){
 							genes_current=results$genes_current
 							if (NCOL(genes_current)==1){
 								# Count as a fail
@@ -2704,7 +2048,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 							}
 							genes_toadd_ordrop=results$genes_dropped
 						}
-						if (search_current=="env"){
+						if (search=="env"){
 							env_current=results$env_current
 							if (NCOL(env_current)==1){
 								# Count as a fail
@@ -2716,470 +2060,13 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 				}
 				else{
 					backward_failed=TRUE
-					if (search_current=="genes" && print) cat("No gene removed\n")
-					if (search_current=="env" && print) cat("No environment removed\n")
+					if (search=="genes" && print) cat("No gene removed1\n")
+					if (search=="env" && print) cat("No environment removed1\n")
 				}
 				direction="forward"
 			}
-			if (forward_failed && backward_failed){
-				if (search=="both"){
-					backward_failed = FALSE
-					forward_failed = FALSE
-					if (search_current == "genes"){
-						search_current = "env"
-						# Count as a fail
-						if (NCOL(env_current)==1) backward_failed=TRUE
-						if (NCOL(env_toadd_ordrop)==0) forward_failed=TRUE
-						G_conv = TRUE
-						if (E_conv) conv = TRUE
-					}
-					else{
-						search_current = "genes"
-						# Count as a fail
-						if (NCOL(genes_current)==1) backward_failed=TRUE
-						if (NCOL(genes_toadd_ordrop)==0) forward_failed=TRUE
-						E_conv = TRUE
-						if (G_conv) conv = TRUE
-					}
-					if (search_type == "bidirectional-forward") direction="forward"
-					if (search_type == "bidirectional-backward") direction="backward"
-				}
-				else conv = TRUE
-				if (conv) break
-			}
+			if (forward_failed && backward_failed) break
 		}
 	}
-	if (i >= max_steps) warning("Stepwise search did not reach convergence in max_steps steps. Try increasing max_steps.")
 	return(fit)
-}
-
-
-stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, print=TRUE, remove_miss=FALSE){
-	k = max(length(latent_var_original),length(latent_var_extra))
-	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
-	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
-	if (search_criterion=="AIC") string_choice="lowest AIC"
-	else if (search_criterion=="BIC") string_choice="lowest BIC"
-	else if (search_criterion=="cv") string_choice="lowest cross-validation error"
-	else if (search_criterion=="cv_Huber") string_choice="lowest cross-validation Huber error"
-	else if (search_criterion=="cv_L1") string_choice="lowest cross-validation L1-norm error"
-	else if (search_criterion=="cv_AUC") string_choice="biggest cross-validated area under the curve"
-	else stop("Not a valid search_criterion, use: AIC, BIC, cv or cv_AUC")
-
-	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
-	data=data.frame(data)
-	for (i in 1:k) data[,names(latent_var_original)[i]] = 0
-	data = stats::model.frame(formula, data=data, na.action=na.pass)
-	#  Check for empty latent variable (Note: Probably shouldn't be named empty_start_dataset but empty_start_latent_var althought that would be even more confusing considering start_latent_var)
-	if (is.null(latent_var_original)) stop("latent_var_original cannot be null. However, if search=i, then you could set latent_var_original[[i]]=NULL.")
-	# Make it to have NULL elements but not be NULL
-	comp = rep(TRUE, NROW(data))
-	for (i in 1:k){
-		if (!is.null(latent_var_original[[i]])) comp = comp & stats::complete.cases(data, latent_var_original[[i]])
-		if (!is.null(latent_var_extra) && !is.null(latent_var_extra[[i]])) comp = comp & stats::complete.cases(data, latent_var_extra[[i]])
-	}
-	if (remove_miss){
-		data = data[comp,, drop=FALSE]
-		for (i in 1:k){
-			if (!is.null(latent_var_original[[i]])) latent_var_original[[i]] = latent_var_original[[i]][comp,, drop=FALSE]
-			if (!is.null(latent_var_extra)){
-				if (!is.null(latent_var_extra[[i]])) latent_var_extra[[i]] = latent_var_extra[[i]][comp,, drop=FALSE]
-			}
-		}
-		if (dim(data)[1] <= 0) stop("no valid observation without missing values")
-	}
-	else if (sum(comp)!=length(comp) && print) cat("Note: Missing data was found. This will increase computing time in forward steps \n and could lead to an incorrect subset of variable if the sample size change too much. \n")
-
-	if (interactive_mode && print) cat("<<~ Interative mode enabled ~>>\n")
-
-	# Making all elements NULL instead
-	if (is.null(latent_var_extra)) latent_var_extra = vector("list", k)
-
-	empty_start_dataset = FALSE
-	for (i in 1:k){
-		if (is.null(latent_var_original[[i]]) || NCOL(latent_var_original[[i]])==0){
-			if (i != search) stop("If search=i, you can set latent_var_original[[i]]=NULL but not latent_var_original[[j]]=NULL. When search=0, you must start with at least an element in every latent variable.")
-			else if (search_type=="bidirectional-backward" || search_type=="backward") stop ("If search=i, you can normally set latent_var_original[[i]]=NULL but not with backward search because you must start from somewhere before dropping variables.")
-			else empty_start_dataset = TRUE
-			# Make an empty dataframe instead of NULL
-			latent_var_original[[i]] = latent_var_extra[[i]][,-c(1:NCOL(latent_var_extra[[i]])), drop=FALSE]
-		}
-		if (is.null(latent_var_extra[[i]]) || NCOL(latent_var_extra[[i]])==0){
-			# Make an empty dataframe instead of NULL
-			latent_var_extra[[i]] = latent_var_original[[i]][,-c(1:NCOL(latent_var_original[[i]])), drop=FALSE]
-		}
-	}
-
-	# Setting up initial start
-	if (is.null(start_latent_var)){
-		start_latent_var = vector("list", k)
-		for (i in 1:k){
-			if (empty_start_dataset && search==i) start_latent_var[[i]]=c()
-			else start_latent_var[[i]] = rep(1/NCOL(latent_var_original[[i]]),NCOL(latent_var_original[[i]]))
-		}
-	}
-	fit = NULL
-
-	if (search_type == "forward"){
-		if (print){
-			if (forward_exclude_p_bigger < 1 && (exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Keeping only variables with p-values smaller than ", forward_exclude_p_bigger, " and which inclusion decrease the AIC\n"))
-			else if (forward_exclude_p_bigger < 1 && !(exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Keeping only variables with p-values smaller than ", forward_exclude_p_bigger,"\n"))
-			else if (exclude_worse_AIC || search_criterion=="AIC") cat(paste0("Keeping only variables which inclusion decrease the AIC\n"))
-			if ((search_criterion=="cv" || search_criterion=="cv_AUC" || search_criterion=="cv_Huber" || search_criterion=="cv_L1") && (!exclude_worse_AIC || forward_exclude_p_bigger > .2)) cat("Note : We recommend using exclude_worse_AIC=TRUE and forward_exclude_p_bigger <= .20 to reduce the amount of cross-validations needed and to make the algorithm much faster.\n")
-			if (search_criterion=="cv_AUC") classification=TRUE
-			if (search==0) cat(paste0("Forward search of the elements from all latent variables to find the model with the ", string_choice,"\n"))
-			else cat(paste0("Forward search of the elements from ", names(latent_var_original)[search]," to find the model with the ", string_choice,"\n"))
-		}
-		latent_var_current = latent_var_original
-		if (!empty_start_dataset){
-			# Original model
-			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-			for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-		}
-		else{
-			# If dataset is NULL, then make the current dataset be an empty data frame of same size as the dataset with extra variables 
-			if (is.null(latent_var_original[[search]])) latent_var_original[[search]] = latent_var_extra[[search]][,-c(1:NCOL(latent_var_extra[[search]]))]
-		}
-		latent_var_toadd = latent_var_extra
-		if (print) cat("\n")
-
-		if (search == 0){
-			latent_var_conv = rep(FALSE, k)
-			search_current = 1
-		}
-		else search_current = search
-		# Overall convergence
-		conv = FALSE
-
-		for (i in 1:max_steps){
-			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = forward_step_IM(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, latent_var_current=latent_var_current, latent_var_toadd=latent_var_toadd, search=search_current, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-			if (is.null(results)){
-				if (search == 0){
-					latent_var_conv[search_current] = TRUE
-					if (sum(latent_var_conv)==k) conv = TRUE
-					if (search_current != k) search_current = search_current + 1
-					else search_current = 1
-				}
-				else conv = TRUE
-				if (conv) break
-			}
-			else{
-				# If this one didn't converge then all others have to be retried again since things can change
-				if (search == 0) latent_var_conv = rep(FALSE, k)
-				# Resetting parameters based on iteration results
-				empty_start_dataset = FALSE
-				fit = results$fit
-				for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-				latent_var_current=results$latent_var_current
-				latent_var_toadd=results$latent_var_toadd
-			}
-		}
-	}
-	if (search_type == "backward"){
-		if (print){
-			if (backward_exclude_p_smaller < 1 && (exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Dropping only variables with p-values bigger than ", backward_exclude_p_smaller, " and which removal decrease the AIC\n"))
-			else if (backward_exclude_p_smaller < 1 && !(exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Dropping only variables with p-values bigger than ", backward_exclude_p_smaller,"\n"))
-			else if (exclude_worse_AIC || search_criterion=="AIC") cat(paste0("Dropping only variables which removal decrease the AIC\n"))
-			if ((search_criterion=="cv" || search_criterion=="cv_AUC" || search_criterion=="cv_Huber" || search_criterion=="cv_L1") && (!exclude_worse_AIC || backward_exclude_p_smaller < .01)) cat("Note : We recommend using exclude_worse_AIC=TRUE and backward_exclude_p_smaller >= .01 to reduce the amount of cross-validations needed and to make the algorithm much faster.\n")
-			if (search_criterion=="cv_AUC") classification=TRUE
-			if (search==0) cat(paste0("Backward search of the elements from all latent variables to find the model with the ", string_choice,"\n"))
-			else cat(paste0("Backward search of the elements from ", names(latent_var_original)[search]," to find the model with the ", string_choice,"\n"))
-
-		}
-		latent_var_current = latent_var_original
-		# Original model
-		fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-		for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-		# Creating empty data frames of same size as the other data frames
-		latent_var_dropped = latent_var_original
-		for (i in 1:k) latent_var_dropped[[i]] = latent_var_original[[i]][,-c(1:NCOL(latent_var_original[[i]]))]
-
-		if (print) cat("\n")
-
-		if (search == 0){
-			latent_var_conv = rep(FALSE, k)
-			search_current = 1
-		}
-		else search_current = search
-		# Overall convergence
-		conv = FALSE
-
-		for (i in 1:max_steps){
-			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			results = backward_step_IM(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, latent_var_current=latent_var_current, latent_var_dropped=latent_var_dropped, search=search_current, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-			if (is.null(results)){
-				if (search==0){
-					latent_var_conv[search_current] = TRUE
-					if (sum(latent_var_conv)==k) conv = TRUE
-					if (search_current != k) search_current = search_current + 1
-					else search_current = 1
-				}
-				else conv = TRUE
-				if (conv) break
-			}
-			else{
-				# If this one didn't converge then all others have to be retried again since things can change
-				if (search == 0) latent_var_conv = rep(FALSE, k)
-				# Resetting parameters based on iteration results
-				fit = results$fit
-				for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-				latent_var_current=results$latent_var_current
-				latent_var_dropped=results$latent_var_dropped
-				if (NCOL(latent_var_current[[search_current]])==1){
-					if (search == 0){
-						latent_var_conv[search_current] = TRUE
-						if (sum(latent_var_conv) == k) conv = TRUE	
-						if (search_current != k) search_current = search_current + 1
-						else search_current = 1
-					}
-					else conv = TRUE
-					if (conv) break
-				}
-			}
-		}
-	}
-	if (search_type == "bidirectional-forward" || search_type == "bidirectional-backward"){
-		if (print){
-			if (forward_exclude_p_bigger < 1 && (exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Keeping only variables with p-values smaller than ", forward_exclude_p_bigger, " and which inclusion decrease the AIC\n"))
-			else if (forward_exclude_p_bigger < 1 && !(exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Keeping only variables with p-values smaller than ", forward_exclude_p_bigger,"\n"))
-			else if (exclude_worse_AIC || search_criterion=="AIC") cat(paste0("Keeping only variables which inclusion decrease the AIC\n"))
-			if (backward_exclude_p_smaller < 1 && (exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Dropping only variables with p-values bigger than ", backward_exclude_p_smaller, " and which removal decrease the AIC\n"))
-			else if (backward_exclude_p_smaller < 1 && !(exclude_worse_AIC || search_criterion=="AIC")) cat(paste0("Dropping only variables with p-values bigger than ", backward_exclude_p_smaller,"\n"))
-			else if (exclude_worse_AIC || search_criterion=="AIC") cat(paste0("Dropping only variables which removal decrease the AIC\n"))
-			if ((search_criterion=="cv" || search_criterion=="cv_AUC" || search_criterion=="cv_Huber" || search_criterion=="cv_L1") && (!exclude_worse_AIC || forward_exclude_p_bigger > .2)) cat("Note : We recommend using exclude_worse_AIC=TRUE and forward_exclude_p_bigger <= .20 to reduce the amount of cross-validations needed and to make the algorithm much faster.\n")
-			if (search_criterion=="cv_AUC") classification=TRUE
-			if (search==0) cat(paste0("Bidirectional search of the elements from all latent variables to find the model with the ", string_choice,"\n"))
-			else cat(paste0("Bidirectional search of the elements from ", names(latent_var_original)[search]," to find the model with the ", string_choice,"\n"))
-
-		}
-		if (search_type == "bidirectional-forward"){
-			latent_var_current = latent_var_original
-			if (!empty_start_dataset){
-				# Original model
-				fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-				for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-			}
-			else{
-				# If dataset is NULL, then make the current dataset be an empty data frame of same size as the dataset with extra variables 
-				if (is.null(latent_var_original[[search]])) latent_var_original[[search]] = latent_var_extra[[search]][,-c(1:NCOL(latent_var_extra[[search]]))]
-			}
-			latent_var_toadd_ordrop = latent_var_extra
-
-			direction="forward"
-			forward_failed=FALSE
-			# Count as failed because we can't backward if forward doesn't work
-			backward_failed=TRUE
-		}
-		if (search_type == "bidirectional-backward"){
-			latent_var_current = latent_var_original
-			# Original model
-			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-			for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-			# Creating empty data frames of same size as the other data frames
-			latent_var_toadd_ordrop = latent_var_original
-			for (i in 1:k) latent_var_toadd_ordrop[[i]] = latent_var_original[[i]][,-c(1:NCOL(latent_var_original[[i]]))]
-			direction="backward"
-			# Count as failed because we can't backward if forward doesn't work
-			forward_failed=TRUE
-			backward_failed=FALSE
-		}
-		if (print) cat("\n")
-
-		if (search == 0){
-			latent_var_conv = rep(FALSE, k)
-			search_current = 1
-		}
-		else search_current = search
-		# Overall convergence
-		conv = FALSE
-
-		for (i in 1:max_steps){
-			if (print) cat(paste0("[Iteration: ",i,"]\n"))
-			if (direction=="forward"){
-				results = forward_step_IM(empty_start_dataset=empty_start_dataset, fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, latent_var_current=latent_var_current, latent_var_toadd=latent_var_toadd_ordrop, search=search_current, search_criterion=search_criterion, p_threshold = forward_exclude_p_bigger, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-				if (is.null(results)) forward_failed=TRUE
-				else{
-					if (search == 0) latent_var_conv = rep(FALSE, k)
-					forward_failed=FALSE
-					# Resetting parameters based on iteration results
-					empty_start_dataset = FALSE
-					fit = results$fit
-					for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-					latent_var_current=results$latent_var_current
-					latent_var_toadd_ordrop=results$latent_var_toadd
-					if (NCOL(latent_var_toadd_ordrop[[search_current]])==0){
-						# Count as a fail
-						forward_failed=TRUE
-					}
-				}
-				direction="backward"
-			}
-			if (forward_failed && backward_failed){
-				if (search == 0){
-					backward_failed = FALSE
-					forward_failed = FALSE
-					latent_var_conv[search_current] = TRUE
-					if (sum(latent_var_conv)==k) conv = TRUE
-					if (search_current != k) search_current = search_current + 1
-					else search_current = 1
-					# Count as a fail
-					if (NCOL(latent_var_current)==1) backward_failed=TRUE
-					if (NCOL(latent_var_toadd_ordrop)==0) forward_failed=TRUE
-					if (search_type == "bidirectional-forward") direction="forward"
-					if (search_type == "bidirectional-backward") direction="backward"
-				}
-				else conv = TRUE
-				if (conv) break
-			}
-			if (direction=="backward"){
-				# Can't backward if only one remaining variable
-				if (!(NCOL(latent_var_current[[search_current]])<=1)){
-					results = backward_step_IM(fit=fit, data=data, formula=formula, interactive_mode=interactive_mode, latent_var_current=latent_var_current, latent_var_dropped=latent_var_toadd_ordrop, search=search_current, search_criterion=search_criterion, p_threshold = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=seed, print=print)
-					if (is.null(results)) backward_failed=TRUE
-					else{
-						# If this one didn't converge then all others have to be retried again since things can change
-						if (search == 0) latent_var_conv = rep(FALSE, k)
-						backward_failed=FALSE
-						# Resetting parameters based on iteration results
-						fit = results$fit
-						for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
-						one_remain=FALSE
-						latent_var_current=results$latent_var_current
-						latent_var_toadd_ordrop=results$latent_var_dropped
-						if (NCOL(latent_var_current[[search_current]])==1){
-							# Count as a fail
-							backward_failed=TRUE
-						}
-					}
-				}
-				else{
-					backward_failed=TRUE
-					if (print) cat(paste0("No element from ", names(latent_var_original)[search_current]," was removed\n"))
-				}
-				direction="forward"
-			}
-			if (forward_failed && backward_failed){
-				if (search==0){
-					backward_failed = FALSE
-					forward_failed = FALSE
-
-					if (search == 0) latent_var_conv[search_current] = TRUE
-					if (sum(latent_var_conv) == k) conv = TRUE	
-					if (search_current != k) search_current = search_current + 1
-					else search_current = 1
-					# Count as a fail
-					if (NCOL(latent_var_current[[search_current]])==1) backward_failed=TRUE
-					if (NCOL(latent_var_toadd_ordrop[[search_current]])==0) forward_failed=TRUE
-
-					if (search_type == "bidirectional-forward") direction="forward"
-					if (search_type == "bidirectional-backward") direction="backward"
-				}
-				else conv = TRUE
-				if (conv) break
-			}
-		}
-	}
-	if (i >= max_steps) warning("Stepwise search did not reach convergence in max_steps steps. Try increasing max_steps.")
-	return(fit)
-}
-
-
-bootstrap_var_select = function(data, formula, bootstrap_iter=1000, bootstrap_size=NULL, bootstrap_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, progress=TRUE, n_cluster = 1){
-	k = max(length(latent_var_original),length(latent_var_extra))
-	## Removing missing data and checks
-	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
-	data=data.frame(data)
-	for (i in 1:k) data[,names(latent_var_original)[i]] = 0
-	data = stats::model.frame(formula, data=data, na.action=na.pass)
-	#  Check for empty latent variable (Note: Probably shouldn't be named empty_start_dataset but empty_start_latent_var althought that would be even more confusing considering start_latent_var)
-	if (is.null(latent_var_original)) stop("latent_var_original cannot be null. However, if search=i, then you could set latent_var_original[[i]]=NULL.")
-	# Make it to have NULL elements but not be NULL
-	comp = rep(TRUE, NROW(data))
-	for (i in 1:k){
-		if (!is.null(latent_var_original[[i]])) comp = comp & stats::complete.cases(data, latent_var_original[[i]])
-		if (!is.null(latent_var_extra) && !is.null(latent_var_extra[[i]])) comp = comp & stats::complete.cases(data, latent_var_extra[[i]])
-	}
-	if (!is.null(bootstrap_group)) bootstrap_group = bootstrap_group[comp]
-	data = data[comp,, drop=FALSE]
-	for (i in 1:k){
-		if (!is.null(latent_var_original[[i]])) latent_var_original[[i]] = latent_var_original[[i]][comp,, drop=FALSE]
-		if (!is.null(latent_var_extra)){
-			if (!is.null(latent_var_extra[[i]])) latent_var_extra[[i]] = latent_var_extra[[i]][comp,, drop=FALSE]
-		}
-	}
-	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
-
-	# Making all elements NULL instead
-	if (is.null(latent_var_extra)) latent_var_extra = vector("list", k)
-
-	## Bootstrapping
-	if (is.null(bootstrap_size)) bootstrap_size = NROW(data)
-	# Create list of variable counts
-	var_select = vector("list", k)
-	for (i in 1:k){
-		if (is.null(latent_var_extra[[i]])) latent_var_all = latent_var_original[[i]]
-		else if (is.null(latent_var_original[[i]])) latent_var_all = latent_var_extra[[i]]
-		else latent_var_all = cbind(latent_var_original[[i]],latent_var_extra[[i]])
-		var_select[[i]] = rep(0, NCOL(latent_var_all))
-		names(var_select[[i]]) = colnames(latent_var_all)
-	}
-	# Setting up parallel
-	cl <- snow::makeCluster(n_cluster)
-	doSNOW::registerDoSNOW(cl)
-	if (progress){
-		pb = utils::txtProgressBar(max = bootstrap_iter, style = 3)
-		progress <- function(n) utils::setTxtProgressBar(pb, n)
-		opts <- list(progress = progress)
-	}
-	else opts <- list()
-	# Function for combining results together
-	combine_list <- function(x, y) Map("+", x, y)
-	# Need to use this "with(c(),CODEHERE)" to prevent R check from returning a "no visible binding for global variable"
-	with(c(),{
-		var_select <- foreach::foreach(b = 1:bootstrap_iter, .combine=combine_list, .options.snow = opts) %dopar% {
-			if (!is.null(seed)) set.seed(seed+b)
-			if (is.null(bootstrap_group)) boot = sample(1:NROW(data),size=bootstrap_size,replace=TRUE)
-			else{
-				boot = c()
-				N = NROW(data)
-				repeat{
-					id_sampled = sample(unique(bootstrap_group),size=1)
-					toadd = which(bootstrap_group==id_sampled)
-					current_size = length(boot)
-					if (abs(N-current_size) > abs(N - current_size - length(toadd))) boot = c(boot, toadd)
-					else break
-				}
-			}
-			data_b = data[boot,, drop=FALSE]
-			latent_var_original_b = latent_var_original
-			latent_var_extra_b = latent_var_extra
-			for (i in 1:k){
-				if (!is.null(latent_var_original[[i]])) latent_var_original_b[[i]] = latent_var_original_b[[i]][boot,, drop=FALSE]
-				if (!is.null(latent_var_extra)){
-					if (!is.null(latent_var_extra[[i]])) latent_var_extra_b[[i]] = latent_var_extra_b[[i]][boot,, drop=FALSE]
-				}
-			}
-			results = stepwise_search_IM(data_b, formula, interactive_mode=FALSE, latent_var_original=latent_var_original_b, latent_var_extra=latent_var_extra_b, search_type=search_type, search=search, search_criterion=search_criterion, forward_exclude_p_bigger = forward_exclude_p_bigger, backward_exclude_p_smaller = backward_exclude_p_smaller, exclude_worse_AIC=exclude_worse_AIC, max_steps = max_steps, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=NULL, print=FALSE, remove_miss=TRUE)
-			var_select_current = var_select
-			for (i in 1:k){
-				kept = names(stats::coef(results$fit_latent_var[[i]]))
-				var_select_current[[i]] = names(var_select_current[[i]]) %in%  kept
-			}
-			return(var_select_current)
-		}
-		close(pb)
-		snow::stopCluster(cl)
-	})
-	names(var_select) = names(latent_var_original)
-	for (i in 1:k){
-		if (is.null(latent_var_extra[[i]])) latent_var_all = latent_var_original[[i]]
-		else if (is.null(latent_var_original[[i]])) latent_var_all = latent_var_extra[[i]]
-		else latent_var_all = cbind(latent_var_original[[i]],latent_var_extra[[i]])
-		names(var_select[[i]]) = colnames(latent_var_all)
-		var_select[[i]] = sort(var_select[[i]], decreasing = TRUE)
-		var_select[[i]] = var_select[[i]]/bootstrap_iter
-	}
-	cat("\nDone\n")
-	return(var_select)
 }
