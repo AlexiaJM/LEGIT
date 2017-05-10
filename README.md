@@ -36,6 +36,5 @@ Here is an example with 3 latent variables and a 3-way interaction (see: https:/
 
 **References**
 
-https://arxiv.org/abs/1703.08111
-
-https://ajolicoeur.wordpress.com/legit/
+* https://arxiv.org/abs/1703.08111
+* https://ajolicoeur.wordpress.com/legit/
