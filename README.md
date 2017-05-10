@@ -28,12 +28,12 @@ To install the latest GitHub development version, run in R :
 
 **Example**
 
-Here is an example with 2 latent variables and a 2-way interaction :
+Here is an example with 2 latent variables and a 2-way interaction (see: arxiv.org/abs/1703.08111) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_2way.png)
 
-Here is an example with 3 latent variables and a 3-way interaction :
+Here is an example with 3 latent variables and a 3-way interaction (see: arxiv.org/abs/1703.08111) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_3way.png)
 
 **References**
 
-The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here : https://arxiv.org/abs/1703.08111
+The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here : arxiv.org/abs/1703.08111
