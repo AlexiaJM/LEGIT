@@ -7,12 +7,12 @@
 stepwise_search(data, formula, interactive_mode = FALSE,
   genes_original = NULL, env_original = NULL, genes_extra = NULL,
   env_extra = NULL, search_type = "bidirectional-forward",
-  search = "genes", search_criterion = "AIC",
+  search = "both", search_criterion = "AIC",
   forward_exclude_p_bigger = 0.2, backward_exclude_p_smaller = 0.01,
-  exclude_worse_AIC = TRUE, max_steps = 50, cv_iter = 5, cv_folds = 10,
+  exclude_worse_AIC = TRUE, max_steps = 100, cv_iter = 5, cv_folds = 10,
   folds = NULL, Huber_p = 1, classification = FALSE, start_genes = NULL,
   start_env = NULL, eps = 0.01, maxiter = 25, family = gaussian,
-  seed = NULL, print = TRUE)
+  seed = NULL, print = TRUE, remove_miss = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -25,13 +25,13 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 
 \item{env_original}{data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).}
 
-\item{genes_extra}{data.frame of the additionnal variables to try including inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). If not NULL, \code{env_extra} should be NULL.}
+\item{genes_extra}{data.frame of the additionnal variables to try including inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). Set to NULL if using a backward search.}
 
-\item{env_extra}{data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). If not NULL, \code{genes_extra} should be NULL.}
+\item{env_extra}{data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). Set to NULL if using a backward search.}
 
 \item{search_type}{If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).}
 
-\item{search}{If \code{search="genes"}, uses a stepwise search for the genetic score variables \code{genes_extra}, forcing \code{genes_original} to be included in the genetic score. If \code{search="env"}, uses a stepwise search for the environmental score variables \code{env_extra}, forcing \code{env_original} to be included in the genetic score (Default = "genes").}
+\item{search}{If \code{search="genes"}, uses a stepwise search for the genetic score variables. If \code{search="env"}, uses a stepwise search for the environmental score variables. If \code{search="both"}, uses a stepwise search for both the gene and environmental score variables (Default = "both").}
 
 \item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.}
 
@@ -66,12 +66,14 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 \item{seed}{Seed for cross-validation folds.}
 
 \item{print}{If TRUE, print all the steps and notes/warnings. Highly recommended unless you are batch running multiple stepwise searchs. (Default=TRUE).}
+
+\item{remove_miss}{If TRUE, remove missing data completely, otherwise missing data is only removed when adding or dropping a variable (Default = FALSE).}
 }
 \value{
 Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 }
 \description{
-Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). For now, only \code{search_type="forward"} is implemented. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
+Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
 }
 \examples{
 \dontrun{

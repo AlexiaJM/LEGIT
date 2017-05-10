@@ -48,3 +48,23 @@ summary(fit_default)
 cv_5folds_bin = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, cv_iter=1, cv_folds=5, classification=TRUE, family=binomial, seed=777)
 pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
 
+## ------------------------------------------------------------------------
+library(LEGIT)
+example_3way_3latent(N=5, sigma=1, logit=FALSE, seed=7)
+
+## ----message=FALSE-------------------------------------------------------
+train = example_3way_3latent(N=250, sigma=1, logit=FALSE, seed=7)
+
+## ------------------------------------------------------------------------
+fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
+summary(fit_default)
+
+## ------------------------------------------------------------------------
+g1_bad = rbinom(250,1,.30)
+g2_bad = rbinom(250,1,.30)
+g3_bad = rbinom(250,1,.30)
+g4_bad = rbinom(250,1,.30)
+g5_bad = rbinom(250,1,.30)
+G_new = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+forward_genes_BIC = stepwise_search_IM(train$data, latent_var_original=train$latent_var, latent_var_extra=list(G=G_new, E=NULL, Z=NULL), formula=y ~ E*G*Z, search_type="forward", search=1, search_criterion="BIC", interactive_mode=FALSE)
+

@@ -5,7 +5,7 @@
 \title{Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model}
 \usage{
 IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
-  maxiter = 50, family = gaussian, print = TRUE)
+  maxiter = 100, family = gaussian, print = TRUE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -25,7 +25,7 @@ IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
 \item{print}{If FALSE, nothing except warnings will be printed. (Default = TRUE).}
 }
 \value{
-Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
+Returns an object of the class "IMLEGIT" which is list containing, in the following order: a glm fit of the main model, a list of the glm fits of the latent variables and a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 }
 \description{
 Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that the stepwise search has not been implemented yet for IMLEGIT models.

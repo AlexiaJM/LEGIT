@@ -6,7 +6,7 @@
 \usage{
 LEGIT_cv(data, genes, env, formula, cv_iter = 5, cv_folds = 10,
   folds = NULL, Huber_p = 1, classification = FALSE, start_genes = NULL,
-  start_env = NULL, eps = 0.001, maxiter = 50, family = gaussian,
+  start_env = NULL, eps = 0.001, maxiter = 100, family = gaussian,
   seed = NULL, id = NULL)
 }
 \arguments{

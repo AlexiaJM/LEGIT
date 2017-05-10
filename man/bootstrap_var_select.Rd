@@ -4,9 +4,8 @@
 \alias{bootstrap_var_select}
 \title{Bootstrap variable selection (for IMLEGIT)}
 \usage{
-bootstrap_var_select(data, formula, bootstrap_iter = 1000,
-  bootstrap_size = NULL, bootstrap_group = NULL,
-  latent_var_original = NULL, latent_var_extra = NULL,
+bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
+  boot_group = NULL, latent_var_original = NULL, latent_var_extra = NULL,
   search_type = "bidirectional-forward", search = 0,
   search_criterion = "AIC", forward_exclude_p_bigger = 0.2,
   backward_exclude_p_smaller = 0.01, exclude_worse_AIC = TRUE,
@@ -20,15 +19,15 @@ bootstrap_var_select(data, formula, bootstrap_iter = 1000,
 
 \item{formula}{Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).}
 
-\item{bootstrap_iter}{number of bootstrap samples (Default = 1000).}
+\item{boot_iter}{number of bootstrap samples (Default = 1000).}
 
-\item{bootstrap_size}{Optional size of the bootstrapped samples (Default = number of observations).}
+\item{boot_size}{Optional size of the bootstrapped samples (Default = number of observations).}
 
-\item{bootstrap_group}{Optional vector which represent the group associated with each observation. Sampling will be done by group instead of by observations (very important if you have longitudinal data). The sample sizes of the bootstrap samples might differ by up to "\code{bootstrap_size} - maximum group size" observations.}
+\item{boot_group}{Optional vector which represents the group associated with each observation. Sampling will be done by group instead of by observations (very important if you have longitudinal data). The sample sizes of the bootstrap samples might differ by up to "\code{boot_size} - maximum group size" observations.}
 
 \item{latent_var_original}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...}
 
-\item{latent_var_extra}{list of data.frame (with the same structure as latent_var_original) containing the additionnal elements to try including inside the latent variables. Set to NULL if using a backward search.}
+\item{latent_var_extra}{list of data.frame (with the same structure as latent_var_original) containing the additional elements to try including inside the latent variables. Set to NULL if using a backward search.}
 
 \item{search_type}{If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).}
 
@@ -62,21 +61,34 @@ bootstrap_var_select(data, formula, bootstrap_iter = 1000,
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
 
-\item{seed}{Seed for bootstrap.}
+\item{seed}{Optional seed for bootstrap.}
 
 \item{progress}{If TRUE, shows the progress done (Default=TRUE).}
 
 \item{n_cluster}{Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).}
 }
 \value{
-Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
+Returns a list of vectors containing the percentage of times that each variable was selected within each latent variable.
 }
 \description{
-Creates bootstrap samples, run stepwise search on all of them and then report the percentage of times that each variables were selected. This is very computationnaly demanding. With sample sample sizes, variable selection can be somewhat unstable and bootstrapping can be used to give us an idea of the degree of certitude that a variable should be included or not.
+Creates bootstrap samples, run stepwise search on all of them and then report the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
 }
 \examples{
 \dontrun{
 ## Example
+train = example_3way_3latent(250, 2, seed=777)
+# Bootstrap with Bidirectional-backward search for everything based on AIC
+# Normally you should use a lot more than 10 iterations and extra CPUs (n_cluster)
+boot = bootstrap_var_select(train$data, latent_var_extra=NULL, 
+latent_var_original=train$latent_var,
+formula=y ~ E*G*Z,search_type="bidirectional-backward", search=0, 
+search_criterion="AIC", boot_iter=10, n_cluster=1)
+# Assuming it's longitudinal with 5 timepoints, even though it's not
+id = factor(rep(1:50,each=5))
+boot_longitudinal = bootstrap_var_select(train$data, latent_var_extra=NULL, 
+latent_var_original=train$latent_var,
+formula=y ~ E*G*Z,search_type="bidirectional-backward", search=0, 
+search_criterion="AIC", boot_iter=10, n_cluster=1, boot_group=id)
 }
 }
 \references{
