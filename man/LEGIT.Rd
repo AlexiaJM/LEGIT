@@ -5,7 +5,7 @@
 \title{Latent Environmental & Genetic InTeraction (LEGIT) model}
 \usage{
 LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
-  eps = 0.001, maxiter = 50, family = gaussian, print = TRUE)
+  eps = 0.001, maxiter = 100, family = gaussian, print = TRUE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}

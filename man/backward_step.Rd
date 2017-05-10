@@ -2,12 +2,12 @@
 % Please edit documentation in R/LEGIT.R
 \name{backward_step}
 \alias{backward_step}
-\title{Internal function that does the backward step for the stepwise function.}
+\title{Internal function that does the backward step for the stepwise IM function.}
 \usage{
 backward_step(fit, data, formula, interactive_mode = FALSE,
   genes_current = NULL, env_current = NULL, genes_dropped = NULL,
   env_dropped = NULL, search = "genes", search_criterion = "AIC",
-  p_threshold = 0.2, exclude_worse_AIC = TRUE, max_steps = 50,
+  p_threshold = 0.2, exclude_worse_AIC = TRUE, max_steps = 100,
   cv_iter = 5, cv_folds = 10, folds = NULL, Huber_p = 1,
   classification = FALSE, start_genes = NULL, start_env = NULL,
   eps = 0.01, maxiter = 25, family = gaussian, seed = NULL,
@@ -21,9 +21,9 @@ backward_step(fit, data, formula, interactive_mode = FALSE,
 \item{...}{Same parameters as in the stepwise function.}
 }
 \value{
-Returns fit, start_genes, start_env and genes_current, genes_toadd if search="genes" or env_current and env_toadd if search="env".
+Returns fit, start_genes, start_env and genes_current, genes_dropped if search="genes" or env_current and env_dropped if search="env".
 }
 \description{
-Internal function that does the backward step for the stepwise function.
+Internal function that does the backward step for the stepwise IM function.
 }
 \keyword{internal}

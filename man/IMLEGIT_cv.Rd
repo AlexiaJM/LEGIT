@@ -6,8 +6,8 @@
 \usage{
 IMLEGIT_cv(data, latent_var, formula, cv_iter = 5, cv_folds = 10,
   folds = NULL, Huber_p = 1, classification = FALSE,
-  start_latent_var = NULL, eps = 0.001, maxiter = 50, family = gaussian,
-  seed = NULL, id = NULL)
+  start_latent_var = NULL, eps = 0.001, maxiter = 100,
+  family = gaussian, seed = NULL, id = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
