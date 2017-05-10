@@ -28,10 +28,10 @@ To install the latest GitHub development version, run in R :
 
 **Example**
 
-Here is an example from the paper of a LEGIT model with 2 latent variables and a 2-way interaction :
+Here is an example with 2 latent variables and a 2-way interaction :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_2way.png)
 
-Here is an example from the paper of a LEGIT model with 3 latent variables and a 3-way interaction :
+Here is an example with 3 latent variables and a 3-way interaction :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_3way.png)
 
 **References**
