@@ -27,11 +27,11 @@ To install the latest GitHub development version, run in R :
 
 * devtools::install_github("AlexiaJM/LEGIT")
 
-**References**
-
-The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here: https://arxiv.org/abs/1703.08111
-
 **Example**
 
 Here is an example from the paper of a LEGIT model with 3 latent variables and a 3-way interaction :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_3way.png)
+
+**References**
+
+The paper discussing the alternating optimization approach to estimating the LEGIT parameters is available here: https://arxiv.org/abs/1703.08111
