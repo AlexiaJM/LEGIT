@@ -896,6 +896,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	formula_withlatent_var  = vector("list", k)
 	formula_step  = vector("list", k)
 	fit_ = vector("list", k)
+	names(fit_) = names(latent_var)
 
 	# Deconstructing formula into parts (With latent_var and without latent_var)
 	formula_full = stats::terms(formula,simplify=TRUE)
