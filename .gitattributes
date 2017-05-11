@@ -1,2 +1,2 @@
 * linguist-vendored
-*.R linguist-vendored=false
+R/.R linguist-vendored=false
