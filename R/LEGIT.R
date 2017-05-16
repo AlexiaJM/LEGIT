@@ -453,6 +453,7 @@
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
 #' @param progress If TRUE, shows the progress done (Default=TRUE).
 #' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).
+#' @param best_subsets If \code{best_subsets = k}, the output will show the k most frequently chosen subsets of variables (Default = 5)
 #' @return Returns a list of vectors containing the percentage of times that each variable was selected within each latent variable.
 #' @examples
 #'	\dontrun{
@@ -499,7 +500,7 @@ example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 		eps = rnorm(N,0,sigma)
 		y = y_true + eps
 	}
-	return(list(data=data.frame(y,y_true),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(5,2,3,4)))
+	return(list(data=data.frame(y,y_true),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(-1,2,3,4)))
 }
 
 example_3way = function(N, sigma=2.5, logit=FALSE, seed=NULL){
@@ -525,7 +526,7 @@ example_3way = function(N, sigma=2.5, logit=FALSE, seed=NULL){
 		eps = rnorm(N,0,sigma)
 		y = y_true + eps
 	}
-	return(list(data=data.frame(y,y_true,z),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(5,2,3,1,5,1.5,2,2)))
+	return(list(data=data.frame(y,y_true,z),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(-2,2,3,1,5,-1.5,2,2)))
 }
 
 example_3way_3latent = function(N, sigma=1, logit=FALSE, seed=NULL){
@@ -554,7 +555,7 @@ example_3way_3latent = function(N, sigma=1, logit=FALSE, seed=NULL){
 		eps = rnorm(N,0,sigma)
 		y = y_true + eps
 	}
-	return(list(data=data.frame(y,y_true),latent_var=list(G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),Z=data.frame(z1,z2,z3)),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2),coef_Z=c(.15,.75,.10), coef_main=c(5,2,3,1,5,1.5,2,2)))
+	return(list(data=data.frame(y,y_true),latent_var=list(G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),Z=data.frame(z1,z2,z3)),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2),coef_Z=c(.15,.75,.10), coef_main=c(-2,2,3,1,5,-1.5,2,2)))
 }
 
 longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NULL, data_needed=NULL){
@@ -1113,6 +1114,7 @@ summary.LEGIT = function(object, ...){
 summary.IMLEGIT = function(object, ...){
 	newobject = list(fit_main=object$fit_main)
 	for (i in 1:length(object$fit_latent_var)) newobject[[i+1]] = object$fit_latent_var[[i]]
+	names(newobject) = c("fit_main",paste0("fit_",names(object$fit_latent_var)))
 	lapply(newobject,function(object_current, dispersion = NULL, correlation = FALSE, symbolic.cor = FALSE, ...){
 		# Using the right values
 		object_current$aic = object$true_model_parameters$AIC
@@ -3100,7 +3102,7 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 }
 
 
-bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, boot_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, progress=TRUE, n_cluster = 1){
+bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, boot_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=25, family=gaussian, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5){
 	k = max(length(latent_var_original),length(latent_var_extra))
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -3139,6 +3141,9 @@ bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, b
 		var_select[[i]] = rep(0, NCOL(latent_var_all))
 		names(var_select[[i]]) = colnames(latent_var_all)
 	}
+	# Number of times a subset of variable has appeared
+	subset_count = c()
+
 	# Setting up parallel
 	cl <- snow::makeCluster(n_cluster)
 	doSNOW::registerDoSNOW(cl)
@@ -3148,11 +3153,9 @@ bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, b
 		opts <- list(progress = progress)
 	}
 	else opts <- list()
-	# Function for combining results together
-	combine_list <- function(x, y) Map("+", x, y)
 	# Need to use this "with(c(),CODEHERE)" to prevent R check from returning a "no visible binding for global variable"
 	with(c(),{
-		var_select <- foreach::foreach(b = 1:boot_iter, .combine=combine_list, .options.snow = opts) %dopar% {
+		results <- foreach::foreach(b = 1:boot_iter, .options.snow = opts) %dopar% {
 			if (!is.null(seed)) set.seed(seed+b)
 			if (is.null(boot_group)) boot = sample(1:NROW(data),size=boot_size,replace=TRUE)
 			else{
@@ -3186,15 +3189,52 @@ bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, b
 		close(pb)
 		snow::stopCluster(cl)
 	})
+	# Counting number of times variables appear
+	var_select = results[[1]]
+	# Keeping list of unique subset of variables and their count
+	unique_subset_string = vector("character",boot_iter)
+	unique_subset = vector("list", boot_iter)
+	unique_subset_count = vector("numeric", boot_iter)
+
+	unique_subset_string[1] = toString(results[[1]])
+	unique_subset[[1]] = results[[1]]
+	names(unique_subset[[1]]) = names(latent_var_original)
+	unique_subset_count[1] = 1
+	max_sub = 1
+
+	for (i in 2:boot_iter){
+		var_select = Map("+", var_select, results[[i]])
+		index_subset = unique_subset_string %in% toString(results[[i]])
+		if (sum(index_subset)==1) unique_subset_count[index_subset] = unique_subset_count[index_subset] + 1
+		else{
+			max_sub = max_sub + 1
+			unique_subset_string[max_sub] = toString(results[[i]])
+			unique_subset[[max_sub]] = results[[i]]
+			unique_subset_count[max_sub] = 1
+			names(unique_subset[[max_sub]]) = names(latent_var_original)
+		}
+	}
+	new_index = order(unique_subset_count,decreasing=TRUE)
+	unique_subset_count = unique_subset_count[new_index]
+	unique_subset = unique_subset[new_index]
 	names(var_select) = names(latent_var_original)
 	for (i in 1:k){
 		if (is.null(latent_var_extra[[i]])) latent_var_all = latent_var_original[[i]]
 		else if (is.null(latent_var_original[[i]])) latent_var_all = latent_var_extra[[i]]
 		else latent_var_all = cbind(latent_var_original[[i]],latent_var_extra[[i]])
 		names(var_select[[i]]) = colnames(latent_var_all)
-		var_select[[i]] = sort(var_select[[i]], decreasing = TRUE)
+		new_index_current = order(var_select[[i]], decreasing = TRUE)
+		var_select[[i]] = var_select[[i]][new_index_current]
+		for (j in 1:max_sub){
+			names(unique_subset[[j]][[i]]) = colnames(latent_var_all)
+			unique_subset[[j]][[i]] = unique_subset[[j]][[i]][new_index_current]
+		}
 		var_select[[i]] = var_select[[i]]/boot_iter
 	}
+	unique_subset = unique_subset[1:min(max_sub,best_subsets)]
+	unique_subset_count=unique_subset_count[1:min(max_sub,best_subsets)]
+	unique_subset_count = unique_subset_count/boot_iter
+	names(unique_subset) = paste0("Subset", seq(1,length(unique_subset)))
 	cat("\nDone\n")
-	return(var_select)
+	return(list(var_select=var_select, subset_select=unique_subset_count, best_subset=unique_subset))
 }

@@ -12,7 +12,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
   max_steps = 100, cv_iter = 5, cv_folds = 10, folds = NULL,
   Huber_p = 1, classification = FALSE, start_latent_var = NULL,
   eps = 0.01, maxiter = 25, family = gaussian, seed = NULL,
-  progress = TRUE, n_cluster = 1)
+  progress = TRUE, n_cluster = 1, best_subsets = 5)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -66,6 +66,8 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 \item{progress}{If TRUE, shows the progress done (Default=TRUE).}
 
 \item{n_cluster}{Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).}
+
+\item{best_subsets}{If \code{best_subsets = k}, the output will show the k most frequently chosen subsets of variables (Default = 5)}
 }
 \value{
 Returns a list of vectors containing the percentage of times that each variable was selected within each latent variable.

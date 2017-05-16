@@ -201,7 +201,7 @@ fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
 summary(fit_default)
 ```
 
-Let's add irrelevant genes and try a forward search as before. Note that search = 1 means that we will search for the first latent variable which is "G". We could also set search = 0 to search trough all latent variables.
+Let's add irrelevant genes and try a forward search as before. Note that search = 1 means that we will search for the first latent variable which is "G". We could also set search = 0 to search through all latent variables.
 
 $$\mathbf{g'}_b \sim Binomial(n=1,p=.30) \\ b = 1, 2, 3, 4, 5$$
 ```{r}
