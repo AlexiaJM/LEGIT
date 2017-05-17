@@ -7,7 +7,7 @@
 \method{summary}{IMLEGIT}(object, ...)
 }
 \arguments{
-\item{object}{An object of class "IMLEGIT", usually, a result of a call to LEGIT.}
+\item{object}{An object of class "IMLEGIT", usually, a result of a call to IMLEGIT.}
 
 \item{...}{Further arguments passed to or from other methods.}
 }
