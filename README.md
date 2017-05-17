@@ -21,10 +21,12 @@ To install the latest stable version, run in R :
 
 * install.packages("LEGIT")
 
-To install the latest GitHub development version, run in R :
+To install the latest GitHub development version which could contain new or experimental features, run in R :
 
 * install.packages("devtools")
 * devtools::install_github("AlexiaJM/LEGIT")
+
+(Note : The GitHub version currently contains an experimental feature to account for gene-environment correlation rGE which is not yet in the CRAN version)
 
 **Examples**
 
