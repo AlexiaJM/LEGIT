@@ -11,7 +11,7 @@ stepwise_search_IM(data, formula, interactive_mode = FALSE,
   backward_exclude_p_smaller = 0.01, exclude_worse_AIC = TRUE,
   max_steps = 100, cv_iter = 5, cv_folds = 10, folds = NULL,
   Huber_p = 1, classification = FALSE, start_latent_var = NULL,
-  eps = 0.01, maxiter = 25, family = gaussian, seed = NULL,
+  eps = 0.01, maxiter = 100, family = gaussian, seed = NULL,
   print = TRUE, remove_miss = FALSE)
 }
 \arguments{
@@ -29,7 +29,7 @@ stepwise_search_IM(data, formula, interactive_mode = FALSE,
 
 \item{search}{If \code{search=0}, uses a stepwise search for all latent variables. Otherwise, if search = i, uses a stepwise search on the i-th latent variable (Default = 0).}
 
-\item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. if \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.}
+\item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.}
 
 \item{forward_exclude_p_bigger}{If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to 1 to prevent any exclusion here.}
 
