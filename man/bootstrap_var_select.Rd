@@ -10,8 +10,8 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
   search_criterion = "AIC", forward_exclude_p_bigger = 0.2,
   backward_exclude_p_smaller = 0.01, exclude_worse_AIC = TRUE,
   max_steps = 100, start_latent_var = NULL, eps = 0.01, maxiter = 100,
-  family = gaussian, seed = NULL, progress = TRUE, n_cluster = 1,
-  best_subsets = 5)
+  family = gaussian, ylim = NULL, seed = NULL, progress = TRUE,
+  n_cluster = 1, best_subsets = 5)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -49,6 +49,8 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 \item{maxiter}{Maximum number of iterations.}
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
+
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
 
 \item{seed}{Optional seed for bootstrap.}
 

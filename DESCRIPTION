@@ -1,7 +1,7 @@
 Package: LEGIT
 Title: Latent Environmental & Genetic InTeraction (LEGIT) Model
-Version: 1.1.1
-Date: 2017-04-16
+Version: 1.1.2
+Date: 2017-05-21
 Author: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
 Maintainer: Alexia Jolicoeur-Martineau <alexia.jolicoeur-martineau@mail.mcgill.ca>
 Description: Constructs genotype x environment interaction (GxE) models where

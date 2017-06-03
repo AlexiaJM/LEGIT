@@ -5,7 +5,7 @@
 \title{Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model}
 \usage{
 IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
-  maxiter = 100, family = gaussian, print = TRUE)
+  maxiter = 100, family = gaussian, ylim = NULL, print = TRUE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -21,6 +21,8 @@ IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
 \item{maxiter}{Maximum number of iterations.}
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
+
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
 
 \item{print}{If FALSE, nothing except warnings will be printed. (Default = TRUE).}
 }

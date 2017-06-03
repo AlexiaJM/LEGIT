@@ -82,6 +82,7 @@
 #' @param formula Optional Model formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "formula" here if you have missing data).
 #' @param data Optional data.frame used for the formula. If data and formula are provided, only the non-missing observations will be used when creating the folds (Put "data" here if you have missing data).
 #' @param data_needed Optional data.frame with variables that have to be included (Put "cbind(genes,env)"" or "latent_var" here if you have missing data).
+#' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
 #' @return Returns a list of vectors containing the fold number for each observation
 #' @examples
 #'	train = example_2way(500, 1, seed=777)
@@ -102,6 +103,7 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
 #' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 #' @examples
@@ -129,6 +131,7 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
 #' @return Returns an object of the class "IMLEGIT" which is list containing, in the following order: a glm fit of the main model, a list of the glm fits of the latent variables and a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 #' @examples
@@ -224,8 +227,9 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param seed Seed for cross-validation folds.
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param id Optional id of observations, can be a vector or data.frame (only used when returning list of possible outliers).
 #' @return If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration, and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration. The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @examples
@@ -265,8 +269,9 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param seed Seed for cross-validation folds.
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param id Optional id of observations, can be a vector or data.frame (only used when returning list of possible outliers).
 #' @return If \code{classification} = FALSE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a matrix of the possible outliers (standardized residuals > 2.5 or < -2.5) and their corresponding standardized residuals and standardized pearson residuals. If \code{classification} = TRUE, returns a list containing, in the following order: a vector of the cross-validated \eqn{R^2} at each iteration, a vector of the Huber cross-validation error at each iteration, a vector of the L1-norm cross-validation error at each iteration, a vector of the AUC at each iteration, a matrix of the best choice of threshold (based on Youden index) and the corresponding specificity and sensitivity at each iteration, and a list of objects of class "roc" (to be able to make roc curve plots) at each iteration. The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @examples
@@ -350,9 +355,10 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param seed Seed for cross-validation folds.
 #' @param print If TRUE, print all the steps and notes/warnings. Highly recommended unless you are batch running multiple stepwise searchs. (Default=TRUE).
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param remove_miss If TRUE, remove missing data completely, otherwise missing data is only removed when adding or dropping a variable (Default = FALSE).
 #' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 #' @examples
@@ -401,10 +407,11 @@
 #' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param family Outcome distribution and link function (Default = gaussian).
 #' @param seed Seed for cross-validation folds.
 #' @param print If TRUE, print all the steps and notes/warnings. Highly recommended unless you are batch running multiple stepwise searchs. (Default=TRUE).
-#' @param Huber_p Parameter controlling the Huber cross-validation error (Default =1).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param remove_miss If TRUE, remove missing data completely, otherwise missing data is only removed when adding or dropping a variable (Default = FALSE).
 #' @return Returns an object of the class "IMLEGIT" which is list containing, in the following order: a glm fit of the main model, a list of the glm fits of the latent variables and a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
 #' @examples
@@ -445,6 +452,7 @@
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
 #' @param seed Optional seed for bootstrap.
 #' @param progress If TRUE, shows the progress done (Default=TRUE).
 #' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).
@@ -472,6 +480,45 @@
 #' @references Mark Reiser, Lanlan Yao, Xiao Wang, Jeanne Wilcox and Shelley Gray. \emph{A Comparison of Bootstrap Confidence Intervals for Multi-level Longitudinal Data Using Monte-Carlo Simulation} (2017). 10.1007/978-981-10-3307-0_17.
 #' @export
 "bootstrap_var_select"
+
+#' @title Parallel genetic algorithm variable selection (for IMLEGIT)
+#' @description Use a standard genetic algorithm with single-point crossover and a single mutation ran in parallel to find the best subset of variables. The percentage of times that each variable is included the final populations is also given. This is very computationally demanding but this finds much better solutions than either stepwise search or bootstrap variable selection.
+#' @param data data.frame of the dataset to be used.
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param parallel_iter number of parallel genetic algorithms (Default = 10). I recommend using 2-4 times the number of CPU cores used.
+#' @param entropy_threshold Entropy threshold for convergence of the population (Default = .10). Note that not reaching the entropy threshold just means that the population has some diversity, this is not necessarily a bad thing. Reaching the threshold is not necessary but if a population reach the threshold, we want it to stop it reproducing (rather than continuing until maxgen) since the future generations won't change much.
+#' @param popsize Size of the population (Default = 25). Between 25 and 100 is generally adequate.
+#' @param mutation_prob Probability of mutation (Default = .50). A single variable is selected for mutation and it is mutated with probability \code{mutation_prob}. If the mutation causes a latent variable to become empty, no mutation is done. Using a small value (close to .05) will lead to getting more stuck in suboptimal solutions but using a large value (close to 1) will greatly increase the computing time because it will have a hard time reaching the entropy threshold.
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...
+#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param maxgen Maximum number of generations (iterations) of the genetic algorithm (Default = 100). Between 50 and 200 generations is generally adequate.
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
+#' @param maxiter Maximum number of iterations.
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param seed Optional seed.
+#' @param progress If TRUE, shows the progress done (Default=TRUE).
+#' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores - 1 (Default = 1).
+#' @param best_subsets If \code{best_subsets = k}, the output will show the k best subsets of variables (Default = 5)
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
+#' @param classification Set to TRUE if you are doing classification and cross-validation (binary outcome).
+#' @return Returns a list of vectors containing the percentage of times that each variable was included in the final populations, the criterion of the best k models, the starting points of the best k models (with the names of the best variables) and the entropy of the populations.
+#' @examples
+#'	\dontrun{
+#'	## Example
+#'	train = example_3way_3latent(250, 2, seed=777)
+#'	# Genetic algorithm based on BIC
+#'	# Normally you should use a lot more than 2 populations with 10 generations
+#'	boot = genetic_var_select(train$data, latent_var=train$latent_var,
+#'	formula=y ~ E*G*Z, search_criterion="AIC", parallel_iter=2, maxgen = 10)
+#'	}
+#' @import foreach snow doSNOW utils iterators
+#' @references Mu Zhu, & Hugh Chipman. \emph{Darwinian evolution in parallel universes: A parallel genetic algorithm for variable selection} (2006). Technometrics, 48(4), 491-502.
+#' @export
+"genetic_var_select"
 
 example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 	set.seed(seed)
@@ -553,7 +600,7 @@ example_3way_3latent = function(N, sigma=1, logit=FALSE, seed=NULL){
 	return(list(data=data.frame(y,y_true),latent_var=list(G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),Z=data.frame(z1,z2,z3)),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2),coef_Z=c(.15,.75,.10), coef_main=c(-2,2,3,1,5,-1.5,2,2)))
 }
 
-longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NULL, data_needed=NULL){
+longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NULL, data_needed=NULL, print=TRUE){
 	if (cv_folds > length(unique(id))) stop("cv_folds must be smaller than the number of unique id")
 	# in IMLEGIT, data_needed would be latent_var which is a list and we need to unlist it if that's the case
 	if (!is.null(data_needed)) if(class(data_needed)=="list") data_needed = do.call(cbind.data.frame, data_needed)
@@ -577,6 +624,7 @@ longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NUL
 	else{
 		if (!is.null(data_needed)) id = id[stats::complete.cases(data_needed)]
 	}
+	if(print) print(paste0("You have ",length(unique(id))," unique observations with ", max(table(factor(id)))," categories/time-points for a total of ", length(id)," observations"))
 	folds = vector("list", cv_iter)
 	for (i in 1:cv_iter){
 		s = sample(sort(unique(id)))
@@ -589,8 +637,11 @@ longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NUL
  	return(folds)
 }
 
-LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, print=TRUE)
+LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE)
 {
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
 	if (maxiter <= 0) warning("maxiter must be > 0")
 	if(!is.null(start_genes)){
 		if (NCOL(genes)!=length(start_genes)) stop("start_genes must either be NULL or have the same length as the number of genes")
@@ -811,14 +862,17 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	else{
 		warning(paste0("Did not reach convergence in maxiter iterations. Try increasing maxiter or make eps smaller."))
 	}
-
-	result = list(fit_main = fit_a, fit_genes = fit_b, fit_env = fit_c, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance))
+	if (is.null(ylim)) result = list(fit_main = fit_a, fit_genes = fit_b, fit_env = fit_c, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance))
+	else result = list(fit_main = fit_a, fit_genes = fit_b, fit_env = fit_c, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance), ylim=ylim)
 	class(result) <- "LEGIT"
 	return(result)
 }
 
-IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, print=TRUE)
+IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE)
 {
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
 	# Setting up latent_var and checks
 	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
 	k = length(latent_var)
@@ -966,6 +1020,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	}
 
 	# Rerunning last time and scaling to return as results
+
 	fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
 
 	warn = FALSE
@@ -1004,8 +1059,8 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	else{
 		warning(paste0("Did not reach convergence in maxiter iterations. Try increasing maxiter or make eps smaller."))
 	}
-
-	result = list(fit_main = fit_a, fit_latent_var = fit_, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance))
+	if (is.null(ylim)) result = list(fit_main = fit_a, fit_latent_var = fit_, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance))
+	else result = list(fit_main = fit_a, fit_latent_var = fit_, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance), ylim=ylim)
 	class(result) <- "IMLEGIT"
 	return(result)
 }
@@ -1016,7 +1071,9 @@ predict.LEGIT = function(object, data, genes, env, ...){
 	env = as.matrix(env, drop=FALSE)
 	data$G = genes%*%stats::coef(object[[2]])
 	data$E = env%*%stats::coef(object[[3]])
-	return(stats::predict.glm(object[[1]], newdata=data, ...))
+	results = stats::predict.glm(object[[1]], newdata=data, ...)
+	if (is.null(object$ylim)) return(results)
+	else return(pmin(pmax(results,object$ylim[1]),object$ylim[2]))
 }
 
 predict.IMLEGIT = function(object, data, latent_var, ...){
@@ -1028,7 +1085,9 @@ predict.IMLEGIT = function(object, data, latent_var, ...){
 		names(latent_var) = paste0("L",1:k)
 	}
 	for (i in 1:k) data[,names(latent_var)[i]] = latent_var[[i]]%*%stats::coef(object[[2]][[i]])
-	return(stats::predict.glm(object[[1]], newdata=data, ...))
+	results = stats::predict.glm(object[[1]], newdata=data, ...)
+	if (is.null(object$ylim)) return(results)
+	else return(pmin(pmax(results,object$ylim[1]),object$ylim[2]))
 }
 
 summary.LEGIT = function(object, ...){
@@ -1188,7 +1247,10 @@ summary.IMLEGIT = function(object, ...){
 	})
 }
 
-LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, seed=NULL, id=NULL){
+LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, id=NULL){
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
 
 	# Renaming it because there is already an id variable
 	if (!is.null(id)) obs_id = id
@@ -1272,7 +1334,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	 		y_test_new = data_test[,formula_outcome]
 
 	 		# Fit model and add predictions
-	 		fit_train = LEGIT(data=data_train, genes=genes_train, env=env_train, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	 		fit_train = LEGIT(data=data_train, genes=genes_train, env=env_train, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			pred_new = predict(fit_train, data=data_test,genes=genes_test,env=env_test,type="response")
 			pred = c(pred,pred_new)
 			y_test = c(y_test, y_test_new)
@@ -1325,7 +1387,10 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
 }
 
-IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, seed=NULL, id=NULL){
+IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, id=NULL){
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
 
 	# Renaming it because there is already an id variable
 	if (!is.null(id)) obs_id = id
@@ -1424,7 +1489,7 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 	 		y_test_new = data_test[,formula_outcome]
 
 	 		# Fit model and add predictions
-	 		fit_train = IMLEGIT(data=data_train, latent_var=latent_var_train, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	 		fit_train = IMLEGIT(data=data_train, latent_var=latent_var_train, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			pred_new = predict(fit_train, data=data_test,latent_var=latent_var_test,type="response")
 			pred = c(pred,pred_new)
 			y_test = c(y_test, y_test_new)
@@ -1477,7 +1542,7 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 	return(list(R2_cv = R2_cv, Huber_cv = Huber_cv, L1_cv=L1_cv, possible_outliers = possible_outliers_data))
 }
 
-forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE){
+forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_toadd)
 	if (search=="env") elements_N = NCOL(env_toadd)
@@ -1507,8 +1572,8 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 	comp_without = stats::complete.cases(data,genes_current_nomiss,env_current_nomiss)
 	# Non-cross-validated models
 	for (j in 1:elements_N){
-		if (search=="genes") fit_with = LEGIT(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
-		if (search=="env") fit_with = LEGIT(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, print=FALSE)
+		if (search=="genes") fit_with = LEGIT(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+		if (search=="env") fit_with = LEGIT(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		if (search=="genes"){
 			p_value = stats::coef(summary(fit_with)$fit_genes)[,4]
 			good[j] = p_value[length(p_value)] <= p_threshold
@@ -1521,7 +1586,7 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 		else if (fit$fit_main$df.null != fit_with$fit_main$df.null){
 			if (search=="genes") comp = stats::complete.cases(data,genes_current,genes_toadd[,j,drop=FALSE],env_current)
 			if (search=="env") comp = stats::complete.cases(data,genes_current,env_toadd[,j,drop=FALSE],env_current)
-			fit_without = LEGIT(data=data[comp,,drop=FALSE], genes=genes_current[comp,,drop=FALSE], env=env_current[comp,,drop=FALSE], formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit_without = LEGIT(data=data[comp,,drop=FALSE], genes=genes_current[comp,,drop=FALSE], env=env_current[comp,,drop=FALSE], formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		}
 		else fit_without = fit
 
@@ -1609,15 +1674,15 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		if (!empty_start_dataset) fit_cv = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		if (!empty_start_dataset) fit_cv = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 		for (j in 1:elements_N){
-			if (search=="genes") fit_cv_with = LEGIT_cv(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-			if (search=="env") fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+			if (search=="genes") fit_cv_with = LEGIT_cv(data=data, genes=cbind(genes_current,genes_toadd[,j,drop=FALSE]), env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=c(start_genes,0), start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
+			if (search=="env") fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=cbind(env_current,env_toadd[,j,drop=FALSE]), formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=c(start_env,0), eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 			if (empty_start_dataset) fit_cv_without = NULL
 			else{
 				if (search=="genes") comp_with = stats::complete.cases(data,genes_current,genes_toadd[,j,drop=FALSE],env_current)
 				if (search=="env") comp_with = stats::complete.cases(data,genes_current,env_toadd[,j,drop=FALSE],env_current)
-				if (sum(comp_without) != sum(comp_with)) fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				if (sum(comp_without) != sum(comp_with)) fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 				else fit_cv_without = fit_cv
 			}
 			if (search_criterion=="cv"){
@@ -1728,14 +1793,14 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 	# Updated model and coefficients
 	if (search=="genes") start_genes=c(start_genes,0)
 	if (search=="env") start_env=c(start_env,0)
-	fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 	start_genes = stats::coef(fit$fit_genes)
 	start_env = stats::coef(fit$fit_env)
 	if (search=="genes") return(list(fit=fit, start_genes=start_genes,start_env=start_env,genes_current=genes_current,genes_toadd=genes_toadd))
 	if (search=="env") return(list(fit=fit, start_genes=start_genes,start_env=start_env,env_current=env_current,env_toadd=env_toadd))
 }
 
-forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_toadd=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE){
+forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_toadd=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
 	k = length(latent_var_current)
 	# How much genes or env to add
 	elements_N = NCOL(latent_var_toadd[[search]])
@@ -1772,7 +1837,7 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 		else latent_var_new[[search]] = cbind(latent_var_current[[search]],latent_var_toadd[[search]][,j,drop=FALSE])
 		start_latent_var_new = start_latent_var
 		start_latent_var_new[[search]] = c(start_latent_var[[search]],0)
-		fit_with = IMLEGIT(data=data, latent_var=latent_var_new, formula=formula, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+		fit_with = IMLEGIT(data=data, latent_var=latent_var_new, formula=formula, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		# p-values
 		p_value = stats::coef(summary(fit_with)[[search+1]])[,4]
 		good[j] = p_value[length(p_value)] <= p_threshold
@@ -1783,7 +1848,7 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 			data_with = data[comp_with,, drop=FALSE]
 			latent_var_with = latent_var_current
 			for (i in 1:k) latent_var_with[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-			fit_without = IMLEGIT(data=data_with, latent_var=latent_var_with, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit_without = IMLEGIT(data=data_with, latent_var=latent_var_with, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		}
 		else fit_without = fit
 
@@ -1860,7 +1925,7 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		if (!empty_start_dataset) fit_cv = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		if (!empty_start_dataset) fit_cv = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 		for (j in 1:elements_N){
 			# Running IMLEGIT with new variable
 			latent_var_new = latent_var_current
@@ -1868,7 +1933,7 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 			latent_var_new[[search]] = cbind(latent_var_current[[search]],latent_var_toadd[[search]][,j,drop=FALSE])
 			start_latent_var_new = start_latent_var
 			start_latent_var_new[[search]] = c(start_latent_var[[search]],0)
-			fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_new, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+			fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_new, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_new, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 			if (empty_start_dataset) fit_cv_without = NULL
 			else{
 				# If new variable has new missing data: Remove observations missing the new variable and rerun model without the variable (Note : with and without is confusing here)
@@ -1877,7 +1942,7 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 					data_with = data[comp_with,, drop=FALSE]
 					latent_var_with = latent_var_current
 					for (i in 1:k) latent_var_with[[i]] = latent_var_current[[i]][comp_with,, drop=FALSE]
-					fit_cv_without = IMLEGIT_cv(data=data_with, latent_var=latent_var_with, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+					fit_cv_without = IMLEGIT_cv(data=data_with, latent_var=latent_var_with, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 				}
 				else fit_cv_without = fit_cv
 			}
@@ -1972,17 +2037,17 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 	}
 	# Updated model and coefficients
 	start_latent_var[[search]] = c(start_latent_var[[search]],0)
-	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 	for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 	return(list(fit=fit, start_latent_var=start_latent_var, latent_var_current=latent_var_current,latent_var_toadd=latent_var_toadd))
 }
 
 
-backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE){
+backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_current)
 	if (search=="env") elements_N = NCOL(env_current)
-	if (elements_N == 0){
+	if (elements_N <= 1){
 		if (search=="genes" && print) cat("No gene removed\n")
 		if (search=="env" && print) cat("No environment removed\n")
 		return(NULL)
@@ -2010,11 +2075,11 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 	for (j in 1:elements_N){
 		if (search=="genes"){
 			comp_without = stats::complete.cases(data,genes_current[,-j,drop=FALSE],env_current)
-			fit_without = LEGIT(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit_without = LEGIT(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		}
 		if (search=="env"){
 			comp_without = stats::complete.cases(data,genes_current,env_current[,-j,drop=FALSE])
-			fit_without = LEGIT(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit_without = LEGIT(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		}
 		good[j] = p_value[j] <= p_threshold
 
@@ -2090,14 +2155,14 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		fit_cv_with = LEGIT_cv(data=data, genes=genes_current, env=env_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 		for (j in 1:elements_N){
 			# Only do this if not labelled as good
 			if (!good[j]){
 				if (search=="genes") comp_without = stats::complete.cases(data,genes_current[,-j,drop=FALSE],env_current)
 				if (search=="env") comp_without = stats::complete.cases(data,genes_current,env_current[,-j,drop=FALSE])
-				if (search=="genes") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
-				if (search=="env") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				if (search=="genes") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,-j,drop=FALSE], env=env_current[comp_with,,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes[-j], start_env=start_env, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
+				if (search=="env") fit_cv_without = LEGIT_cv(data=data[comp_with,,drop=FALSE], genes=genes_current[comp_with,,drop=FALSE], env=env_current[comp_with,-j,drop=FALSE], formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env[-j], eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 				if (search_criterion=="cv"){
 					criterion_before[j] = mean(fit_cv_with$R2_cv)
 					criterion_after[j] = mean(fit_cv_without$R2_cv)
@@ -2193,18 +2258,18 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 	# Updated model and coefficients
 	if (search=="genes") start_genes=start_genes[-worst_var]
 	if (search=="env") start_env=start_env[-worst_var]
-	fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 	start_genes = stats::coef(fit$fit_genes)
 	start_env = stats::coef(fit$fit_env)
 	if (search=="genes") return(list(fit=fit, start_genes=start_genes,start_env=start_env,genes_current=genes_current,genes_dropped=genes_dropped))
 	if (search=="env") return(list(fit=fit, start_genes=start_genes,start_env=start_env,env_current=env_current,env_dropped=env_dropped))
 }
 
-backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_dropped=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE){
+backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_dropped=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
 	k = length(latent_var_current)
 	# How much genes or env to add
 	elements_N = NCOL(latent_var_current[[search]])
-	if (elements_N == 0){
+	if (elements_N <= 1){
 		if (print) cat(paste0("No element from ", names(latent_var_current)[search]," was removed\n"))
 		return(NULL)
 	}
@@ -2242,7 +2307,7 @@ backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_v
 		}
 		start_latent_var_without = start_latent_var
 		start_latent_var_without[[search]] = start_latent_var[[search]][-j]
-		fit_without = IMLEGIT(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+		fit_without = IMLEGIT(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		good[j] = p_value[j] <= p_threshold
 
 		if (exclude_worse_AIC){
@@ -2308,7 +2373,7 @@ backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_v
 		# Set seed
 		if (!is.null(seed)) current_seed = seed
 		else current_seed = NULL
-		fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+		fit_cv_with = IMLEGIT_cv(data=data, latent_var=latent_var_current, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 		for (j in 1:elements_N){
 			# Only do this if not labelled as good
 			if (!good[j]){
@@ -2327,7 +2392,7 @@ backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_v
 				start_latent_var_without = start_latent_var
 				start_latent_var_without[[search]] = start_latent_var[[search]][-j]
 
-				fit_cv_without = IMLEGIT_cv(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, seed=current_seed)
+				fit_cv_without = IMLEGIT_cv(data=data[comp_with,,drop=FALSE], latent_var=latent_var_without, formula=formula, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_without, eps=eps, maxiter=maxiter, family=family, seed=current_seed, ylim=ylim)
 				if (search_criterion=="cv"){
 					criterion_before[j] = mean(fit_cv_with$R2_cv)
 					criterion_after[j] = mean(fit_cv_without$R2_cv)
@@ -2406,13 +2471,13 @@ backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_v
 	}
 	# Updated model and coefficients
 	start_latent_var[[search]] = start_latent_var[[search]][-worst_var]
-	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+	fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 	for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 	return(list(fit=fit, start_latent_var=start_latent_var,latent_var_current=latent_var_current,latent_var_dropped=latent_var_dropped))
 }
 
 
-stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="both", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE, remove_miss=FALSE){
+stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="both", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE, remove_miss=FALSE){
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
 	if (search_criterion=="AIC") string_choice="lowest AIC"
@@ -2475,7 +2540,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		env_current = env_original
 		if (!empty_start_dataset){
 			# Original model
-			fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			start_genes = stats::coef(fit$fit_genes)
 			start_env = stats::coef(fit$fit_env)
 		}
@@ -2552,7 +2617,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 		genes_current = genes_original
 		env_current = env_original
 		# Original model
-		fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+		fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		start_genes = stats::coef(fit$fit_genes)
 		start_env = stats::coef(fit$fit_env)
 		# Creating empty data frames of same size as the other data frames
@@ -2646,7 +2711,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			env_current = env_original
 			if (!empty_start_dataset){
 				# Original model
-				fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+				fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 				start_genes = stats::coef(fit$fit_genes)
 				start_env = stats::coef(fit$fit_env)
 			}
@@ -2668,7 +2733,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 			genes_current = genes_original
 			env_current = env_original
 			# Original model
-			fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit = LEGIT(data=data, genes=genes_current, env=env_current, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			start_genes = stats::coef(fit$fit_genes)
 			start_env = stats::coef(fit$fit_env)
 			# Creating empty data frames of same size as the other data frames
@@ -2822,7 +2887,7 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 }
 
 
-stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, seed=NULL, print=TRUE, remove_miss=FALSE){
+stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE, remove_miss=FALSE){
 	k = max(length(latent_var_original),length(latent_var_extra))
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
@@ -2902,7 +2967,7 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 		latent_var_current = latent_var_original
 		if (!empty_start_dataset){
 			# Original model
-			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 		}
 		else{
@@ -2954,11 +3019,10 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 			if (search_criterion=="cv_AUC") classification=TRUE
 			if (search==0) cat(paste0("Backward search of the elements from all latent variables to find the model with the ", string_choice,"\n"))
 			else cat(paste0("Backward search of the elements from ", names(latent_var_original)[search]," to find the model with the ", string_choice,"\n"))
-
 		}
 		latent_var_current = latent_var_original
 		# Original model
-		fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+		fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 		for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 		# Creating empty data frames of same size as the other data frames
 		latent_var_dropped = latent_var_original
@@ -2996,15 +3060,15 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 				latent_var_current=results$latent_var_current
 				latent_var_dropped=results$latent_var_dropped
 				if (NCOL(latent_var_current[[search_current]])==1){
-					if (search == 0){
-						latent_var_conv[search_current] = TRUE
-						if (sum(latent_var_conv) == k) conv = TRUE	
-						if (search_current != k) search_current = search_current + 1
-						else search_current = 1
+				if (search == 0){
+					latent_var_conv[search_current] = TRUE
+					if (sum(latent_var_conv) == k) conv = TRUE	
+					if (search_current != k) search_current = search_current + 1
+					else search_current = 1
 					}
-					else conv = TRUE
-					if (conv) break
-				}
+				else conv = TRUE
+				if (conv) break
+			}
 			}
 		}
 	}
@@ -3026,7 +3090,7 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 			latent_var_current = latent_var_original
 			if (!empty_start_dataset){
 				# Original model
-				fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+				fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 				for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 			}
 			else{
@@ -3043,7 +3107,7 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 		if (search_type == "bidirectional-backward"){
 			latent_var_current = latent_var_original
 			# Original model
-			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, print=FALSE)
+			fit = IMLEGIT(data=data, latent_var=latent_var_current, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			for (i in 1:k) start_latent_var[[i]] = stats::coef(fit$fit_latent_var[[i]])
 			# Creating empty data frames of same size as the other data frames
 			latent_var_toadd_ordrop = latent_var_original
@@ -3154,7 +3218,7 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 }
 
 
-bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, boot_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5){
+bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, boot_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5){
 	k = max(length(latent_var_original),length(latent_var_extra))
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -3289,4 +3353,191 @@ bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, b
 	names(unique_subset) = paste0("Subset", seq(1,length(unique_subset)))
 	cat("\nDone\n")
 	return(list(var_select=var_select, subset_select=unique_subset_count, best_subset=unique_subset))
+}
+
+
+genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold=.10, popsize=25, mutation_prob=.50, latent_var=NULL, search_criterion="AIC", maxgen = 100, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE){
+	k = length(latent_var)
+	## Removing missing data and checks
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	#  Check for empty latent variable (Note: Probably shouldn't be named empty_start_dataset but empty_start_latent_var althought that would be even more confusing considering start_latent_var)
+	if (is.null(latent_var)) stop("latent_var cannot be null. However, if search=i, then you could set latent_var[[i]]=NULL.")
+	# Make it to have NULL elements but not be NULL
+	comp = rep(TRUE, NROW(data))
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) comp = comp & stats::complete.cases(data, latent_var[[i]])
+	}
+	data = data[comp,, drop=FALSE]
+	N_var = 0
+	var = c()
+	var_k = c()
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+		N_var = NCOL(latent_var[[i]]) + N_var
+		var = c(var, names(latent_var[[i]]))
+		var_k = c(var_k, c(rep(i,NCOL(latent_var[[i]]))))
+	}
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	# Setting up parallel
+	cl <- snow::makeCluster(n_cluster)
+	doSNOW::registerDoSNOW(cl)
+	if (progress){
+		pb = utils::txtProgressBar(max = parallel_iter, style = 3)
+		progress <- function(n) utils::setTxtProgressBar(pb, n)
+		opts <- list(progress = progress)
+	}
+	else opts <- list()
+	# Need to use this "with(c(),CODEHERE)" to prevent R check from returning a "no visible binding for global variable"
+	with(c(),{
+		results <- foreach::foreach(b = 1:parallel_iter, .options.snow = opts) %dopar% {
+			if (!is.null(seed)) set.seed(seed+b)
+			# The names of the variables selected is going to be the names of start_latent_var_pop elements
+			start_latent_var_pop  = vector("list", popsize)
+			# r if the frequency of appearance
+			r = rep(0, N_var)
+			indexes_pop = vector("list", popsize)
+			# cirterion of the individual
+			crit = rep(0, popsize)
+			# Generate population
+			for (p in 1:popsize){
+				start_latent_var_pop[[p]] = vector("list", k)
+				names(start_latent_var_pop[[p]]) = names(latent_var)
+				# current latent_var (not to be retained, temporary)
+				latent_var_pop = vector("list", k)
+				names(latent_var_pop) = names(latent_var)
+				for (i in 1:k){
+					indexes = sample(1:NCOL(latent_var[[i]]),size=sample(1:NCOL(latent_var[[i]]),1))
+					latent_var_pop[[i]] = latent_var[[i]][,indexes,drop=FALSE]
+					r = r + var %in% colnames(latent_var_pop[[i]])
+					# Keeping indexes 
+					indexes_pop[[p]] = c(indexes_pop[[p]], 1:NCOL(latent_var[[i]]) %in% indexes)
+					# Starting point generation  (Dirichlet distribution)
+					start_latent_var_pop[[p]][[i]] = rgamma(length(indexes),1)*(1-2*rbinom(length(indexes),1,.5))
+					start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(start_latent_var_pop[[p]][[i]])
+					names(start_latent_var_pop[[p]][[i]]) = colnames(latent_var_pop[[i]])
+				}
+				# Fit model
+				fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+				start_latent_var_pop[[p]] = lapply(fit$fit_latent_var,coef)
+				if (search_criterion=="AIC") crit[p] = fit$true_model_parameters$AIC
+				else if (search_criterion=="AICc") crit[p] = fit$true_model_parameters$AICc
+				else if (search_criterion=="BIC") crit[p] = fit$true_model_parameters$BIC
+				else{
+					fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+					if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)	
+					else if (search_criterion=="cv_Huber") crit[p] = mean(fit_cv$Huber_cv)
+					else if (search_criterion=="cv_L1") crit[p] = mean(fit_cv$L1_cv)
+					else if (search_criterion=="cv_AUC") crit[p] = mean(fit_cv$AUC)				
+				}
+			}
+			# print(lapply(latent_var_pop,function(x) lapply(x,dim)))
+			r_ = r/popsize
+			entropy = - (1/N_var)*sum(r_*log2(r_) + (1-r_)*log2(1-r_), na.rm=TRUE)
+			step = 0
+			conv = TRUE
+			while(entropy > entropy_threshold){
+				step =  step + 1
+				# Selection of the survivors
+				if(search_criterion=="cv" || search_criterion=="cv_AUC") ordered_crit = order(crit, decreasing=TRUE)
+				else ordered_crit = order(crit, decreasing=FALSE)
+				survivors = ordered_crit[1:(popsize/2)]
+				deaths = ordered_crit[((popsize/2)+1):popsize]
+				# Reproduction, make babies
+				for (p in deaths){
+					parents = sample(survivors,2)
+					# Mutation index, do not mutate yet until children is born
+					Mutation_index = sample(1:N_var,1)
+					Mutation_yesorno = runif(1) < (mutation_prob)
+					latent_var_pop = vector("list", k)
+					names(latent_var_pop) = names(latent_var)
+					for (i in 1:k){
+						# Cross-over for latent variable i
+						crossover = sample(which(var_k == i),length(which(var_k==i))/2)
+						indexes_pop[[p]][var_k == i] = indexes_pop[[parents[1]]][var_k == i]
+						indexes_pop[[p]][crossover] = indexes_pop[[parents[2]]][crossover]
+						if (sum(indexes_pop[[p]][var_k == i])==0){
+							# We have no variable in child, we need to reverse order of parenting to fix this
+								indexes_pop[[p]][var_k == i] = indexes_pop[[parents[2]]][var_k == i]
+								indexes_pop[[p]][crossover] = indexes_pop[[parents[1]]][crossover]
+						}
+						# Mutation
+						if (var_k[Mutation_index]==i && Mutation_yesorno){
+							indexes_pop[[p]][Mutation_index] = !indexes_pop[[p]][Mutation_index]
+							# Revert back if this remove all variables
+							if (sum(indexes_pop[[p]][var_k == i])==0) indexes_pop[[p]][Mutation_index] = !indexes_pop[[p]][Mutation_index]
+						}
+						# Removing current one from r
+						r = r - (var %in% names(start_latent_var_pop[[p]][[i]]))
+						# New latent var
+						latent_var_pop[[i]] = latent_var[[i]][,indexes_pop[[p]][var_k == i],drop=FALSE]
+						# Added new one to r
+						r = r + var %in% colnames(latent_var_pop[[i]])
+						# Index of the variables the child has
+						b_index = which(indexes_pop[[p]][var_k==i])
+						# Index of the variables the parents have
+						p1_index = which(indexes_pop[[parents[1]]][var_k==i])
+						p2_index = which(indexes_pop[[parents[2]]][var_k==i])
+						start_latent_var_pop[[p]][[i]] = rep(NA, length(b_index))
+						# Average starting point of parents (Not sure if this ideal? Could also use the splitting thing from birthing)
+						for (j in b_index){
+							if ((j %in% p1_index) && (j %in% p2_index)) start_latent_var_pop[[p]][[i]][b_index == j] = (start_latent_var_pop[[parents[1]]][[i]][p1_index == j] + start_latent_var_pop[[parents[2]]][[i]][p2_index == j])/2
+							else if ((j %in% p1_index) && !(j %in% p2_index)) start_latent_var_pop[[p]][[i]][b_index == j] = start_latent_var_pop[[parents[1]]][[i]][p1_index == j]
+							else if (!(j %in% p1_index) && (j %in% p2_index)) start_latent_var_pop[[p]][[i]][b_index == j] = start_latent_var_pop[[parents[2]]][[i]][p2_index == j]
+							else start_latent_var_pop[[p]][[i]][b_index == j] = 0
+						}
+						start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(start_latent_var_pop[[p]][[i]])
+					}
+					# Fit model
+					fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+					start_latent_var_pop[[p]] = lapply(fit$fit_latent_var,coef)
+					if (search_criterion=="AIC") crit[p] = fit$true_model_parameters$AIC
+					else if (search_criterion=="AICc") crit[p] = fit$true_model_parameters$AICc
+					else if (search_criterion=="BIC") crit[p] = fit$true_model_parameters$BIC
+					else{
+						fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+						if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)
+						else if (search_criterion=="cv_Huber") crit[p] = mean(fit_cv$Huber_cv)
+						else if (search_criterion=="cv_L1") crit[p] = mean(fit_cv$L1_cv)
+						else if (search_criterion=="cv_AUC") crit[p] = mean(fit_cv$AUC)				
+					}
+				}
+				r_ = r/popsize
+				entropy = - (1/N_var)*sum(r_*log2(r_) + (1-r_)*log2(1-r_), na.rm=TRUE)
+				if (step >= maxgen){
+					conv = FALSE
+					break
+				}
+			}
+			# We won't return the whole population but just the % of times variables are selected(r) and top K models
+			if (search_criterion=="cv" || search_criterion=="cv_AUC") ordered_crit = order(crit, decreasing=TRUE)
+			else ordered_crit = order(crit, decreasing=FALSE)
+			list_best_latent_var_crit = crit[ordered_crit[1:best_subsets]]
+			list_best_latent_var_start = start_latent_var_pop[ordered_crit[1:best_subsets]]
+			return(list(list_best_latent_var_crit=list_best_latent_var_crit, list_best_latent_var_start=list_best_latent_var_start,r=r, conv=conv, entropy=entropy))
+		}
+		close(pb)
+		snow::stopCluster(cl)
+	})
+	list_best_latent_var_crit = results[[1]]$list_best_latent_var_crit
+	list_best_latent_var_start = results[[1]]$list_best_latent_var_start
+	list_entropy = results[[1]]$entropy
+	# Keeping the best ones
+	if (parallel_iter > 1){
+		for (i in 2:parallel_iter){
+			best_latent_crit = c(list_best_latent_var_crit, results[[i]]$list_best_latent_var_crit)
+			if (search_criterion=="cv" || search_criterion=="cv_AUC") ordered_crit = order(best_latent_crit, decreasing=TRUE)
+			else ordered_crit = order(best_latent_crit, decreasing=FALSE)
+			list_best_latent_var_crit = c(list_best_latent_var_crit, results[[i]]$list_best_latent_var_crit)[ordered_crit[1:best_subsets]]
+			list_best_latent_var_start = c(list_best_latent_var_start, results[[i]]$list_best_latent_var_start)[ordered_crit[1:best_subsets]]
+			list_entropy = c(list_entropy, results[[i]]$entropy)
+		} 
+	}
+	# Getting percentages of variables used
+	var_select = Reduce("+",lapply(results,function(x) x$r/popsize))/parallel_iter
+	names(var_select) = var
+	return(list(var_select=var_select, best_subsets_crit=list_best_latent_var_crit, best_subsets_start=list_best_latent_var_start, entropy=list_entropy))
 }

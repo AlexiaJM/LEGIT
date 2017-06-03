@@ -10,9 +10,9 @@ stepwise_search_IM(data, formula, interactive_mode = FALSE,
   search_criterion = "AIC", forward_exclude_p_bigger = 0.2,
   backward_exclude_p_smaller = 0.01, exclude_worse_AIC = TRUE,
   max_steps = 100, cv_iter = 5, cv_folds = 10, folds = NULL,
-  Huber_p = 1, classification = FALSE, start_latent_var = NULL,
-  eps = 0.01, maxiter = 100, family = gaussian, seed = NULL,
-  print = TRUE, remove_miss = FALSE)
+  Huber_p = 1.345, classification = FALSE, start_latent_var = NULL,
+  eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
+  seed = NULL, print = TRUE, remove_miss = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -45,7 +45,7 @@ stepwise_search_IM(data, formula, interactive_mode = FALSE,
 
 \item{folds}{Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.}
 
-\item{Huber_p}{Parameter controlling the Huber cross-validation error (Default =1).}
+\item{Huber_p}{Parameter controlling the Huber cross-validation error (Default = 1.345).}
 
 \item{classification}{Set to TRUE if you are doing classification (binary outcome).}
 
@@ -56,6 +56,8 @@ stepwise_search_IM(data, formula, interactive_mode = FALSE,
 \item{maxiter}{Maximum number of iterations.}
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
+
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
 
 \item{seed}{Seed for cross-validation folds.}
 

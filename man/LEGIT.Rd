@@ -5,7 +5,8 @@
 \title{Latent Environmental & Genetic InTeraction (LEGIT) model}
 \usage{
 LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
-  eps = 0.001, maxiter = 100, family = gaussian, print = TRUE)
+  eps = 0.001, maxiter = 100, family = gaussian, ylim = NULL,
+  print = TRUE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -25,6 +26,8 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
 \item{maxiter}{Maximum number of iterations.}
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
+
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
 
 \item{print}{If FALSE, nothing except warnings will be printed. (Default = TRUE).}
 }
