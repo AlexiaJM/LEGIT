@@ -14,6 +14,7 @@ The LEGIT model is an interaction model with two latent variables: a weighted su
 **How to use**
 
 A vignette explaining how to use the software is available here : https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/LEGIT.html
+
 An additionnal vignetter explaining how it can be used for G x E testing as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013) is available here: https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/GxE_testing.html
 
 **How to install**
