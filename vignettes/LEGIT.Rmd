@@ -51,27 +51,44 @@ Full details of the algorithm are available on [arXiv](arxiv.org/abs/1703.08111)
 
 ## Implementation
 
-In the LEGIT package, we include the following main functions:
+In the LEGIT package, we include the following functions:
 
 To fit a LEGIT model with 2 latent variables (G and E)
 
 * LEGIT: Fits a LEGIT model
-* LEGIT_cv: Uses cross-validation on a LEGIT model
-* stepwise_search: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a LEGIT model
+* plot.LEGIT: Plot function for LEGIT models.
+* predict.LEGIT: Predictions of LEGIT fits.
+* summary.LEGIT: Summarizing LEGIT fits.
+* LEGIT_cv: Uses cross-validation on a LEGIT model.
+* stepwise_search: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a LEGIT model.
+* GxE_interaction_test: Testing of the GxE interaction, a method adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress/vantage-sensitivity vs differential susceptibility), assuming or not assuming a main effect for E (WEAK vs STRONG) using the LEGIT model.
 
 To fit a IMLEGIT model (LEGIT model with more than 2 latent variables)
 
-* IMLEGIT: Fits a IMLEGIT model
-* IMLEGIT_cv: Uses cross-validation on a IMLEGIT model
-* stepwise_search_IM: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a IMLEGIT model
+* IMLEGIT: Fits a IMLEGIT model.
+* predict.IMLEGIT: Predictions of IMLEGIT fits.
+* summary.IMLEGIT: Summarizing IMLEGIT fits.
+* IMLEGIT_cv: Uses cross-validation on a IMLEGIT model.
+* stepwise_search_IM: Adds the best variable or drops the worst variable one at a time in the genetic or environmental score of a IMLEGIT model.
 * bootstrap_var_select: Creates bootstrap samples, run stepwise search on all of them and then report the percentage of times that each variables were selected.
+* genetic_var_select: Parallel genetic algorithm variable selection.
+
+To simulate examples of GxE models
+
+* example_2way: Simulated example of a 2 way interaction GxE model (where G and E are latent variables).
+* example_3way: Simulated example of a 3 way interaction GxExz model (where G and E are latent variables).
+* example_3way_3latent: Simulated example of a 3 way interaction GxExZ model (where G, E and Z are latent variables).
+* example_with_crossover: Simulated example of a 2 way interaction GxE model with cross-over point (where G and E are latent variables).
+
+Others
+
+* longitudinal_folds: Function to create folds adequately for longitudinal datasets by forcing every observation with the same id to be in the same fold. Can be used with LEGIT_cv to make sure that the cross-validation folds are appropriate when using longitudinal data.
 
 ## Notes
 
 - Interactions inside the genetic and environmental scores must be manually coded as new variables (ex: g1, g2, g1_g2 where g1_g2=g1*g2).
 - Default starting point is set to $1/k$ for each of the genetic variants and $1/s$ for each of the environmental variables.
 - Only local convergence is guaranteed, therefore it is recommended to try different starting points. 
-- Experimentally, we rarely ended up stuck in a local optimum but when we did it was when using a starting point which assumed that every genetic variant had a positive weight while some genetic variants had positive weights and some genetic variants had negative weights. Adding genetic variants in a stepwise manner while readjusting the starting point at every step is thus recommended (This is done automatically in the stepwise_search function).
 
 ## How to use the LEGIT package: Example 1
 
@@ -79,7 +96,8 @@ Let's look at a three-way interaction model with continuous outcome:
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
 $$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
-$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$ 
+$$\mathbf{z} \sim Normal(\mu=3,\sigma=1)$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$
 $$ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
 $$\mathbf{\mu} = -2 + 2\mathbf{g} + 3\mathbf{e} + \mathbf{z} + 5\mathbf{ge} + 2\mathbf{gz} - 1.5\mathbf{ez} + 2\mathbf{gez} $$ 
 $$ y \sim Normal(\mu,\sigma=1)$$
@@ -108,6 +126,13 @@ ssres = sum((test$data$y - predict(fit_default, test$data, test$G, test$E))^2)
 sstotal = sum((test$data$y - mean(test$data$y))^2)
 R2 = 1 - ssres/sstotal
 R2
+```
+
+We can also plot the model at specific values of z.
+```{r fig3, fig.height = 5, fig.width = 5}
+cov_values = c(3)
+names(cov_values) = "z"
+plot(fit_default, cov_values = cov_values,cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
 ```
 
 Now, let's see what happens if we introduce variables that are not in the model. Let's add these irrelevant genetic variants:
@@ -163,12 +188,17 @@ fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E, family=binomial)
 summary(fit_default)
 ```
 We are a little off, especially with regards to the weights of the genetic variants. This is because there is substantial loss of information with binary outcomes. To assess the quality of the fit, we are going to do a 5-Folds cross-validation.
-```{r}
+```{r fig1, fig.height = 5, fig.width = 5}
 cv_5folds_bin = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, cv_iter=1, cv_folds=5, classification=TRUE, family=binomial, seed=777)
 pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
 ```
 
 Although the weights of the genetic variants are a bit off, the model predictive power is good.
+
+We can also plot the model.
+```{r fig2, fig.height = 5, fig.width = 5}
+plot(fit_default, cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+```
 
 ## How to use the LEGIT package: Example 3
 
@@ -176,7 +206,7 @@ In example 1 we looked at a 3-way model but only two of the three variables were
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
 $$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
-$$\mathbf{z}_t \sim Normal(\mu=0,\sigma=1.5) \\ t = 1, 2, 3$$
+$$\mathbf{z}_t \sim Normal(\mu=3,\sigma=1)$$
 $$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$
 $$ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
 $$ \mathbf{z} = .15\mathbf{z}_1 + .60\mathbf{z}_2 + .25\mathbf{z}_3$$

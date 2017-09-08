@@ -16,6 +16,11 @@ sstotal = sum((test$data$y - mean(test$data$y))^2)
 R2 = 1 - ssres/sstotal
 R2
 
+## ----fig3, fig.height = 5, fig.width = 5---------------------------------
+cov_values = c(3)
+names(cov_values) = "z"
+plot(fit_default, cov_values = cov_values,cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+
 ## ------------------------------------------------------------------------
 g1_bad = rbinom(250,1,.30)
 g2_bad = rbinom(250,1,.30)
@@ -44,9 +49,12 @@ train = example_2way(N=1000, logit=TRUE, seed=777)
 fit_default = LEGIT(train$data, train$G, train$E, y ~ G*E, family=binomial)
 summary(fit_default)
 
-## ------------------------------------------------------------------------
+## ----fig1, fig.height = 5, fig.width = 5---------------------------------
 cv_5folds_bin = LEGIT_cv(train$data, train$G, train$E, y ~ G*E, cv_iter=1, cv_folds=5, classification=TRUE, family=binomial, seed=777)
 pROC::plot.roc(cv_5folds_bin$roc_curve[[1]])
+
+## ----fig2, fig.height = 5, fig.width = 5---------------------------------
+plot(fit_default, cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
 
 ## ------------------------------------------------------------------------
 library(LEGIT)

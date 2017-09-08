@@ -54,9 +54,9 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 
 \item{classification}{Set to TRUE if you are doing classification (binary outcome).}
 
-\item{start_genes}{Optional starting points for genetic score (must be same length as the number of columns of \code{genes}).}
+\item{start_genes}{Optional starting points for genetic score (must be the same length as the number of columns of \code{genes}).}
 
-\item{start_env}{Optional starting points for environmental score (must be same length as the number of columns of \code{env}).}
+\item{start_env}{Optional starting points for environmental score (must be the same length as the number of columns of \code{env}).}
 
 \item{eps}{Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).}
 
@@ -64,7 +64,7 @@ stepwise_search(data, formula, interactive_mode = FALSE,
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
 
-\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
 
 \item{seed}{Seed for cross-validation folds.}
 

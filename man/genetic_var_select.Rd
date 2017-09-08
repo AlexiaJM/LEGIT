@@ -6,10 +6,11 @@
 \usage{
 genetic_var_select(data, formula, parallel_iter = 10,
   entropy_threshold = 0.1, popsize = 25, mutation_prob = 0.5,
-  latent_var = NULL, search_criterion = "AIC", maxgen = 100, eps = 0.01,
-  maxiter = 100, family = gaussian, ylim = NULL, seed = NULL,
-  progress = TRUE, n_cluster = 1, best_subsets = 5, cv_iter = 5,
-  cv_folds = 5, folds = NULL, Huber_p = 1.345, classification = FALSE)
+  first_pop = NULL, latent_var = NULL, search_criterion = "AIC",
+  maxgen = 100, eps = 0.01, maxiter = 100, family = gaussian,
+  ylim = NULL, seed = NULL, progress = TRUE, n_cluster = 1,
+  best_subsets = 5, cv_iter = 5, cv_folds = 5, folds = NULL,
+  Huber_p = 1.345, classification = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -24,6 +25,8 @@ genetic_var_select(data, formula, parallel_iter = 10,
 
 \item{mutation_prob}{Probability of mutation (Default = .50). A single variable is selected for mutation and it is mutated with probability \code{mutation_prob}. If the mutation causes a latent variable to become empty, no mutation is done. Using a small value (close to .05) will lead to getting more stuck in suboptimal solutions but using a large value (close to 1) will greatly increase the computing time because it will have a hard time reaching the entropy threshold.}
 
+\item{first_pop}{optional Starting initial population which is used instead of a fully random one. Mutation is also done on the initial population to increase variability.}
+
 \item{latent_var}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...}
 
 \item{search_criterion}{Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.}
@@ -36,7 +39,7 @@ genetic_var_select(data, formula, parallel_iter = 10,
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
 
-\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with distribution that already assume the proper range (ex: [0,1] with binomial distribution).}
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
 
 \item{seed}{Optional seed.}
 

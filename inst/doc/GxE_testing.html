@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>GxE testing</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h2>GxE testing</h2>
+
+<p>From version 1.2.0 of the LEGIT package, we introduce a function to test for different types of gene-by-environment interactions as per <a href="https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013">Belsky et al. (2013)</a>. The goal of testing the interaction is to know:</p>
+
+<ol>
+<li><p>Does the GxE reflect diathesis stress, differential susceptibility or vantage sensitivity?</p></li>
+<li><p>Can we assume that having a genetic score of 0 makes one completely nonsusceptible to the environment (STRONG) or can individuals with a genetic score of 0 still be slightly susceptible (WEAK)?</p></li>
+</ol>
+
+<p>See the figure below for a graphical representation of different types of interactions:
+<img src="https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/GxE_testing.png" alt=""/></p>
+
+<p>Vantage sensitivity is not presented here but it is just like diathesis-stress with a positive predictor. Note that the Figure assume only one genetic variant, but with the LEGIT model, we consider multiple genetic variants and the more genetic variants there are, the fewer there are individuals with a genetic score of 0.</p>
+
+<p>To test for differential susceptibility, Widaman et al. (2013) estimate the cross-over point of the model. This can be done easily with LEGIT by simply adding a negative intercept to the environment E. This can be seen by the following:
+\[y = 2 + 3(E-c) + 5G(E-c) \ E = q_1e_1 + q_2e_2 + &hellip; + q_le_l\]
+is equivalent to
+\[y = 2 + 3E' + 5GE' \ E' = -c + q_1e_1 + q_2e_2 + &hellip; + q_le_l\]</p>
+
+<p>Note that by default, we invert the genetic variants that have negative weights (if \(g_i\) has negative weight, then we use \(1-g_i\)) to prevent the possibility of a negative genetic score which would complicate the interpretation of the model. In the examples below, all the weights are positive so this potential problem is not encountered. </p>
+
+<h2>Simulation of diathesis-stress and differential susceptibility</h2>
+
+<p>Let&#39;s look at a two-way interaction model with a cross-over point and a continuous outcome:</p>
+
+<p>\[\mathbf{g}_j \sim Binomial(n=1,p=.30) \ j = 1, 2, 3, 4\]
+\[\mathbf{e}_l \sim max(Poisson(\mu=0,\sigma=4), 10) \ l = 1, 2, 3\]
+\[\mathbf{g} = .30\mathbf{g}_1 + .10\mathbf{g}_2 + .20\mathbf{g}_3 + .40\mathbf{g}_4 \]
+\[ \mathbf{e} = .45\mathbf{e}_1 + .35\mathbf{e}_2 + .20\mathbf{e}_3\]
+\[\mathbf{\mu} = 3 + \beta_E(\mathbf{e}-c) + 2\mathbf{g}(\mathbf{e}-c) \] 
+where \(c\) and \(\beta_E\) depends on the model assumed. \(c = 0\) represents diathesis-stress while \(c \ne 0\) represents differential susceptibility. \(\beta_E = 0\) assume a STRONG model while \(\beta_E \ne 0\) assume a STRONG model.</p>
+
+<p>\[ y \sim Normal(\mu,\sigma=1)\]</p>
+
+<p>Note that the environmental score E is in the range [0,10].</p>
+
+<h2>Example 1: Diathesis-stress WEAK</h2>
+
+<p>When assuming diathesis-stress WEAK, we let \(c=0\):
+\[\mathbf{\mu} = 3 + (\mathbf{e}-0) + 2\mathbf{g}(\mathbf{e}-0) \] </p>
+
+<p>We generate N=250 observations and test all 4 possible models based on the BIC (other choices are also available: AIC, AICc, cross-validation and cross-validated AUC). It is important to not include G or E in the model formula because they will be added automatically. In this case, we assume that we don&#39;t know the true minimum of the environment, thus we use option <em>crossover = &ldquo;min&rdquo;</em> to find the minimum of the observed data. </p>
+
+<pre><code class="r">library(LEGIT)
+</code></pre>
+
+<pre><code>## Loading required package: formula.tools
+</code></pre>
+
+<pre><code>## Loading required package: operator.tools
+</code></pre>
+
+<pre><code class="r">ex_dia = example_with_crossover(N=250, c=0, coef = c(3,1,2), sigma=1, seed=7)
+GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code class="r">GxE_test_BIC$results
+</code></pre>
+
+<pre><code>##                                    BIC      crossover 95%      
+## Differential susceptibility WEAK   &quot;759.69&quot; &quot;( -0.66 / -0.18 )&quot;
+## Diathesis-stress WEAK              &quot;764.16&quot; &quot;&quot;                 
+## Differential susceptibility STRONG &quot;873.53&quot; &quot;( 1.77 / 2.41 )&quot;  
+## Diathesis-stress STRONG            &quot;946.82&quot; &quot;&quot;                 
+##                                    Within observable range?
+## Differential susceptibility WEAK   &quot;No&quot;                    
+## Diathesis-stress WEAK              &quot;&quot;                      
+## Differential susceptibility STRONG &quot;Yes&quot;                   
+## Diathesis-stress STRONG            &quot;&quot;
+</code></pre>
+
+<p>Here we see the results. Notice that diathesis-stress WEAK is not the model with the lowest BIC. Differential susceptibility WEAK is slightly a better fit but the crossover point is not within observable range, thus we reject it.</p>
+
+<p>Considering that we know that the minimum of E is 0, we can also refit the models with <em>crossover = 0</em></p>
+
+<pre><code class="r">GxE_test_BIC_ = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = 0, criterion=&quot;BIC&quot;)
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code class="r">GxE_test_BIC_$results
+</code></pre>
+
+<pre><code>##                                    BIC      crossover 95%      
+## Diathesis-stress WEAK              &quot;754.82&quot; &quot;&quot;                 
+## Differential susceptibility WEAK   &quot;759.69&quot; &quot;( -0.66 / -0.18 )&quot;
+## Differential susceptibility STRONG &quot;873.53&quot; &quot;( 1.77 / 2.41 )&quot;  
+## Diathesis-stress STRONG            &quot;982.5&quot;  &quot;&quot;                 
+##                                    Within observable range?
+## Diathesis-stress WEAK              &quot;&quot;                      
+## Differential susceptibility WEAK   &quot;No&quot;                    
+## Differential susceptibility STRONG &quot;Yes&quot;                   
+## Diathesis-stress STRONG            &quot;&quot;
+</code></pre>
+
+<p>This time, diathesis-stress WEAK is the best fit so we get the same conclusion.
+Note that we only show the element <em>results</em> of the output, but the 4 models are also returned. </p>
+
+<p>We can then plot the best model:</p>
+
+<pre><code class="r">plot(GxE_test_BIC$fits$diathesis_stress_WEAK, xlim=c(0,10), ylim=c(3,13),cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAFoCAMAAABNO5HnAAAApVBMVEUAAAAAADoAAGYAOjoAOpAAZpAAZrYoIxgrDBAyiL06AAA6ADo6AGY6Ojo6OpA6ZmY6kLY6kNtQkK9mAABmADpmAGZmZmZmZrZmkNtmtrZmtv9rgJyQOgCQOjqQtpCQ2/+2ZgC2tma2/7a2///KsXbMmm7UvL3U3NnVPk/W5/LbkDrbtmbb25Db/9vb///uzMb07+T32Nz/tmb/25D//7b//9v///86ZrVoAAAACXBIWXMAAAsSAAALEgHS3X78AAAQlklEQVR4nO2da0PcuhGGnUtp2Jz2dKFXwiluQ1jstmHZBf//n1bdfdHFK1sayfa8HwjrGI38MIxG0tguGhSIitQd2IoQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJAQNJCmgC6L4uP34D1ZufxA10Xx+SfhXBQfHrSWEsja0ePx8fF49McRT16ga3pxn3Z3TfN2ezWrpTCymuScFwv6/f7zz+a8Y4hrLXhkBPqYn0N74Xm73ZOv5RJAZ8fZ06NVZH67Jc49vaVAspiknBcNujkVBfVpQtw0GIbq0uUym8wxcPjiOe8Y6KY0pHcZgc6Qc0A8uYAOHziqEI0EwDOa1EaTFXRYzrmAHrZ03hV0XuM+uyYxqBw76WKTHUXgnCnomg6YnQTFKJ4phjLZVWjQVQLQb7ed2a8tjz7JxESbOvabigQ6Bmd4jy4vAC3jQf33n3zOzvx7X4powo/Q6PLxOzu17q6bnGTD6qhooSl/x1JK+dHWeZ7a+VyTW1Ua0OQ670Za6i2C1AQNzQhJ3n3H/0ceYR5NQdMDapZ53t3xeb46Worzye9432nQ2vnADl2lAm1MoHstdTCI7wkwBo9yVUckaEZfxZGTaF0dFecTvMyw+nFb53lq53dJDlXpQDtiaxc0jTEfHk7sr5+4KQ/YhKs6IkFTH25FIsod/1ccVefziNR+tHQ+rENXCUGPtqRCB3HDWoTzFrQ6YgZNYwz5Tyto9eOWzgflXFVZg+ZRomGgT3KUG3h00zQW0Ozc4m4A+lT0PNra+aBzwipz0IwKFQHNwwiho0CrI70Y3U8FWWARRzsxmoJWP27sfNDFpCp70HzCQqI0IUNzBgpNgVZHelmHIse+YRmHPMqzjiuZNcofN3U+JOeqWgBoPq/hmQENqled0KGOkH9NeXRdiE96Hs0jkvxxQ+cDBo5qGaDh1DUZj/P19XWARlcFOhZnBN1+G27fW+eMoaMLOlTgMHBG0K3JYIHDxBlBK5NxOSPoFnSgtSQzZwQtTYZahNayjWvMo7smQwUOG2cELUGHCRzGqIGgW5OBAoedM4IWoIMEDgdnBM1MhgkcLs4IWoKOzBlBU5MhAoeWblTrBd1baOaVOmwnnC9sn38xbr4XYUbCMc5rAk23ZU6KtNpyKa+amlUqmMtJiiCBwx02wmDOBTTfnlIFG7Wq79g3568PzfmP5mrIIoRDw3COB/rarf7JfNu77jgy09stKz14/81SMFkEcGggztFAj3A2blrIMqj3+z/wnUIG+uvDyVYvWdDUbl6vRzjPa7yrPDyaqZbli20NAovR//vt4WQuuC5mOzQY50xiNNWp6DvuiZUWkKzjdEVitbEMuFgO53xA18Wgqk9W4rz95TtlXhtcei5oJ+c5DRuUC+hyyLktedqzKlP9DlIKOhhnLX2e07BJmYDuFV6LHISTJQ7dWD161pxwgDku50xAd6uqxTj4fi9uaWS3+O/lx77JgJzjYs4FtKjHpRV3zLVLVZvL5yrnnTnrmGHSNQrOaNaqPEDDm4TmvFXQ4Jw3Chqe8zZBww6DXFsEnYLzBkEnCBtUmwPt4By8f11tDXQqzrmAVruE7Hbwq2Z0u3CiyWSccwHd3pgl7xof2S6cZtLOeWrHL1YmoGu1ucK8mt+I6NounGTSnm5M7vjFigb60a3BD8tdQr66RL6ObRdO6byVs18z0xQL9AjnAWm1S8hXSIk7j20XTui8LWx4NTJZeXi02iXki3f048h2oX/nU7pzk02MZiKhuQU9sl3obTIx57xAy+cayKeCOLYLfU0mDRtU2YHmg+HodqGnyeScMwGtdglVekePurYL/UwmDhtUeYBudwnVhKVxbxd6mcyAcyagO7uEJ1W/69wu9DFpDhuwnLMBHdFk8vDMtH7QeXBeP+hMOJv7SgLm/u3Pzqe4XthSXF1g0sg5fs90GfrKHku8JzMzxwLlZS3F1pjJqoM5MWdTX0v+/L/zzu/xzvmBNnOG6Zomva8UMpsDWydkl7YUXW6TXc6pMTtBOx74ellL0eU0mRdnR+ioC+da8CUteUg86I6ND+3TR0duOHSZzIyzqa/ywefuh8df0tLlKlUhadN9m87IDYcOkybOczo4W7b0rvD05xD10fJh6qX6FY/ccGg3mR3nTCYs3JnFfYadqvSRGw6tJjvZRiac44F+dqt/Mg8RAnQ7CI/dcGjrfIaco4Ee4TwgLZ+jLvexhMZuOLR03jAKJufsGgw933c6x6PFYFj0blSWst9waAadV7YhpfeVPf59PmhP0deH/PcrRay9b8h+w6HRZJ6cjROWaW9WCrBnSH+z+ktW7Tccmkxmytno0dNe+jMfNMsxuk/9H7vh0GAyt6xOydDX4SsLprd0sdTLcPrWx2441E226UZmnI14SvgYzd/pRL+TY+ElNxxqJvPlnM1gOElDk8OwAd8ju3IaDOeazJlzVoPhPJPaMAjfH5dMW1lfwQfDieqaHHKG741bptCxxBidO+e1gB6mG/B9GVMey6RzTSrM2XJeB+hh9gzfk3GZ8PBM2jfJSwc662xDylZAA7xnOE3c5CI4m3fBWSINuws+SczkMjhb6jqYllFAk3lWp7R00LlndUoBQ0cCZZ89t/IbDE+03IMmJabHKk7rwOvz86t28MKn6PbCxjTzYLKndwZ/pveXFH+6N/8WpoPWD172FN0lcfbCw15Ffd7xnT0tzQ4IeoWcvfCwYVJsnuoj5TTQxshxUeBYFmcjHgZRK6+wgpYj0yT7kx16YZxNoGsWgMtCu7UiRugwO/Qo596i6CTD0DLl0WJ7X2cZfjA0RY7jeOBYHmfPCUtNkxG6YB0qvTNEjgsCRy99nmI2gYy74CxmQNwsZHDo47hDdxefJxhNo7SrdzroC95gs0B3bhKvR79qkeM4PidcWLYhlXSHxeDQoy8nXCjnpKBfNdDr5WzMOkT+HH2ZdB5nb3NpNcDT1hoU8csNTKBHOS9vGOQa4qk7oP1Kw7xBU8490B6cfW2llyN0zG5pRM8Dhx5LOJYbNqjSDYa+Dr1szglLwoYR+mLOnnYyUTrQA4cemRIunbMDz8mPsy9oP4dePGcXnjJqAc1g9u12aJVu+NnISQ48cScsfYdePWcHHrkBML8lkwaRw5naLT5sULkGw5ihox85XA69/PDM5ADt+WQUP9A9h94A51QTln7kcCwmrSE8M6UD3X6wO3S1Gs7Ge8FZ4PBe8PABrTm0+S29S15EGkrDM/GxKDNAWwPHmjhreAhntln4fu9L2hN0+8EWOJa9iDSUvh69176b1pJDQ4c2Bg7J2asT+WqAh1V9ad9OacmlLmjbSLgyzvpWVuvG8abgFzj02jgnAT3u0NXqOCcJHR3QR6NDryd7bqUPhnfqu1iDYZ+z7tBr5GxK79gaB0nvPGvCLgbdOvTRGDhWsrgxUIIJiwJ9NAaO9YVnJvgpeNehtcBRrXAY5IJfVOo49IY4JwRtCBwr5gwPuufQGufr9aUbQslA88DRBb1qzuCgZZG/FjgWXvE1KnDQHYfeEudUoIcZx+o5Q4MWkWM4JVxxtiEFDbp16E7g2ADnNKD7gWNFW90OwYKWnLsOvQ3OiUDrnNc7CgolAN2bqmyFMyxowfm4Qc5JQEvOVbUdzqCg2S3JrUNvijMsaJ3zekq+xpQMtMS8Ec6QoGnkeBlyXvHqRl+QoAVnAroTnTfCOQXoPudg9jMXHGgeObbKGRI05/x4OGyRMxxo6dCM86aGQS5Y0JTzYUvZcyso0ILzo+C8MXduwEC/dhx6k5zhQBPOPzbMGQz0y/PzEwscG+UMBJpxZg69Vc5QoJ8E6M1yBgKNnGFAPxHQP3483txslzME6KpinH9smjMA6Ko6MNA3NzcbWhXVFB005UxBf9s25+igK+HQhPNhy5xjg66EQ3/7dtg257igKdoDd+itc44KuuKgvxGHZqujW+YcE7TkTEA/bZ5zPNCV4HxDOT8dNo45HuhKgL65+UEdevOcY4FuOX9joINZWaxigK6qljNz6KdgRparCKAV54pwfqSgg9lYsMKDVpivCefDDwL6JZiNBSseaMaZOvSL/g7ODSoa6OvrmwPhjA4tFAs040xAP5leKrtFRQItOD8+YeQQigKalnwdmEO/oEMLxQCtOD++IGip8KBZBeOhdWgEzRQFtOCMDt1RlBgtOD+iQ7eKAfrQdWgEzRUN9OPjESNHRxFAy8BxRIfuaAro0viEWNkS43yUDo2ghfxA10Xx+WdJnxH74cHWkuSMkaMnL9DsFcufdnf04cfam7Ra0OL2WHTornxAs4fRn3cMsf4CAAVackbQXfmA5m9aKIeg5Vv5xEfx/ILji/Z+9U3Lz6NVZH67tT6YXnJGh+7JK0afCv6Chfd7w2AoxQMHd2gEreSXdZx3/E0WpeMFANyhj68YOXoKN2GR4pzRoQeKBfoVQfcVHvTxiJHDoEig0aGHCg/690TFly/Pz1++FGtRACzhQYdvMbklBL0gQwgayBCCBjKEoIEMIWggQwgayBAclo0LQQMJQQMJQQMJQQMJQQMpMGj6smvf91xPU8mW1fzeET/FDK9fmX9dYUGfd/TqIUi/34OArvnr6ANcV1jQJb3yMr6f0Uv3fnH5BJE/myv+7+zrCgqaV3uwgqbYOtnrHYKJxIt/sNK3ENcVFLSoRtDLxcKr/vgvU6VlUL39TdQYhriuwKDZ33MN4G18LCxixw8Jev51BQV9KqBA8+q0+EGKgw5xXUv1aK7oljL1aMAYzQUGOrMYDZd1QP1K3/LMOuDy6Pd7ithw30FgCQu55dGAM8MTSzqiDwYCdHYzQ8C1Dnrt8S3Jv5nc1jpQViFoICFoICFoICFoICFoICFoICFoICFoICFoICFoICFoICFoICFoICFoICFoIGUEupY3BBv3p2bvRJ5/gdoyNmo7oOH25o3KCXRcEghaqkOCuO9/eFEuf6jQ2+0V9ej3+6uabsjKHbz2tPNuzx74dKJPQGwa/QxW5gtQ5WpVrqBlaR2vxiJfOehPOwJS7YC3p513v+7IoX/ueOTRz0DQrWSM5nyueBU434Ymfs1BU1bk6x39T/ZZnHbesV8K+e/zjh2/a9ijENszMHQo9UCr+hjKhz7ZkIOmh8WzJMsPD+1p7BgrKKLntXVMg4YSKifQvRjNarCueIHhibGnoOlhUXJ4oqDlaQyt8H4ZW+ivrNMQgpYyg6ZfSuGpCDqIzKDJ4X/f7pse6DZ0mEG3N7ggaIMsoM+7v8qic3m4HQzNoGWZOh9CJWiwqm2jcgItZ4Y9PpSrLJoVs8NO8mYGLc4o9j2PxvROyAKaHKeAOqBVgaMVNC//vOv9aZA5DMDdYlZlBHrdQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBAQtBA+j8EYXmyWlDRqAAAAABJRU5ErkJggg==" alt="plot of chunk fig1"/></p>
+
+<h2>Example 2: Diathesis-stress STRONG</h2>
+
+<p>When assuming diathesis-stress STRONG, we let \(c=0\) and \(\beta_E=0\):
+\[\mathbf{\mu} = 3 + 2\mathbf{g}(\mathbf{e}-0) \] </p>
+
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+
+<pre><code class="r">ex_dia_s = example_with_crossover(N=250, c=0, coef = c(3,0,2), sigma=1, seed=7)
+GxE_test_BIC = GxE_interaction_test(data=ex_dia_s$data, genes=ex_dia_s$G, env=ex_dia_s$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code class="r">GxE_test_BIC$results
+</code></pre>
+
+<pre><code>##                                    BIC      crossover 95%     
+## Differential susceptibility STRONG &quot;756.22&quot; &quot;( -0.37 / 0.65 )&quot;
+## Differential susceptibility WEAK   &quot;759.68&quot; &quot;( -0.96 / 0.06 )&quot;
+## Diathesis-stress STRONG            &quot;760.13&quot; &quot;&quot;                
+## Diathesis-stress WEAK              &quot;763.66&quot; &quot;&quot;                
+##                                    Within observable range?
+## Differential susceptibility STRONG &quot;No&quot;                    
+## Differential susceptibility WEAK   &quot;No&quot;                    
+## Diathesis-stress STRONG            &quot;&quot;                      
+## Diathesis-stress WEAK              &quot;&quot;
+</code></pre>
+
+<p>We conclude that Diathesis-stress STRONG is the best model.</p>
+
+<p>We can then plot the best model:</p>
+
+<pre><code class="r">plot(GxE_test_BIC$fits$diathesis_stress_STRONG, xlim=c(0,10), ylim=c(3,13),cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk fig2"/></p>
+
+<h2>Example 3: Differential susceptibility WEAK</h2>
+
+<p>When assuming differential susceptibility WEAK, we let \(c=5\):
+\[\mathbf{\mu} = 8 + (\mathbf{e}-5) + 2\mathbf{g}(\mathbf{e}-5) \] </p>
+
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+
+<pre><code class="r">ex_ds = example_with_crossover(N=250, c=5, coef = c(3+5,1,2), sigma=1, seed=7)
+GxE_test_BIC = GxE_interaction_test(data=ex_ds$data, genes=ex_ds$G, env=ex_ds$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code class="r">GxE_test_BIC$results
+</code></pre>
+
+<pre><code>##                                    BIC       crossover 95%    
+## Differential susceptibility WEAK   &quot;757.6&quot;   &quot;( 4.77 / 5.25 )&quot;
+## Diathesis-stress WEAK              &quot;839.13&quot;  &quot;&quot;               
+## Differential susceptibility STRONG &quot;865.42&quot;  &quot;( 4.16 / 4.79 )&quot;
+## Diathesis-stress STRONG            &quot;1168.65&quot; &quot;&quot;               
+##                                    Within observable range?
+## Differential susceptibility WEAK   &quot;Yes&quot;                   
+## Diathesis-stress WEAK              &quot;&quot;                      
+## Differential susceptibility STRONG &quot;Yes&quot;                   
+## Diathesis-stress STRONG            &quot;&quot;
+</code></pre>
+
+<p>We conclude that differential susceptibility WEAK is the best model.</p>
+
+<p>We can then plot the best model:</p>
+
+<pre><code class="r">plot(GxE_test_BIC$fits$diff_suscept_WEAK, xlim=c(0,10), ylim=c(3,13),cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk fig3"/></p>
+
+<h2>Example 4: Differential susceptibility STRONG</h2>
+
+<p>When assuming differential susceptibility STRONG, we let \(c=5\) and \(\beta_E=0\):
+\[\mathbf{\mu} = 8 + 2\mathbf{g}(\mathbf{e}-5) \] </p>
+
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+
+<pre><code class="r">ex_ds_s = example_with_crossover(N=250, c=5, coef = c(3+5,0,2), sigma=1, seed=7)
+GxE_test_BIC = GxE_interaction_test(data=ex_ds_s$data, genes=ex_ds_s$G, env=ex_ds_s$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
+</code></pre>
+
+<pre><code>## Warning in LEGIT(data = data, genes = genes, env = env, formula =
+## formula_STRONG, : Did not reach convergence in maxiter iterations. Try
+## increasing maxiter or make eps smaller.
+</code></pre>
+
+<pre><code>## Waiting for profiling to be done...
+## Waiting for profiling to be done...
+</code></pre>
+
+<pre><code class="r">GxE_test_BIC$results
+</code></pre>
+
+<pre><code>##                                    BIC      crossover 95%    
+## Differential susceptibility STRONG &quot;753.57&quot; &quot;( 4.41 / 5.42 )&quot;
+## Differential susceptibility WEAK   &quot;757.6&quot;  &quot;( 4.52 / 5.53 )&quot;
+## Diathesis-stress WEAK              &quot;839.18&quot; &quot;&quot;               
+## Diathesis-stress STRONG            &quot;899.34&quot; &quot;&quot;               
+##                                    Within observable range?
+## Differential susceptibility STRONG &quot;Yes&quot;                   
+## Differential susceptibility WEAK   &quot;Yes&quot;                   
+## Diathesis-stress WEAK              &quot;&quot;                      
+## Diathesis-stress STRONG            &quot;&quot;
+</code></pre>
+
+<p>We conclude that differential susceptibility STRONG is the best model.</p>
+
+<p>We can then plot the best model:</p>
+
+<pre><code class="r">plot(GxE_test_BIC$fits$diff_suscept_STRONG, xlim=c(0,10), ylim=c(3,13),cex.leg=1.4, cex.axis=1.5, cex.lab=1.5)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAFoCAMAAABNO5HnAAAAolBMVEUAAAAAADoAAGYAOjoAOpAAZpAAZrYrDBAyiL06AAA6ADo6AGY6Ojo6OpA6ZmY6kLY6kNtQkK9mAABmADpmAGZmZmZmZrZmkNtmtrZmtv9rgJyQOgCQOjqQtpCQ2/+2ZgC2tma2/7a2///KsXbMmm7UvL3U3NnVPk/W5/LbkDrbtmbb25Db/9vb///uzMb07+T32Nz/tmb/25D//7b//9v////N7AljAAAACXBIWXMAAAsSAAALEgHS3X78AAAQiElEQVR4nO2daWPkqBGGNUec9GyOtnM63lib8a69SjKjVrf1//9aOAS6kAQICgT1fvChVgP9uFwUUKCiRYGoCN2AXISggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggYSggWQDuiyKj1+dtyRxmYGuiuLzN8K5KD48z0oKoF0f/cL19naR2lXeuozaWtEP9+n02La3h7tdJbmRC9BAnI3a+v70+Vt7PTHE1cx5HA303KBdNUspk7beHs7ka5kGaFjHYWrR0jPfHohx25fkSG5BO2uWUkZtbYqC2jQhruoMXTVJXzuqhOZs2NbriYFuS0V4d0TQbz1od61Syx2eQ4GeGbTDVqnlAI+ToNauZut3gnP2YdHXU0HHNet3V8QHlVs3aVdpqqnj2NcMLbkHXdEOcxCgKMUjRVdVmmrqOBw0ZVNmcfRg9LsURzciMJkNHcdFBQQN76Bbw7aWGqCFP6j+/o2P2Zl9n8vOm/Ar1Lt8/MpurYbzJo0oWF7tSmjL37CQUvxq0XipSwDHYT6p9LhR0mgSpCJoaERI4u5H/oq4wiyagqYX5Cjzenrk43x5tezuJ3/j86BAq8Z3uoRwHMZtVQXQo5IGGLqfCTAGj3KVVwRoRl/6kaYrXV7t7id4WcXy7XaN5wriOIzb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" alt="plot of chunk fig4"/></p>
+
+</body>
+
+</html>
