@@ -101,10 +101,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <pre><code>## Loading required package: formula.tools</code></pre>
 <pre><code>## Loading required package: operator.tools</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ex_dia =<span class="st"> </span><span class="kw">example_with_crossover</span>(<span class="dt">N=</span><span class="dv">250</span>, <span class="dt">c=</span><span class="dv">0</span>, <span class="dt">coef =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>), <span class="dt">sigma=</span><span class="dv">1</span>, <span class="dt">seed=</span><span class="dv">7</span>)
-GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia$data, <span class="dt">genes=</span>ex_dia$G, <span class="dt">env=</span>ex_dia$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)</code></pre></div>
-<pre><code>## Waiting for profiling to be done...</code></pre>
-<pre><code>## Waiting for profiling to be done...</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC$results</code></pre></div>
+GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia$data, <span class="dt">genes=</span>ex_dia$G, <span class="dt">env=</span>ex_dia$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)
+GxE_test_BIC$results</code></pre></div>
 <pre><code>##                                    BIC      crossover 95%      
 ## Differential susceptibility WEAK   &quot;759.69&quot; &quot;( -0.66 / -0.18 )&quot;
 ## Diathesis-stress WEAK              &quot;764.16&quot; &quot;&quot;                 
@@ -117,10 +115,8 @@ GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</sp
 ## Diathesis-stress STRONG            &quot;&quot;</code></pre>
 <p>Here we see the results. Notice that diathesis-stress WEAK is not the model with the lowest BIC. Differential susceptibility WEAK is slightly a better fit but the crossover point is not within observable range, thus we reject it. Note that we only show the element <em>results</em> of the output, but the 4 models are also returned.</p>
 <p>Considering that we know that the minimum of E is 0, we can also refit the models with <em>crossover = 0</em>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC_ =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia$data, <span class="dt">genes=</span>ex_dia$G, <span class="dt">env=</span>ex_dia$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="dv">0</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)</code></pre></div>
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC_$results</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC_ =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia$data, <span class="dt">genes=</span>ex_dia$G, <span class="dt">env=</span>ex_dia$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="dv">0</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)
+GxE_test_BIC_$results</code></pre></div>
 <pre><code>##                                    BIC      crossover 95%      
 ## Diathesis-stress WEAK              &quot;754.82&quot; &quot;&quot;                 
 ## Differential susceptibility WEAK   &quot;759.69&quot; &quot;( -0.66 / -0.18 )&quot;
@@ -141,10 +137,8 @@ GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</sp
 <p>When assuming diathesis-stress STRONG, we let <span class="math inline">\(c=0\)</span> and <span class="math inline">\(\beta_E=0\)</span> so that: <span class="math display">\[\mathbf{\mu} = 3 + 2\mathbf{g}(\mathbf{e}-0) \]</span></p>
 <p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don’t know what is the minimum environmental score.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ex_dia_s =<span class="st"> </span><span class="kw">example_with_crossover</span>(<span class="dt">N=</span><span class="dv">250</span>, <span class="dt">c=</span><span class="dv">0</span>, <span class="dt">coef =</span> <span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">0</span>,<span class="dv">2</span>), <span class="dt">sigma=</span><span class="dv">1</span>, <span class="dt">seed=</span><span class="dv">7</span>)
-GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia_s$data, <span class="dt">genes=</span>ex_dia_s$G, <span class="dt">env=</span>ex_dia_s$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)</code></pre></div>
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC$results</code></pre></div>
+GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_dia_s$data, <span class="dt">genes=</span>ex_dia_s$G, <span class="dt">env=</span>ex_dia_s$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)
+GxE_test_BIC$results</code></pre></div>
 <pre><code>##                                    BIC      crossover 95%     
 ## Differential susceptibility STRONG &quot;756.22&quot; &quot;( -0.37 / 0.65 )&quot;
 ## Differential susceptibility WEAK   &quot;759.68&quot; &quot;( -0.96 / 0.06 )&quot;
@@ -165,10 +159,8 @@ GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</sp
 <p>When assuming differential susceptibility WEAK, we let <span class="math inline">\(c=5\)</span> (and use 8 instead of 3 as intercept to keep a similar outcome range) so that: <span class="math display">\[\mathbf{\mu} = 8 + (\mathbf{e}-5) + 2\mathbf{g}(\mathbf{e}-5) \]</span></p>
 <p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don’t know what is the minimum environmental score.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ex_ds =<span class="st"> </span><span class="kw">example_with_crossover</span>(<span class="dt">N=</span><span class="dv">250</span>, <span class="dt">c=</span><span class="dv">5</span>, <span class="dt">coef =</span> <span class="kw">c</span>(<span class="dv">3+5</span>,<span class="dv">1</span>,<span class="dv">2</span>), <span class="dt">sigma=</span><span class="dv">1</span>, <span class="dt">seed=</span><span class="dv">7</span>)
-GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_ds$data, <span class="dt">genes=</span>ex_ds$G, <span class="dt">env=</span>ex_ds$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)</code></pre></div>
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC$results</code></pre></div>
+GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</span>(<span class="dt">data=</span>ex_ds$data, <span class="dt">genes=</span>ex_ds$G, <span class="dt">env=</span>ex_ds$E, <span class="dt">formula_noGxE =</span> y ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">crossover =</span> <span class="st">&quot;min&quot;</span>, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)
+GxE_test_BIC$results</code></pre></div>
 <pre><code>##                                    BIC       crossover 95%    
 ## Differential susceptibility WEAK   &quot;757.6&quot;   &quot;( 4.77 / 5.25 )&quot;
 ## Diathesis-stress WEAK              &quot;839.13&quot;  &quot;&quot;               
@@ -193,8 +185,6 @@ GxE_test_BIC =<span class="st"> </span><span class="kw">GxE_interaction_test</sp
 <pre><code>## Warning in LEGIT(data = data, genes = genes, env = env, formula =
 ## formula_STRONG, : Did not reach convergence in maxiter iterations. Try
 ## increasing maxiter or make eps smaller.</code></pre>
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">GxE_test_BIC$results</code></pre></div>
 <pre><code>##                                    BIC      crossover 95%    
 ## Differential susceptibility STRONG &quot;753.57&quot; &quot;( 4.41 / 5.42 )&quot;

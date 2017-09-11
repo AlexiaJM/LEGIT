@@ -1182,8 +1182,8 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover, reve
 	}
 	else{
 		# Non-bootstrapped
-		crossover_interval_WEAK = round(stats::confint(diff_suscept_WEAK$fit_env,"crossover"),2)
-		crossover_interval_STRONG = round(stats::confint(diff_suscept_STRONG$fit_env,"crossover"),2)
+		crossover_interval_WEAK = round(suppressMessages(stats::confint(diff_suscept_WEAK$fit_env,"crossover")),2)
+		crossover_interval_STRONG = round(suppressMessages(stats::confint(diff_suscept_STRONG$fit_env,"crossover")),2)
 	}
 	data = diff_suscept_WEAK$fit_main$data
 	inside_WEAK = (crossover_interval_WEAK[1] > min(data$E) && crossover_interval_WEAK[2] < max(data$E))

@@ -258,15 +258,7 @@ where \(c\) and \(\beta_E\) depend on the model assumed. \(c = 0\) represents di
 
 <pre><code class="r">ex_dia = example_with_crossover(N=250, c=0, coef = c(3,1,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-</code></pre>
-
-<pre><code class="r">GxE_test_BIC$results
+GxE_test_BIC$results
 </code></pre>
 
 <pre><code>##                                    BIC      crossover 95%      
@@ -286,13 +278,7 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia
 <p>Considering that we know that the minimum of E is 0, we can also refit the models with <em>crossover = 0</em>.</p>
 
 <pre><code class="r">GxE_test_BIC_ = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = 0, criterion=&quot;BIC&quot;)
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...
-</code></pre>
-
-<pre><code class="r">GxE_test_BIC_$results
+GxE_test_BIC_$results
 </code></pre>
 
 <pre><code>##                                    BIC      crossover 95%      
@@ -325,13 +311,7 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia
 
 <pre><code class="r">ex_dia_s = example_with_crossover(N=250, c=0, coef = c(3,0,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_dia_s$data, genes=ex_dia_s$G, env=ex_dia_s$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...
-</code></pre>
-
-<pre><code class="r">GxE_test_BIC$results
+GxE_test_BIC$results
 </code></pre>
 
 <pre><code>##                                    BIC      crossover 95%     
@@ -364,13 +344,7 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia_s$data, genes=ex_dia_s$G, env=ex
 
 <pre><code class="r">ex_ds = example_with_crossover(N=250, c=5, coef = c(3+5,1,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_ds$data, genes=ex_ds$G, env=ex_ds$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...
-</code></pre>
-
-<pre><code class="r">GxE_test_BIC$results
+GxE_test_BIC$results
 </code></pre>
 
 <pre><code>##                                    BIC       crossover 95%    
@@ -408,10 +382,6 @@ GxE_test_BIC = GxE_interaction_test(data=ex_ds_s$data, genes=ex_ds_s$G, env=ex_d
 <pre><code>## Warning in LEGIT(data = data, genes = genes, env = env, formula =
 ## formula_STRONG, : Did not reach convergence in maxiter iterations. Try
 ## increasing maxiter or make eps smaller.
-</code></pre>
-
-<pre><code>## Waiting for profiling to be done...
-## Waiting for profiling to be done...
 </code></pre>
 
 <pre><code class="r">GxE_test_BIC$results
