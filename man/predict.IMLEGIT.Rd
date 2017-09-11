@@ -11,7 +11,7 @@
 
 \item{data}{data.frame of the dataset to be used.}
 
-\item{latent_var}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...}
+\item{latent_var}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...}
 
 \item{...}{Further arguments passed to or from other methods.}
 }

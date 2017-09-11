@@ -210,13 +210,13 @@ hr {
 
 <ol>
 <li><p>Does the GxE reflect diathesis stress, differential susceptibility or vantage sensitivity?</p></li>
-<li><p>Can we assume that having a genetic score of 0 makes one completely nonsusceptible to the environment (STRONG) or can individuals with a genetic score of 0 still be slightly susceptible (WEAK)?</p></li>
+<li><p>Can we assume that having a genetic score of 0 makes one completely nonsusceptible to the environment (STRONG model) or can individuals with a genetic score of 0 still be slightly susceptible to the environment (WEAK model)?</p></li>
 </ol>
 
-<p>See the figure below for a graphical representation of different types of interactions:
+<p>See the figure below for a graphical representation of the different types of interactions:
 <img src="https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/GxE_testing.png" alt=""/></p>
 
-<p>Vantage sensitivity is not presented here but it is just like diathesis-stress with a positive predictor. Note that the Figure assume only one genetic variant, but with the LEGIT model, we consider multiple genetic variants and the more genetic variants there are, the fewer there are individuals with a genetic score of 0.</p>
+<p>Vantage sensitivity is not presented here but it is just like diathesis-stress with a positive predictor. Note that the figure assumes only one genetic variant, but with the LEGIT model, we consider multiple genetic variants and the more genetic variants there are, the fewer there are individuals with a genetic score of 0.</p>
 
 <p>To test for differential susceptibility, Widaman et al. (2013) estimate the cross-over point of the model. This can be done easily with LEGIT by simply adding a negative intercept to the environment E. This can be seen by the following:
 \[y = 2 + 3(E-c) + 5G(E-c) \ E = q_1e_1 + q_2e_2 + &hellip; + q_le_l\]
@@ -234,7 +234,7 @@ is equivalent to
 \[\mathbf{g} = .30\mathbf{g}_1 + .10\mathbf{g}_2 + .20\mathbf{g}_3 + .40\mathbf{g}_4 \]
 \[ \mathbf{e} = .45\mathbf{e}_1 + .35\mathbf{e}_2 + .20\mathbf{e}_3\]
 \[\mathbf{\mu} = 3 + \beta_E(\mathbf{e}-c) + 2\mathbf{g}(\mathbf{e}-c) \] 
-where \(c\) and \(\beta_E\) depends on the model assumed. \(c = 0\) represents diathesis-stress while \(c \ne 0\) represents differential susceptibility. \(\beta_E = 0\) assume a STRONG model while \(\beta_E \ne 0\) assume a STRONG model.</p>
+where \(c\) and \(\beta_E\) depend on the model assumed. \(c = 0\) represents diathesis-stress while \(c \ne 0\) represents differential susceptibility. \(\beta_E = 0\) assumes a STRONG model while \(\beta_E \ne 0\) assumes a STRONG model.</p>
 
 <p>\[ y \sim Normal(\mu,\sigma=1)\]</p>
 
@@ -242,10 +242,10 @@ where \(c\) and \(\beta_E\) depends on the model assumed. \(c = 0\) represents d
 
 <h2>Example 1: Diathesis-stress WEAK</h2>
 
-<p>When assuming diathesis-stress WEAK, we let \(c=0\):
+<p>When assuming diathesis-stress WEAK, we let \(c=0\) so that:
 \[\mathbf{\mu} = 3 + (\mathbf{e}-0) + 2\mathbf{g}(\mathbf{e}-0) \] </p>
 
-<p>We generate N=250 observations and test all 4 possible models based on the BIC (other choices are also available: AIC, AICc, cross-validation and cross-validated AUC). It is important to not include G or E in the model formula because they will be added automatically. In this case, we assume that we don&#39;t know the true minimum of the environment, thus we use option <em>crossover = &ldquo;min&rdquo;</em> to find the minimum of the observed data. </p>
+<p>We generate N=250 observations and test all 4 possible models based on the BIC (other choices are also available: AIC, AICc, cross-validation and cross-validated AUC). It is important to not include G or E in the model formula because they will be added automatically. We start by assuming that we don&#39;t know the true minimum of the environmental score, thus we use option <em>crossover = &ldquo;min&rdquo;</em> to find the minimum from the observed data. </p>
 
 <pre><code class="r">library(LEGIT)
 </code></pre>
@@ -281,9 +281,9 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia
 ## Diathesis-stress STRONG            &quot;&quot;
 </code></pre>
 
-<p>Here we see the results. Notice that diathesis-stress WEAK is not the model with the lowest BIC. Differential susceptibility WEAK is slightly a better fit but the crossover point is not within observable range, thus we reject it.</p>
+<p>Here we see the results. Notice that diathesis-stress WEAK is not the model with the lowest BIC. Differential susceptibility WEAK is slightly a better fit but the crossover point is not within observable range, thus we reject it. Note that we only show the element <em>results</em> of the output, but the 4 models are also returned.</p>
 
-<p>Considering that we know that the minimum of E is 0, we can also refit the models with <em>crossover = 0</em></p>
+<p>Considering that we know that the minimum of E is 0, we can also refit the models with <em>crossover = 0</em>.</p>
 
 <pre><code class="r">GxE_test_BIC_ = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = 0, criterion=&quot;BIC&quot;)
 </code></pre>
@@ -307,8 +307,7 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia
 ## Diathesis-stress STRONG            &quot;&quot;
 </code></pre>
 
-<p>This time, diathesis-stress WEAK is the best fit so we get the same conclusion.
-Note that we only show the element <em>results</em> of the output, but the 4 models are also returned. </p>
+<p>This time, diathesis-stress WEAK is the best fit so we get the same conclusion. Note that <em>crossover</em> can be any number or a string named <em>&ldquo;min&rdquo;</em> or <em>&ldquo;max&rdquo;</em> to set the crossover point to the minimum or maximum observable environmental score respectively.</p>
 
 <p>We can then plot the best model:</p>
 
@@ -319,10 +318,10 @@ Note that we only show the element <em>results</em> of the output, but the 4 mod
 
 <h2>Example 2: Diathesis-stress STRONG</h2>
 
-<p>When assuming diathesis-stress STRONG, we let \(c=0\) and \(\beta_E=0\):
+<p>When assuming diathesis-stress STRONG, we let \(c=0\) and \(\beta_E=0\) so that:
 \[\mathbf{\mu} = 3 + 2\mathbf{g}(\mathbf{e}-0) \] </p>
 
-<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environmental score.</p>
 
 <pre><code class="r">ex_dia_s = example_with_crossover(N=250, c=0, coef = c(3,0,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_dia_s$data, genes=ex_dia_s$G, env=ex_dia_s$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
@@ -358,10 +357,10 @@ GxE_test_BIC = GxE_interaction_test(data=ex_dia_s$data, genes=ex_dia_s$G, env=ex
 
 <h2>Example 3: Differential susceptibility WEAK</h2>
 
-<p>When assuming differential susceptibility WEAK, we let \(c=5\):
+<p>When assuming differential susceptibility WEAK, we let \(c=5\) (and use 8 instead of 3 as intercept to keep a similar outcome range) so that:
 \[\mathbf{\mu} = 8 + (\mathbf{e}-5) + 2\mathbf{g}(\mathbf{e}-5) \] </p>
 
-<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environmental score.</p>
 
 <pre><code class="r">ex_ds = example_with_crossover(N=250, c=5, coef = c(3+5,1,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_ds$data, genes=ex_ds$G, env=ex_ds$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)
@@ -397,10 +396,10 @@ GxE_test_BIC = GxE_interaction_test(data=ex_ds$data, genes=ex_ds$G, env=ex_ds$E,
 
 <h2>Example 4: Differential susceptibility STRONG</h2>
 
-<p>When assuming differential susceptibility STRONG, we let \(c=5\) and \(\beta_E=0\):
+<p>When assuming differential susceptibility STRONG, we let \(c=5\) and \(\beta_E=0\) (and use 8 instead of 3 as intercept to keep a similar outcome range) so that:
 \[\mathbf{\mu} = 8 + 2\mathbf{g}(\mathbf{e}-5) \] </p>
 
-<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environemental score.</p>
+<p>We generate N=250 observations and test all 4 possible models based on the BIC assuming we don&#39;t know what is the minimum environmental score.</p>
 
 <pre><code class="r">ex_ds_s = example_with_crossover(N=250, c=5, coef = c(3+5,0,2), sigma=1, seed=7)
 GxE_test_BIC = GxE_interaction_test(data=ex_ds_s$data, genes=ex_ds_s$G, env=ex_ds_s$E, formula_noGxE = y ~ 1, crossover = &quot;min&quot;, criterion=&quot;BIC&quot;)

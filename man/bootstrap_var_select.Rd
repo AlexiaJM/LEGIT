@@ -16,7 +16,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
 
-\item{formula}{Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).}
+\item{formula}{Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).}
 
 \item{boot_iter}{number of bootstrap samples (Default = 1000).}
 
@@ -24,7 +24,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 
 \item{boot_group}{Optional vector which represents the group associated with each observation. Sampling will be done by group instead of by observations (very important if you have longitudinal data). The sample sizes of the bootstrap samples might differ by up to "\code{boot_size} - maximum group size" observations.}
 
-\item{latent_var_original}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise the latent variables will be named L1, L2, ...}
+\item{latent_var_original}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...}
 
 \item{latent_var_extra}{list of data.frame (with the same structure as latent_var_original) containing the additional elements to try including inside the latent variables. Set to NULL if using a backward search.}
 
@@ -50,7 +50,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
 
-\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
 
 \item{seed}{Optional seed for bootstrap.}
 
@@ -64,7 +64,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 Returns a list of vectors containing the percentage of times that each variable was selected within each latent variable.
 }
 \description{
-Creates bootstrap samples, run stepwise search on all of them and then report the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
+Creates bootstrap samples, runs a stepwise search on all of them and then reports the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
 }
 \examples{
 \dontrun{

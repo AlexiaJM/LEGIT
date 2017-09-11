@@ -28,7 +28,7 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
 
 \item{family}{Outcome distribution and link function (Default = gaussian).}
 
-\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
+\item{ylim}{Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).}
 
 \item{print}{If FALSE, nothing except warnings will be printed. (Default = TRUE).}
 
@@ -37,8 +37,6 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
 \item{crossover_fixed}{If TRUE, instead of estimating the crossover point of E, we force/fix it to the value of "crossover". (Used when creating a diathes-stress model) (Default = FALSE).}
 
 \item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: g1_new = 1 - g1). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decrease attention but with a negative genetic score, it increase attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. (Default = FALSE).}
-
-\item{warn}{If FALSE, remove certain warnings. (Default = TRUE).}
 }
 \value{
 Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly and the formula.

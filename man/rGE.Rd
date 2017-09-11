@@ -2,7 +2,7 @@
 % Please edit documentation in R/rGE.R
 \name{rGE}
 \alias{rGE}
-\title{Gene-Environment correlation estimation and testing (This is only relevant for GxE models) [Experimental feature]}
+\title{Gene-Environment correlation estimation and testing (This is only relevant for GxE models)}
 \usage{
 rGE(object, ...)
 }
@@ -12,5 +12,5 @@ rGE(object, ...)
 \item{...}{Further arguments passed to or from other methods.}
 }
 \description{
-Estimates the gene-environment correlation (rGE). If there is an important correlation between G and E, the model is still valid prediction-wise but the interpretation is affected as the question becomes is it really a GxE or a GxG since E is partially caused by G. To account for this, we remove the influence of G on E (If E = b0 + b1*G + e, we use E_resid = E - b1*G) and refit the model to see if the model parameters changed. This new environment variable (E_resid) is now completely uncorrelated with G. This does not account for passive rGE but only active rGE.
+Estimates the gene-environment correlation (rGE) and test for a GxE using a residual environmental score. If there is an important correlation between G and E, the model is still valid prediction-wise but the interpretation is affected as the question becomes: is it really a GxE or a GxG since E is partially caused by G? To account for this, we remove the influence of G on E (If E = b0 + b1*G + e, we use E_resid = E - b1*G) and refit the model to see if the model parameters changed. The residual environmental score (E_resid) is uncorrelated with G. This does not account for passive rGE but only active rGE.
 }
