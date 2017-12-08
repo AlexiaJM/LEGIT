@@ -14,7 +14,7 @@
 \arguments{
 \item{x}{An object of class "LEGIT", usually, a result of a call to LEGIT.}
 
-\item{cov_values}{Vector of the values, for each covariate, that will be used in the plotting, if there are any covariates. It must contain the names of the variables. The covariates are the variables that are not \emph{E} nor \emph{G} but still are adjusted for in the model. By default, covariates are fixed to the mean.}
+\item{cov_values}{Vector of the values, for each covariate, that will be used in the plotting, if there are any covariates. It must contain the names of the variables. Covariates are the variables that are not \emph{G} nor \emph{E} but still are adjusted for in the model. By default, covariates are fixed to the mean.}
 
 \item{gene_quant}{Vector of the genes quantiles used to make the plot. We use quantiles instead of fixed values because genetic scores can vary widely depending on the weights, thus looking at quantiles make this simpler. (Default = c(.025,.50,.975))}
 
@@ -54,7 +54,7 @@
 Returns a list containing the different models (diathesis-stress, differential susceptibility and vantage sensitivity WEAK or STRONG) in order from best to worst for each selected criterion.
 }
 \description{
-Plot of LEGIT. By default, non G or E elements are fixed to the mean.
+Plot of LEGIT models. By default, variables that are not in \emph{G} or \emph{E} are fixed to the mean.
 }
 \examples{
 train = example_2way(500, 1, seed=777)

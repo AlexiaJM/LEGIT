@@ -4,8 +4,9 @@
 \alias{example_with_crossover}
 \title{Simulated example of a 2 way interaction GxE model with crossover point.}
 \usage{
-example_with_crossover(N, sigma = 1, c = 0, coef = c(0, 1, 2),
-  logit = FALSE, seed = NULL)
+example_with_crossover(N, sigma = 1, c = 0, coef_main = c(0, 1, 2),
+  coef_G = c(0.3, 0.1, 0.2, 0.4), coef_E = c(0.45, 0.35, 0.2),
+  logit = FALSE, seed = NULL, beta_param = c(2, 2))
 }
 \arguments{
 \item{N}{Sample size.}
@@ -14,20 +15,26 @@ example_with_crossover(N, sigma = 1, c = 0, coef = c(0, 1, 2),
 
 \item{c}{crossover point}
 
-\item{coef}{Coefficients of the main model, must be a vector of size 3 for intercept, E main effect and GxE effect (Default = c(0,1,2)).}
+\item{coef_main}{Coefficients of the main model, must be a vector of size 3 for intercept, E main effect and GxE effect (Default = c(0,1,2)).}
+
+\item{coef_G}{Coefficients of the 4 genes, must be a vector of size 4 (Default = c(.30, .10, .20, .40)).}
+
+\item{coef_E}{Coefficients of the 3 environments, must be a vector of size 3 (Default = c(.45, .35, .2)).}
 
 \item{logit}{If TRUE, the outcome is transformed to binary with a logit link.}
 
 \item{seed}{RNG seed.}
+
+\item{beta_param}{Vector of size two for the parameters of the beta distribution of the environmental variables (Default = c(2,2)).}
 }
 \value{
-Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients, the crossover point.
 }
 \description{
 Simulated example of a 2 way interaction GxE model with crossover point (where G and E are latent variables). 
 \deqn{g_j \sim Binomial(n=1,p=.30)}
 \deqn{j = 1, 2, 3, 4}
-\deqn{e_l \sim max(Poisson(\mu=0,\sigma=4),10)}
+\deqn{e_l \sim 10 Beta(\alpha,\beta))}
 \deqn{l = 1, 2, 3}
 \deqn{g = .30g_1 + .10g_2 + .20g_3 + .40g_4}
 \deqn{e = .45e_1 + .35e_2 + .2e_3}
@@ -38,13 +45,13 @@ Simulated example of a 2 way interaction GxE model with crossover point (where G
 }
 }
 \examples{
-## Examples where x is in [0, 10] and y in [3, 13]
+## Examples
 # Diathesis Stress WEAK
-ex_dia = example_with_crossover(250, c=0, coef = c(3,1,2), sigma=1)
+ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
 # Diathesis Stress STRONG
-ex_dia_s = example_with_crossover(250, c=0, coef = c(3,0,2), sigma=1)
+ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
 # Differential Susceptibility WEAK
-ex_ds = example_with_crossover(250, c=5, coef = c(3+5,1,2), sigma=1)
+ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 # Differential Susceptibility STRONG
-ex_ds_s = example_with_crossover(250, c=5, coef = c(3+5,0,2), sigma=1)
+ex_ds_s = example_with_crossover(250, c=5, coef_main = c(3+5,0,2), sigma=1)
 }

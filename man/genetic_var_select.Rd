@@ -63,7 +63,7 @@ genetic_var_select(data, formula, parallel_iter = 10,
 Returns a list of vectors containing the percentage of times that each variable was included in the final populations, the criterion of the best k models, the starting points of the best k models (with the names of the best variables) and the entropy of the populations.
 }
 \description{
-Use a standard genetic algorithm with single-point crossover and a single mutation ran in parallel to find the best subset of variables. The percentage of times that each variable is included the final populations is also given. This is very computationally demanding but this finds much better solutions than either stepwise search or bootstrap variable selection.
+[Very slow, recommended when the number of variables is large] Use a standard genetic algorithm with single-point crossover and a single mutation ran in parallel to find the best subset of variables. The percentage of times that each variable is included the final populations is also given. This is very computationally demanding but this finds much better solutions than either stepwise search or bootstrap variable selection.
 }
 \examples{
 \dontrun{
@@ -71,7 +71,7 @@ Use a standard genetic algorithm with single-point crossover and a single mutati
 train = example_3way_3latent(250, 2, seed=777)
 # Genetic algorithm based on BIC
 # Normally you should use a lot more than 2 populations with 10 generations
-boot = genetic_var_select(train$data, latent_var=train$latent_var,
+ga = genetic_var_select(train$data, latent_var=train$latent_var,
 formula=y ~ E*G*Z, search_criterion="AIC", parallel_iter=2, maxgen = 10)
 }
 }

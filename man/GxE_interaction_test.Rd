@@ -4,12 +4,12 @@
 \alias{GxE_interaction_test}
 \title{Testing of the GxE interaction}
 \usage{
-GxE_interaction_test(data, genes, env, formula_noGxE, crossover,
-  reverse_code = TRUE, boot = NULL, criterion = "AICc",
-  start_genes = NULL, start_env = NULL, eps = 0.001, maxiter = 1000,
-  family = gaussian, ylim = NULL, cv_iter = 5, cv_folds = 10,
-  folds = NULL, Huber_p = 1.345, id = NULL, classification = FALSE,
-  seed = NULL)
+GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
+  "max"), reverse_code = FALSE, rescale = FALSE, boot = NULL,
+  criterion = "BIC", start_genes = NULL, start_env = NULL, eps = 0.001,
+  maxiter = 100, family = gaussian, ylim = NULL, cv_iter = 5,
+  cv_folds = 10, folds = NULL, Huber_p = 1.345, id = NULL,
+  classification = FALSE, seed = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -20,13 +20,15 @@ GxE_interaction_test(data, genes, env, formula_noGxE, crossover,
 
 \item{formula_noGxE}{formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.}
 
-\item{crossover}{The crossover point of \emph{E} used in the diathesis-stress (or vantage sensitivity) models. Alternatively, Instead of providing a number, you can also write "min" or "max" to automatically choose the observable minimum or maximum of the environmental score \emph{E}.}
+\item{crossover}{A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.}
 
-\item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: g1_new = 1 - g1). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. (Default=TRUE)}
+\item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_{rev}} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).}
+
+\item{rescale}{If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).}
 
 \item{boot}{Optional number of bootstrap samples. If not NULL, we use bootstrap to find the confidence interval of the crossover point. This provides more realistic confidence intervals. Make sure to use a bigger number (>= 1000) to get good precision; also note that a too small number could return an error ("estimated adjustment 'a' is NA").}
 
-\item{criterion}{Criterion used to assess which model is the best. It can be set to "AIC", "AICc", "BIC", "cv", "cv_AUC", "cv_Huber". (Default="AICc")}
+\item{criterion}{Criterion used to assess which model is the best. It can be set to "AIC", "AICc", "BIC", "cv", "cv_AUC", "cv_Huber" (Default="BIC").}
 
 \item{start_genes}{Optional starting points for genetic score (must be the same length as the number of columns of \code{genes}).}
 
@@ -55,46 +57,46 @@ GxE_interaction_test(data, genes, env, formula_noGxE, crossover,
 \item{seed}{Seed for cross-validation folds.}
 }
 \value{
-Returns a list containing the different models (diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) in order from best to worst for each selected criterion. Although called 'diathesis-stress', this model could represent vantage sensitivity. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
+Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95% coverage of the crossover, whether the crossover 95% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
 }
 \description{
-Testing of the GxE interaction, a method adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress/vantage-sensitivity vs differential susceptibility), assuming or not assuming a main effect for E (WEAK vs STRONG) using the LEGIT model. Note that when some genes have negative weights, the interpretation of WEAK vs STRONG is altered since some observations could have negative genetic scores.
+Testing of the GxE interaction using the competitive-confirmatory approach adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress, vantage-sensitivity, or differential susceptibility), assuming or not assuming a main effect for \emph{E} (WEAK vs STRONG) using the LEGIT model.
 }
 \examples{
 \dontrun{
 ## Examples where x is in [0, 10]
 # Diathesis Stress WEAK
-ex_dia = example_with_crossover(250, c=0, coef = c(3,1,2), sigma=1)
+ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
 # Diathesis Stress STRONG
-ex_dia_s = example_with_crossover(250, c=0, coef = c(3,0,2), sigma=1)
+ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
 ## Assuming there is a crossover point at x=5
 # Differential Susceptibility WEAK
-ex_ds = example_with_crossover(250, c=5, coef = c(3+5,1,2), sigma=1)
+ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 # Differential Susceptibility STRONG
-ex_ds_s = example_with_crossover(250, c=5, coef = c(3+5,0,2), sigma=1)
+ex_ds_s = example_with_crossover(250, c=5, coef_main = c(3+5,0,2), sigma=1)
 
 ## If true model is "Diathesis Stress WEAK"
 GxE_test_BIC = GxE_interaction_test(ex_dia$data, ex_dia$G, ex_dia$E, 
 formula_noGxE = y ~ 1, start_genes = ex_dia$coef_G, start_env = ex_dia$coef_E, 
-crossover = 0, criterion="BIC")
+criterion="BIC")
 GxE_test_BIC$results
 
 ## If true model is "Diathesis Stress STRONG"
 GxE_test_BIC = GxE_interaction_test(ex_dia_s$data, ex_dia_s$G, ex_dia_s$E, 
 formula_noGxE = y ~ 1, start_genes = ex_dia_s$coef_G, start_env = ex_dia_s$coef_E, 
-crossover = 0, criterion="BIC")
+criterion="BIC")
 GxE_test_BIC$results
 
 ## If true model is "Differential susceptibility WEAK"
 GxE_test_BIC = GxE_interaction_test(ex_ds$data, ex_ds$G, ex_ds$E, 
 formula_noGxE = y ~ 1, start_genes = ex_ds$coef_G, start_env = ex_ds$coef_E, 
-crossover = 0, criterion="BIC")
+criterion="BIC")
 GxE_test_BIC$results
 
 ## If true model is "Differential susceptibility STRONG"
 GxE_test_BIC = GxE_interaction_test(ex_ds_s$data, ex_ds_s$G, ex_ds_s$E, 
 formula_noGxE = y ~ 1, start_genes = ex_ds_s$coef_G, start_env = ex_ds_s$coef_E,
-crossover = 0, criterion="BIC")
+criterion="BIC")
 GxE_test_BIC$results
 
 # Example of plots
@@ -105,6 +107,8 @@ plot(GxE_test_BIC$fits$diathesis_stress_WEAK, xlim=c(0,10), ylim=c(3,13))
 }
 }
 \references{
+Alexia Jolicoeur-Martineau, Jay Belsky, Eszter Szekely, Keith F. Widaman, Michael Pluess, Celia Greenwood and Ashley Wazana. \emph{Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model} (2017). psyarxiv.com/27uw8. 10.17605/OSF.IO/27UW8.
+
 Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
 
 Jay Belsky, Michael Pluess and Keith F. Widaman. \emph{Confirmatory and competitive evaluation of alternative gene-environment interaction hypotheses} (2013). Journal of Child Psychology and Psychiatry, 54(10), 1135-1143.

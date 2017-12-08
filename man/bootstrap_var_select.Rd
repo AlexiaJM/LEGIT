@@ -64,7 +64,7 @@ bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
 Returns a list of vectors containing the percentage of times that each variable was selected within each latent variable.
 }
 \description{
-Creates bootstrap samples, runs a stepwise search on all of them and then reports the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
+[Very slow, not recommended] Creates bootstrap samples, runs a stepwise search on all of them and then reports the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
 }
 \examples{
 \dontrun{

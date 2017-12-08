@@ -4,8 +4,8 @@ author: "Alexia Jolicoeur-Martineau"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{LEGIT}
   %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{LEGIT}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -240,7 +240,7 @@ g2_bad = rbinom(250,1,.30)
 g3_bad = rbinom(250,1,.30)
 g4_bad = rbinom(250,1,.30)
 g5_bad = rbinom(250,1,.30)
-G_new = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+G_new = cbind(g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 forward_genes_BIC = stepwise_search_IM(train$data, latent_var_original=train$latent_var, latent_var_extra=list(G=G_new, E=NULL, Z=NULL), formula=y ~ E*G*Z, search_type="forward", search=1, search_criterion="BIC", interactive_mode=FALSE)
 ```
 We didn't add any irrelevant genes.

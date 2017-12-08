@@ -26,7 +26,7 @@
 #' @description Simulated example of a 2 way interaction GxE model with crossover point (where G and E are latent variables). 
 #' \deqn{g_j \sim Binomial(n=1,p=.30)}
 #' \deqn{j = 1, 2, 3, 4}
-#' \deqn{e_l \sim max(Poisson(\mu=0,\sigma=4),10)}
+#' \deqn{e_l \sim 10 Beta(\alpha,\beta))}
 #' \deqn{l = 1, 2, 3}
 #' \deqn{g = .30g_1 + .10g_2 + .20g_3 + .40g_4}
 #' \deqn{e = .45e_1 + .35e_2 + .2e_3}
@@ -38,20 +38,23 @@
 #' @param N Sample size.
 #' @param sigma Standard deviation of the gaussian noise (if \code{logit}=FALSE).
 #' @param c crossover point
-#' @param coef Coefficients of the main model, must be a vector of size 3 for intercept, E main effect and GxE effect (Default = c(0,1,2)).
+#' @param coef_main Coefficients of the main model, must be a vector of size 3 for intercept, E main effect and GxE effect (Default = c(0,1,2)).
+#' @param coef_G Coefficients of the 4 genes, must be a vector of size 4 (Default = c(.30, .10, .20, .40)).
+#' @param coef_E Coefficients of the 3 environments, must be a vector of size 3 (Default = c(.45, .35, .2)).
 #' @param logit If TRUE, the outcome is transformed to binary with a logit link.
 #' @param seed RNG seed.
-#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients
+#' @param beta_param Vector of size two for the parameters of the beta distribution of the environmental variables (Default = c(2,2)).
+#' @return Returns a list containing, in the following order: data.frame with the observed outcome (with noise) and the true outcome (without noise), data.frame of the genetic variants (G), data.frame of the environments (E), vector of the true genetic coefficients, vector of the true environmental coefficients, vector of the true main model coefficients, the crossover point.
 #' @examples
-#' ## Examples where x is in [0, 10] and y in [3, 13]
+#' ## Examples
 #' # Diathesis Stress WEAK
-#' ex_dia = example_with_crossover(250, c=0, coef = c(3,1,2), sigma=1)
+#' ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
 #' # Diathesis Stress STRONG
-#' ex_dia_s = example_with_crossover(250, c=0, coef = c(3,0,2), sigma=1)
+#' ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
 #' # Differential Susceptibility WEAK
-#' ex_ds = example_with_crossover(250, c=5, coef = c(3+5,1,2), sigma=1)
+#' ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 #' # Differential Susceptibility STRONG
-#' ex_ds_s = example_with_crossover(250, c=5, coef = c(3+5,0,2), sigma=1)
+#' ex_ds_s = example_with_crossover(250, c=5, coef_main = c(3+5,0,2), sigma=1)
 #' @export
 "example_with_crossover"
 
@@ -137,10 +140,12 @@
 #' @param maxiter Maximum number of iterations.
 #' @param family Outcome distribution and link function (Default = gaussian).
 #' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
-#' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
+#' @param print If FALSE, nothing except warnings will be printed (Default = TRUE).
+#' @param print_steps If TRUE, print the parameters at all iterations, good for debugging (Default = FALSE).
 #' @param crossover If not NULL, estimates the crossover point of \emph{E} using the provided value as starting point (To test for diathesis-stress vs differential susceptibility).
 #' @param crossover_fixed If TRUE, instead of estimating the crossover point of E, we force/fix it to the value of "crossover". (Used when creating a diathes-stress model) (Default = FALSE).
-#' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: g1_new = 1 - g1). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decrease attention but with a negative genetic score, it increase attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. (Default = FALSE).
+#' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
 #' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly and the formula.
 #' @examples
 #'	train = example_2way(500, 1, seed=777)
@@ -159,15 +164,16 @@
 "LEGIT"
 
 #' @title Testing of the GxE interaction
-#' @description Testing of the GxE interaction, a method adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress/vantage-sensitivity vs differential susceptibility), assuming or not assuming a main effect for E (WEAK vs STRONG) using the LEGIT model. Note that when some genes have negative weights, the interpretation of WEAK vs STRONG is altered since some observations could have negative genetic scores.
+#' @description Testing of the GxE interaction using the competitive-confirmatory approach adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress, vantage-sensitivity, or differential susceptibility), assuming or not assuming a main effect for \emph{E} (WEAK vs STRONG) using the LEGIT model.
 #' @param data data.frame of the dataset to be used. 
 #' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). Warning, using reverse_code=TRUE with GxG interactions could cause nonsensical results since GxG could be inverted and by default it is TRUE.
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param formula_noGxE formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.
-#' @param crossover The crossover point of \emph{E} used in the diathesis-stress (or vantage sensitivity) models. Alternatively, Instead of providing a number, you can also write "min" or "max" to automatically choose the observable minimum or maximum of the environmental score \emph{E}.
-#' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: g1_new = 1 - g1). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. (Default=TRUE)
+#' @param crossover A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.
+#' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_{rev}} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
 #' @param boot Optional number of bootstrap samples. If not NULL, we use bootstrap to find the confidence interval of the crossover point. This provides more realistic confidence intervals. Make sure to use a bigger number (>= 1000) to get good precision; also note that a too small number could return an error ("estimated adjustment 'a' is NA").
-#' @param criterion Criterion used to assess which model is the best. It can be set to "AIC", "AICc", "BIC", "cv", "cv_AUC", "cv_Huber". (Default="AICc")
+#' @param criterion Criterion used to assess which model is the best. It can be set to "AIC", "AICc", "BIC", "cv", "cv_AUC", "cv_Huber" (Default="BIC").
 #' @param start_genes Optional starting points for genetic score (must be the same length as the number of columns of \code{genes}).
 #' @param start_env Optional starting points for environmental score (must be the same length as the number of columns of \code{env}).
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
@@ -181,42 +187,42 @@
 #' @param classification Set to TRUE if you are doing classification (binary outcome).
 #' @param seed Seed for cross-validation folds.
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
-#' @return Returns a list containing the different models (diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) in order from best to worst for each selected criterion. Although called 'diathesis-stress', this model could represent vantage sensitivity. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
+#' @return Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95% coverage of the crossover, whether the crossover 95% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
 #' @examples
 #' \dontrun{
 #' ## Examples where x is in [0, 10]
 #' # Diathesis Stress WEAK
-#' ex_dia = example_with_crossover(250, c=0, coef = c(3,1,2), sigma=1)
+#' ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
 #' # Diathesis Stress STRONG
-#' ex_dia_s = example_with_crossover(250, c=0, coef = c(3,0,2), sigma=1)
+#' ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
 #' ## Assuming there is a crossover point at x=5
 #' # Differential Susceptibility WEAK
-#' ex_ds = example_with_crossover(250, c=5, coef = c(3+5,1,2), sigma=1)
+#' ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 #' # Differential Susceptibility STRONG
-#' ex_ds_s = example_with_crossover(250, c=5, coef = c(3+5,0,2), sigma=1)
+#' ex_ds_s = example_with_crossover(250, c=5, coef_main = c(3+5,0,2), sigma=1)
 #' 
 #' ## If true model is "Diathesis Stress WEAK"
 #' GxE_test_BIC = GxE_interaction_test(ex_dia$data, ex_dia$G, ex_dia$E, 
 #' formula_noGxE = y ~ 1, start_genes = ex_dia$coef_G, start_env = ex_dia$coef_E, 
-#' crossover = 0, criterion="BIC")
+#' criterion="BIC")
 #' GxE_test_BIC$results
 #' 
 #' ## If true model is "Diathesis Stress STRONG"
 #' GxE_test_BIC = GxE_interaction_test(ex_dia_s$data, ex_dia_s$G, ex_dia_s$E, 
 #' formula_noGxE = y ~ 1, start_genes = ex_dia_s$coef_G, start_env = ex_dia_s$coef_E, 
-#' crossover = 0, criterion="BIC")
+#' criterion="BIC")
 #' GxE_test_BIC$results
 #' 
 #' ## If true model is "Differential susceptibility WEAK"
 #' GxE_test_BIC = GxE_interaction_test(ex_ds$data, ex_ds$G, ex_ds$E, 
 #' formula_noGxE = y ~ 1, start_genes = ex_ds$coef_G, start_env = ex_ds$coef_E, 
-#' crossover = 0, criterion="BIC")
+#' criterion="BIC")
 #' GxE_test_BIC$results
 #' 
 #' ## If true model is "Differential susceptibility STRONG"
 #' GxE_test_BIC = GxE_interaction_test(ex_ds_s$data, ex_ds_s$G, ex_ds_s$E, 
 #' formula_noGxE = y ~ 1, start_genes = ex_ds_s$coef_G, start_env = ex_ds_s$coef_E,
-#' crossover = 0, criterion="BIC")
+#' criterion="BIC")
 #' GxE_test_BIC$results
 #' 
 #' # Example of plots
@@ -226,15 +232,41 @@
 #' plot(GxE_test_BIC$fits$diathesis_stress_WEAK, xlim=c(0,10), ylim=c(3,13))
 #' }
 #' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Jay Belsky, Eszter Szekely, Keith F. Widaman, Michael Pluess, Celia Greenwood and Ashley Wazana. \emph{Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model} (2017). psyarxiv.com/27uw8. 10.17605/OSF.IO/27UW8.
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
 #' @references Jay Belsky, Michael Pluess and Keith F. Widaman. \emph{Confirmatory and competitive evaluation of alternative gene-environment interaction hypotheses} (2013). Journal of Child Psychology and Psychiatry, 54(10), 1135-1143.
 #' @export
 "GxE_interaction_test"
 
+#' @title Regions of significance using Johnson-Neyman technique
+#' @description Constructs a LEGIT model and returns the regions of significance (RoS) with the predicted type of interaction (diathesis-stress, vantage-sensitivity, or differential susceptibility). RoS is not recommended due to poor accuracy with small samples and small effect sizes, GxE_interaction_test has much better accuracy overall. Only implemented for family=gaussian.
+#' @param data data.frame of the dataset to be used. 
+#' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
+#' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
+#' @param formula_noGxE formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added.
+#' @param t_alpha Alpha level of the student-t distribution for the regions of significance (Default = .05)
+#' @param start_genes Optional starting points for genetic score (must be the same length as the number of columns of \code{genes}).
+#' @param start_env Optional starting points for environmental score (must be the same length as the number of columns of \code{env}).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
+#' @return Returns a list containing the RoS and the predicted type of interaction.
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	ros = GxE_interaction_RoS(train$data, train$G, train$E, y ~ 1)
+#'	ros
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Jay Belsky, Eszter Szekely, Keith F. Widaman, Michael Pluess, Celia Greenwood and Ashley Wazana. \emph{Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model} (2017). psyarxiv.com/27uw8. 10.17605/OSF.IO/27UW8.
+#' @references  Daniel J. Bauer & Patrick J. Curran. \emph{Probing Interactions in Fixed and Multilevel Regression: Inferential and Graphical Techniques} (2005). Multivariate Behavioral Research, 40:3, 373-400, DOI: 10.1207/s15327906mbr4003_5.
+#' @export
+"GxE_interaction_RoS"
+
 #' @title Plot
-#' @description Plot of LEGIT. By default, non G or E elements are fixed to the mean.
+#' @description Plot of LEGIT models. By default, variables that are not in \emph{G} or \emph{E} are fixed to the mean.
 #' @param x An object of class "LEGIT", usually, a result of a call to LEGIT.
-#' @param cov_values Vector of the values, for each covariate, that will be used in the plotting, if there are any covariates. It must contain the names of the variables. The covariates are the variables that are not \emph{E} nor \emph{G} but still are adjusted for in the model. By default, covariates are fixed to the mean.
+#' @param cov_values Vector of the values, for each covariate, that will be used in the plotting, if there are any covariates. It must contain the names of the variables. Covariates are the variables that are not \emph{G} nor \emph{E} but still are adjusted for in the model. By default, covariates are fixed to the mean.
 #' @param gene_quant Vector of the genes quantiles used to make the plot. We use quantiles instead of fixed values because genetic scores can vary widely depending on the weights, thus looking at quantiles make this simpler. (Default = c(.025,.50,.975))
 #' @param env_quant Vector of the environments quantiles used to make the plot. We use quantiles instead of fixed values because environmental scores can vary widely depending on the weights, thus looking at quantiles make this simpler. (Default = c(.025,.50,.975))
 #' @param outcome_quant Vector of the outcome quantiles used to make the plot. We use quantiles instead of fixed values because environmental scores can vary widely depending on the weights, thus looking at quantiles make this simpler. (Default = c(.025,.50,.975))
@@ -473,7 +505,7 @@
 "backward_step_IM"
 
 #' @title Stepwise search for the best subset of genetic variants or environments with the LEGIT model
-#' @description Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
+#' @description [Fast, recommended for small number of variables] Adds the best variable or drops the worst variable one at a time in the genetic (if \code{search="genes"}) or environmental score (if \code{search="env"}). You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. Note that when the number of variables in \emph{G} and \emph{E} is large, this does not generally converge to the optimal subset, this function is only recommended when you have a small number of variables (e.g. 2 environments, 6 genetic variants). If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
 #' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
 #' @param interactive_mode If TRUE, uses interactive mode. In interactive mode, at each iteration, the user is shown the AIC, BIC, p-value and also the cross-validation \eqn{R^2} if \code{search_criterion="cv"} and the cross-validation AUC if \code{search_criterion="cv_AUC"} for the best 5 variables. The user must then enter a number between 1 and 5 to select the variable to be added, entering anything else will stop the search.
@@ -529,7 +561,7 @@
 "stepwise_search"
 
 #' @title Stepwise search for the best subset of elements in the latent variables with the IMLEGIT model
-#' @description Adds the best variable or drops the worst variable one at a time in the latent variables. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
+#' @description [Fast, recommended  when the number of variables is small] Adds the best variable or drops the worst variable one at a time in the latent variables. You can select the desired search criterion (AIC, BIC, cross-validation error, cross-validation AUC) to determine which variable is the best/worst and should be added/dropped. Note that when the number of variables in \emph{G} and \emph{E} is large, this does not generally converge to the optimal subset, this function is only recommended when you have a small number of variables (e.g. 2 environments, 6 genetic variants). If using cross-validation (\code{search_criterion="cv"} or \code{search_criterion="cv_AUC"}), to prevent cross-validating with each variable (extremely slow), we recommend setting a p-value threshold (\code{p_threshold}) and forcing the algorithm not to look at models with bigger AIC (\code{exclude_worse_AIC=TRUE}).
 #' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
 #' @param interactive_mode If TRUE, uses interactive mode. In interactive mode, at each iteration, the user is shown the AIC, BIC, p-value and also the cross-validation \eqn{R^2} if \code{search_criterion="cv"} and the cross-validation AUC if \code{search_criterion="cv_AUC"} for the best 5 variables. The user must then enter a number between 1 and 5 to select the variable to be added, entering anything else will stop the search.
@@ -575,7 +607,7 @@
 "stepwise_search_IM"
 
 #' @title Bootstrap variable selection (for IMLEGIT)
-#' @description Creates bootstrap samples, runs a stepwise search on all of them and then reports the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
+#' @description [Very slow, not recommended] Creates bootstrap samples, runs a stepwise search on all of them and then reports the percentage of times that each variable was selected. This is very computationally demanding. With small sample sizes, variable selection can be unstable and bootstrap can be used to give us an idea of the degree of certitude that a variable should be included or not.
 #' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
 #' @param boot_iter number of bootstrap samples (Default = 1000).
@@ -624,7 +656,7 @@
 "bootstrap_var_select"
 
 #' @title Parallel genetic algorithm variable selection (for IMLEGIT)
-#' @description Use a standard genetic algorithm with single-point crossover and a single mutation ran in parallel to find the best subset of variables. The percentage of times that each variable is included the final populations is also given. This is very computationally demanding but this finds much better solutions than either stepwise search or bootstrap variable selection.
+#' @description [Very slow, recommended when the number of variables is large] Use a standard genetic algorithm with single-point crossover and a single mutation ran in parallel to find the best subset of variables. The percentage of times that each variable is included the final populations is also given. This is very computationally demanding but this finds much better solutions than either stepwise search or bootstrap variable selection.
 #' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
 #' @param parallel_iter number of parallel genetic algorithms (Default = 10). I recommend using 2-4 times the number of CPU cores used.
@@ -655,13 +687,50 @@
 #'	train = example_3way_3latent(250, 2, seed=777)
 #'	# Genetic algorithm based on BIC
 #'	# Normally you should use a lot more than 2 populations with 10 generations
-#'	boot = genetic_var_select(train$data, latent_var=train$latent_var,
+#'	ga = genetic_var_select(train$data, latent_var=train$latent_var,
 #'	formula=y ~ E*G*Z, search_criterion="AIC", parallel_iter=2, maxgen = 10)
 #'	}
 #' @import foreach snow doSNOW utils iterators
 #' @references Mu Zhu, & Hugh Chipman. \emph{Darwinian evolution in parallel universes: A parallel genetic algorithm for variable selection} (2006). Technometrics, 48(4), 491-502.
 #' @export
 "genetic_var_select"
+
+#' @title Parallel natural evolutionary variable selection (nes) (for IMLEGIT)
+#' @description [Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. Note that this approach assumes that the inclusion of a variable does not depends on wether other variables are included (i.e. it assumes independent bernouilli distributions); this is generally not true but this approach still converge well and running it in parallel increases the probability of reaching the global optimum.
+#' @param data data.frame of the dataset to be used.
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param parallel_iter number of parallel tries (Default = 3). For speed, I recommend using the number of CPU cores.
+#' @param alpha vector of the parameter for the Dirichlet distribution of the starting points (Assuming a symmetric Dirichlet distribution with only one parameter). If the vector has size N and parralel_iter=K, we use alpha[1], ..., alpha[N], alpha[1], ... , alpha[N], ... for parallel_iter 1 to K respectively. We assume a dirichlet distribution for the starting points to get a bit more variability and make sure we are not missing on a great subset of variable that doesn't converge to the global optimum with the default starting points. Use bigger values for less variability and lower values for more variability (Default = c(1,5,10)).
+#' @param eps_nes Threshold for convergence, recommended not to change (Default = .001).
+#' @param popsize Size of the population, the number of subsets of variables sampled at each iteration (Default = 25). Between 25 and 100 is generally adequate.
+#' @param lr learning rate of the gradient descent, higher will converge faster but more likely to get stuck in local optium (Default = .2).
+#' @param prop_ignored The proportion of the population that are given a fixed fitness value, thus their importance is greatly reduce. The higher it is, the longer it takes to converge. Highers values makes the algorithm focus more on favorizing the good subsets of variables than penalizing the bad subsets (Default = .50).
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...
+#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores (Default = 1).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
+#' @param maxiter Maximum number of iterations.
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param seed Optional seed.
+#' @param progress If TRUE, shows the progress done (Default=TRUE).
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
+#' @param classification Set to TRUE if you are doing classification and cross-validation (binary outcome).
+#' @param print If TRUE, print the bernouilli probabilities of the variables at each iteration. (Default = TRUE).
+#' @return Returns a list containing the best subset's fit, cross-validation output, latent variables and starting points.
+#' @examples
+#'	\dontrun{
+#'	## Example
+#'	train = example_3way_3latent(250, 2, seed=777)
+#'	nes = nes_var_select(train$data, latent_var=train$latent_var,
+#'	formula=y ~ E*G*Z)
+#'	}
+#' @import foreach snow doSNOW utils iterators
+#' @export
+"nes_var_select"
 
 example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 	set.seed(seed)
@@ -688,22 +757,18 @@ example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 	return(list(data=data.frame(y,y_true),G=data.frame(g1,g2,g3,g4,g1_g3,g2_g3),E=data.frame(e1,e2,e3),coef_G=c(.2,.15,-.3,.1,.05,.2),coef_E=c(-.45,.35,.2), coef_main=c(-1,2,3,4)))
 }
 
-example_with_crossover = function(N, sigma=1, c = 0, coef=c(0,1,2), logit=FALSE, seed=NULL){
+example_with_crossover = function(N, sigma=1, c = 0, coef_main=c(0,1,2), coef_G=c(.30, .10, .20, .40), coef_E=c(.45,.35,.2), logit=FALSE, seed=NULL, beta_param=c(2,2)){
 	set.seed(seed)
 	g1 = rbinom(N,1,.30)
 	g2 = rbinom(N,1,.30)
 	g3 = rbinom(N,1,.30)
 	g4 = rbinom(N,1,.30)
-	e1 = rpois(N,4)
-	e2 = rpois(N,4)
-	e3 = rpois(N,4)
-	# Truncate so e1, e2, e3 are in [0,10]
-	e1[e1>10] = 10
-	e2[e2>10] = 10
-	e3[e3>10] = 10
-	g = .30*g1 + .10*g2 + .20*g3 + .40*g4
-	e = .45*e1 + .35*e2 + .2*e3
-	y_true = coef[1] + coef[2]*(e-c) + coef[3]*g*(e-c)
+	e1 = rbeta(N,beta_param[1],beta_param[2])*10
+	e2 = rbeta(N,beta_param[1],beta_param[2])*10
+	e3 = rbeta(N,beta_param[1],beta_param[2])*10
+	g = coef_G[1]*g1 + coef_G[2]*g2 + coef_G[3]*g3 + coef_G[4]*g4
+	e = coef_E[1]*e1 + coef_E[2]*e2 + coef_E[3]*e3
+	y_true = coef_main[1] + coef_main[2]*(e-c) + coef_main[3]*g*(e-c)
 	if (logit){
 		y_true = 1/(1+exp(-(y_true)))
 		y = rbinom(N,1,y_true)
@@ -712,7 +777,7 @@ example_with_crossover = function(N, sigma=1, c = 0, coef=c(0,1,2), logit=FALSE,
 		eps = rnorm(N,0,sigma)
 		y = y_true + eps
 	}
-	return(list(data=data.frame(y,y_true),G=data.frame(g1,g2,g3,g4),E=data.frame(e1,e2,e3),coef_G=c(.30, .10, .20, .40),coef_E=c(.45,.35,.2), coef_main=coef, c=c))
+	return(list(data=data.frame(y,y_true),G=data.frame(g1,g2,g3,g4),E=data.frame(e1,e2,e3),coef_G=coef_G,coef_E=coef_E, coef_main=coef_main, c=c))
 }
 
 example_3way = function(N, sigma=2.5, logit=FALSE, seed=NULL){
@@ -807,7 +872,7 @@ longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NUL
  	return(folds)
 }
 
-LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE, crossover = NULL, crossover_fixed = FALSE, reverse_code=FALSE)
+LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE, print_steps=FALSE, crossover = NULL, crossover_fixed = FALSE, reverse_code=FALSE, rescale=FALSE)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
@@ -845,7 +910,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	formula = stats::as.formula(formula)
 
 	# Can only reverse genes in [0,1]
-	if (reverse_code && min(genes) !=0 || max(genes) !=1) stop("Please make sure that genes are in range [0,1].")
+	if (reverse_code && (min(genes) !=0 || max(genes) !=1)) stop("Please make sure that genes are in range [0,1].")
 	else{
 		genes_names_orig = colnames(genes)
 		genes_inverted = rep(FALSE, NCOL(genes))
@@ -860,6 +925,12 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	genes = genes[comp,, drop=FALSE]
 	env = env[comp,, drop=FALSE]
 	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	# Rescale environments
+	if (rescale){
+		if (!is.null(crossover) && !crossover_fixed) env[,-1] = apply(env[,-1, drop=FALSE], 2, function(x) (x - min(x))*10/(max(x)-min(x)))
+		else env = apply(env, 2, function(x) (x - min(x))*10/(max(x)-min(x)))
+	}
 
 	#Adding empty variables in main dataset for genes and env
 	data[,colnames(genes)]=0
@@ -880,6 +951,8 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	data$G = genes%*%weights_genes
 	if (!is.null(crossover) && crossover_fixed) data$E = env%*%weights_env - crossover
 	else data$E = env%*%weights_env
+
+	if (print_steps) cat(paste0("G: ", paste(round(weights_genes,2), collapse = " "), " // E: ", paste(round(weights_env,2), collapse = " "),"\n"))
 
 	# Deconstructing formula into parts (No E or G / only E / only G / both G and E)
 	formula_full = stats::terms(formula,simplify=TRUE)
@@ -951,6 +1024,9 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	formula_c = paste0(formula_c, " offset(R0_c) - 1")
 	formula_c = stats::as.formula(formula_c)
 
+	weights_genes_old_old = NULL
+	weights_genes_old = NULL
+
 	for (i in 1:maxiter){
 
 		## Step a : fit main model
@@ -971,6 +1047,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 
 			# Reverse coding
 			if (reverse_code && sum(weights_genes_ < 0) > 0){
+				weights_genes_old_old = weights_genes_old
 				# Invert gene coding
 				genes[,weights_genes_ < 0] = 1 - genes[,weights_genes_ < 0]
 				genes_inverted[weights_genes_ < 0] = !genes_inverted[weights_genes_ < 0]
@@ -993,6 +1070,12 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 			# Updating G estimates and checking convergence
 			weights_genes_old = weights_genes
 			weights_genes = weights_genes_/sum(abs(weights_genes_))
+			if (!is.null(weights_genes_old_old)){
+				if(sqrt(sum((weights_genes_old_old-weights_genes)^2)) < eps){
+					warning("Can't reverse code properly, returning the model with reverse_code=FALSE.")
+					return(LEGIT(data=data, genes=genes, env=env, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print, print_steps=print_steps, crossover = crossover, crossover_fixed = crossover_fixed, reverse_code=FALSE))
+				}
+			}
 
 			data$G = genes%*%weights_genes
 			if(sqrt(sum((weights_genes_old-weights_genes)^2)) < eps) conv_G = TRUE
@@ -1016,7 +1099,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 
 			# Updating E estimates and checking convergence
 			weights_env_old = weights_env
-			if (!is.null(crossover) && !crossover_fixed) weights_env = weights_env_/sum(abs(weights_env_[-1]))
+			if (!is.null(crossover) && !crossover_fixed) weights_env[-1] = weights_env_[-1]/sum(abs(weights_env_[-1]))
 			else weights_env = weights_env_/sum(abs(weights_env_))
 			if (!is.null(crossover) && crossover_fixed) data$E = env%*%weights_env - crossover
 			else data$E = env%*%weights_env
@@ -1025,8 +1108,14 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 		}
 		else conv_E = TRUE
 
+		if (print_steps && !is.null(crossover) && crossover_fixed) cat(paste0("Main: ", paste(round(coef(fit_a),2), collapse = " "), " // G: ", paste(round(weights_genes,2), collapse = " "), " // E: ", paste(round(weights_env,2), collapse = " "), " // C: ", round(crossover,2),"\n"))
+		else if (print_steps && !is.null(crossover) && !crossover_fixed) cat(paste0("Main: ", paste(round(coef(fit_a),2), collapse = " "), " // G: ", paste(round(weights_genes,2), collapse = " "), " // E: ", paste(round(weights_env[-1],2), collapse = " "), " // C: ", round(weights_env[1],2),"\n"))
+		else if (print_steps) cat(paste0("Main: ", paste(round(coef(fit_a),2), collapse = " "), " // G: ", paste(round(weights_genes,2), collapse = " "), " // E: ", paste(round(weights_env,2), collapse = " "),"\n"))
+
+
 		if (conv_G & conv_E) break
 	}
+	if (print_steps) cat("\n")
 
 	# Rerunning last time and scaling to return as results
 	fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
@@ -1102,7 +1191,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	return(result)
 }
 
-GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover, reverse_code=TRUE, boot = NULL, criterion="AICc", start_genes=NULL, start_env=NULL, eps=.001, maxiter=1000, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, id=NULL, classification=FALSE, seed=NULL)
+GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("min","max"), reverse_code=FALSE, rescale = FALSE, boot = NULL, criterion="BIC", start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, id=NULL, classification=FALSE, seed=NULL)
 {
 	formula = stats::as.formula(formula_noGxE)
 	formula_WEAK = paste0(formula, " + G*E - G")
@@ -1112,59 +1201,87 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover, reve
 
 	# 4 Models
 	# If min or max, then we must find the min or max E and make it the crossover after
-	if (crossover == "min" || crossover == "max"){
-		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
-		if (crossover == "min") crossover_diathesis_stress_WEAK = min(diathesis_stress_WEAK$fit_main$data$E)
-		if (crossover == "max") crossover_diathesis_stress_WEAK = max(diathesis_stress_WEAK$fit_main$data$E)
-		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_WEAK, crossover_fixed = TRUE, reverse_code=reverse_code)
+	# We also use the G and E weights too as starting point for even more stability.
+	crossover_vantage_sensitivity_WEAK = crossover[1]
+	crossover_vantage_sensitivity_STRONG = crossover[1]
+	crossover_diathesis_stress_WEAK = crossover[2]
+	crossover_diathesis_stress_STRONG = crossover[2]
+	# Vantage sensitivity c = min
+	if (crossover[1] == "min"){
+		vantage_sensitivity_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
+		if (crossover[1] == "min") crossover_vantage_sensitivity_WEAK = as.numeric(apply(vantage_sensitivity_WEAK$fit_main$data[names(env)],2,min) %*% coef(vantage_sensitivity_WEAK$fit_env))
+		vantage_sensitivity_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(vantage_sensitivity_WEAK$fit_genes), start_env=coef(vantage_sensitivity_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_vantage_sensitivity_WEAK, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 
-		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
-		if (crossover == "min") crossover_diathesis_stress_STRONG = min(diathesis_stress_STRONG$fit_main$data$E)
-		if (crossover == "max") crossover_diathesis_stress_STRONG = max(diathesis_stress_STRONG$fit_main$data$E)
-		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_STRONG, crossover_fixed = TRUE, reverse_code=reverse_code)
+		vantage_sensitivity_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
+		if (crossover[1] == "min") crossover_vantage_sensitivity_STRONG = as.numeric(apply(vantage_sensitivity_STRONG$fit_main$data[names(env)],2,min) %*% coef(vantage_sensitivity_STRONG$fit_env))
+		vantage_sensitivity_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(vantage_sensitivity_STRONG$fit_genes), start_env=coef(vantage_sensitivity_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_vantage_sensitivity_STRONG, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 	}
 	else{
-		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover, crossover_fixed = TRUE, reverse_code=reverse_code)
-		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover, crossover_fixed = TRUE, reverse_code=reverse_code)
+		vantage_sensitivity_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover[1], crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
+		vantage_sensitivity_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover[1], crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 	}
+	# Diathesis-Stress c = max
+	if (crossover[2] == "max"){
+		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
+		if (crossover[2] == "max") crossover_diathesis_stress_WEAK = as.numeric(apply(diathesis_stress_WEAK$fit_main$data[names(env)],2,max) %*% coef(diathesis_stress_WEAK$fit_env))
+		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(diathesis_stress_WEAK$fit_genes), start_env=coef(diathesis_stress_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_WEAK, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
+
+		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
+		if (crossover[2] == "max") crossover_diathesis_stress_STRONG = as.numeric(apply(diathesis_stress_STRONG$fit_main$data[names(env)],2,max) %*% coef(diathesis_stress_STRONG$fit_env))
+		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(diathesis_stress_STRONG$fit_genes), start_env=coef(diathesis_stress_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_STRONG, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
+	}
+	else{
+		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover[2], crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
+		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover[2], crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
+	}
+
 	# We first run the models as normal LEGIT models without crossover, then we use C=-beta_G/beta_GxE as the crossover starting point. 
 	# We also use the G and E weights too as starting point for even more stability.
-	diff_suscept_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
+	diff_suscept_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
 	crossover_diff_suscept_WEAK = -coef(diff_suscept_WEAK$fit_main)[2]/coef(diff_suscept_WEAK$fit_main)[4]
-	diff_suscept_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(diff_suscept_WEAK$fit_genes), start_env=coef(diff_suscept_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diff_suscept_WEAK, crossover_fixed = FALSE, reverse_code=reverse_code)
-	diff_suscept_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
+	diff_suscept_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(diff_suscept_WEAK$fit_genes), start_env=coef(diff_suscept_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diff_suscept_WEAK, crossover_fixed = FALSE, reverse_code=reverse_code, rescale=rescale)
+	diff_suscept_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
 	crossover_diff_suscept_STRONG = -coef(diff_suscept_STRONG$fit_main)[2]/coef(diff_suscept_STRONG$fit_main)[3]
-	diff_suscept_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(diff_suscept_STRONG$fit_genes), start_env=coef(diff_suscept_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diff_suscept_STRONG, crossover_fixed = FALSE, reverse_code=reverse_code)
+	diff_suscept_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(diff_suscept_STRONG$fit_genes), start_env=coef(diff_suscept_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diff_suscept_STRONG, crossover_fixed = FALSE, reverse_code=reverse_code, rescale=rescale)
 
 	# Criterions
 	if (criterion == "cv" || criterion == "cv_AUC" || criterion=="cv_Huber" || criterion=="cv_L1"){
 
-		if (crossover == "min" || crossover == "max"){
+		if (crossover[1] == "min"){
+			vantage_sensitivity_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_vantage_sensitivity_WEAK, crossover_fixed = TRUE)
+			vantage_sensitivity_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_vantage_sensitivity_STRONG, crossover_fixed = TRUE)
+		}
+		else{
+			vantage_sensitivity_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover[1], crossover_fixed = TRUE)
+			vantage_sensitivity_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover[1], crossover_fixed = TRUE)
+		}
+		if (crossover[2] == "max"){
 			diathesis_stress_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_diathesis_stress_WEAK, crossover_fixed = TRUE)
 			diathesis_stress_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_diathesis_stress_STRONG, crossover_fixed = TRUE)
 		}
 		else{
-			diathesis_stress_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover, crossover_fixed = TRUE)
-			diathesis_stress_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover, crossover_fixed = TRUE)
+			diathesis_stress_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover[2], crossover_fixed = TRUE)
+			diathesis_stress_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover[2], crossover_fixed = TRUE)
 		}
 		diff_suscept_WEAK_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_WEAK, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_diff_suscept_WEAK, crossover_fixed = FALSE)
 		diff_suscept_STRONG_cv = LEGIT_cv(data=data, genes=genes, env=env, formula=formula_STRONG, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed, id=id, crossover = crossover_diff_suscept_STRONG, crossover_fixed = FALSE)
 
-		if (criterion == "cv") model_criterion = c(mean(diathesis_stress_WEAK_cv$R2_cv), mean(diathesis_stress_STRONG_cv$R2_cv), mean(diff_suscept_WEAK_cv$R2_cv), mean(diff_suscept_STRONG_cv$R2_cv))
-		else if (criterion == "cv_Huber") model_criterion = c(mean(diathesis_stress_WEAK_cv$Huber_cv), mean(diathesis_stress_STRONG_cv$Huber_cv), mean(diff_suscept_WEAK_cv$Huber_cv), mean(diff_suscept_STRONG_cv$Huber_cv))
-		else if (criterion == "cv_L1") model_criterion = c(mean(diathesis_stress_WEAK_cv$L1_cv), mean(diathesis_stress_STRONG_cv$L1_cv), mean(diff_suscept_WEAK_cv$L1_cv), mean(diff_suscept_STRONG_cv$L1_cv))
-		else if (criterion == "cv_AUC") model_criterion = c(mean(diathesis_stress_WEAK_cv$AUC), mean(diathesis_stress_STRONG_cv$AUC), mean(diff_suscept_WEAK_cv$AUC), mean(diff_suscept_STRONG_cv$AUC))
+		if (criterion == "cv") model_criterion = c(mean(vantage_sensitivity_WEAK_cv$R2_cv), mean(vantage_sensitivity_STRONG_cv$R2_cv),mean(diathesis_stress_WEAK_cv$R2_cv), mean(diathesis_stress_STRONG_cv$R2_cv), mean(diff_suscept_WEAK_cv$R2_cv), mean(diff_suscept_STRONG_cv$R2_cv))
+		else if (criterion == "cv_Huber") model_criterion = c(mean(vantage_sensitivity_WEAK_cv$Huber_cv), mean(vantage_sensitivity_STRONG_cv$Huber_cv),mean(diathesis_stress_WEAK_cv$Huber_cv), mean(diathesis_stress_STRONG_cv$Huber_cv), mean(diff_suscept_WEAK_cv$Huber_cv), mean(diff_suscept_STRONG_cv$Huber_cv))
+		else if (criterion == "cv_L1") model_criterion = c(mean(vantage_sensitivity_WEAK_cv$L1_cv), mean(vantage_sensitivity_STRONG_cv$L1_cv),mean(diathesis_stress_WEAK_cv$L1_cv), mean(diathesis_stress_STRONG_cv$L1_cv), mean(diff_suscept_WEAK_cv$L1_cv), mean(diff_suscept_STRONG_cv$L1_cv))
+		else if (criterion == "cv_AUC") model_criterion = c(mean(vantage_sensitivity_WEAK_cv$AUC), mean(vantage_sensitivity_STRONG_cv$AUC),mean(diathesis_stress_WEAK_cv$AUC), mean(diathesis_stress_STRONG_cv$AUC), mean(diff_suscept_WEAK_cv$AUC), mean(diff_suscept_STRONG_cv$AUC))
 		# List in order from best to worse
 		ordering = order(model_criterion, decreasing = TRUE)
 	}
 	else{
-		if (criterion == "AIC") model_criterion = c(diathesis_stress_WEAK$true_model_parameters$AIC, diathesis_stress_STRONG$true_model_parameters$AIC, diff_suscept_WEAK$true_model_parameters$AIC, diff_suscept_STRONG$true_model_parameters$AIC)
-		else if (criterion == "AICc") model_criterion = c(diathesis_stress_WEAK$true_model_parameters$AICc, diathesis_stress_STRONG$true_model_parameters$AICc, diff_suscept_WEAK$true_model_parameters$AICc, diff_suscept_STRONG$true_model_parameters$AICc)
-		else if (criterion == "BIC") model_criterion = c(diathesis_stress_WEAK$true_model_parameters$BIC, diathesis_stress_STRONG$true_model_parameters$BIC, diff_suscept_WEAK$true_model_parameters$BIC, diff_suscept_STRONG$true_model_parameters$BIC)
+		if (criterion == "AIC") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$AIC, vantage_sensitivity_STRONG$true_model_parameters$AIC,diathesis_stress_WEAK$true_model_parameters$AIC, diathesis_stress_STRONG$true_model_parameters$AIC, diff_suscept_WEAK$true_model_parameters$AIC, diff_suscept_STRONG$true_model_parameters$AIC)
+		else if (criterion == "AICc") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$AICc, vantage_sensitivity_STRONG$true_model_parameters$AICc,diathesis_stress_WEAK$true_model_parameters$AICc, diathesis_stress_STRONG$true_model_parameters$AICc, diff_suscept_WEAK$true_model_parameters$AICc, diff_suscept_STRONG$true_model_parameters$AICc)
+		else if (criterion == "BIC") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$BIC, vantage_sensitivity_STRONG$true_model_parameters$BIC,diathesis_stress_WEAK$true_model_parameters$BIC, diathesis_stress_STRONG$true_model_parameters$BIC, diff_suscept_WEAK$true_model_parameters$BIC, diff_suscept_STRONG$true_model_parameters$BIC)
 		# List in order from best to worse
 		ordering = order(model_criterion)
 	}
 	model_criterion = round(model_criterion[ordering],2)
+	crossover_models = round(c(vantage_sensitivity_WEAK$crossover, vantage_sensitivity_STRONG$crossover, diathesis_stress_WEAK$crossover, diathesis_stress_STRONG$crossover, diff_suscept_WEAK$crossover, diff_suscept_STRONG$crossover)[ordering],2)
 	# 95% interval of crossover for differential susceptibility models
 	if (!is.null(boot)){
 		# We must do bootstrap
@@ -1172,8 +1289,8 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover, reve
 			data_ = d[i,]
 			genes_ = genes[i,]
 			env_ = env[i,]
-			diff_suscept_WEAK = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_WEAK_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
-			diff_suscept_STRONG = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_STRONG_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code)
+			diff_suscept_WEAK = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_WEAK_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
+			diff_suscept_STRONG = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_STRONG_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
 			return (c(-coef(diff_suscept_WEAK$fit_main)[2]/coef(diff_suscept_WEAK$fit_main)[4],-coef(diff_suscept_STRONG$fit_main)[2]/coef(diff_suscept_STRONG$fit_main)[3]))
 		}
 		boot_results = boot::boot(data, LEGIT_boot, boot)
@@ -1191,14 +1308,51 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover, reve
 	crossover_interval_WEAK = paste0("( ",crossover_interval_WEAK[1]," / ",crossover_interval_WEAK[2]," )")
 	crossover_interval_STRONG = paste0("( ",crossover_interval_STRONG[1]," / ",crossover_interval_STRONG[2]," )")
 
+	# Proportion of observations below crossover point
+	prop_below = c(sum(vantage_sensitivity_WEAK$fit_main$data$E <= crossover_vantage_sensitivity_WEAK)/NROW(vantage_sensitivity_WEAK$fit_main$data), sum(vantage_sensitivity_STRONG$fit_main$data$E <= crossover_vantage_sensitivity_STRONG)/NROW(vantage_sensitivity_STRONG$fit_main$data), sum(diathesis_stress_WEAK$fit_main$data$E <= crossover_diathesis_stress_WEAK)/NROW(diathesis_stress_WEAK$fit_main$data), sum(diathesis_stress_STRONG$fit_main$data$E <= crossover_diathesis_stress_STRONG)/NROW(diathesis_stress_STRONG$fit_main$data), sum(diff_suscept_WEAK$fit_main$data$E <= crossover_diff_suscept_WEAK)/NROW(diff_suscept_WEAK$fit_main$data), sum(diff_suscept_STRONG$fit_main$data$E <= crossover_diff_suscept_STRONG)/NROW(diff_suscept_STRONG$fit_main$data))
+
 	# Aggregating results
-	fits = list(diathesis_stress_WEAK = diathesis_stress_WEAK, diathesis_stress_STRONG = diathesis_stress_STRONG, diff_suscept_WEAK = diff_suscept_WEAK, diff_suscept_STRONG = diff_suscept_STRONG)
-	results = cbind(model_criterion, cbind("","",crossover_interval_WEAK,crossover_interval_STRONG)[ordering],cbind("","",c("No","Yes")[inside_WEAK+1],c("No","Yes")[inside_STRONG+1])[ordering])
-	rownames(results) = c("Diathesis-stress WEAK","Diathesis-stress STRONG","Differential susceptibility WEAK","Differential susceptibility STRONG")[ordering]
+	fits = list(vantage_sensitivity_WEAK = vantage_sensitivity_WEAK, vantage_sensitivity_STRONG = vantage_sensitivity_STRONG, diathesis_stress_WEAK = diathesis_stress_WEAK, diathesis_stress_STRONG = diathesis_stress_STRONG, diff_suscept_WEAK = diff_suscept_WEAK, diff_suscept_STRONG = diff_suscept_STRONG)
+	results = cbind(model_criterion, crossover_models,cbind("","","","",crossover_interval_WEAK,crossover_interval_STRONG)[ordering],cbind("","","","",c("No","Yes")[inside_WEAK+1],c("No","Yes")[inside_STRONG+1])[ordering], prop_below[ordering])
+	rownames(results) = c("Vantage sensitivity WEAK","Vantage sensitivity STRONG","Diathesis-stress WEAK","Diathesis-stress STRONG","Differential susceptibility WEAK","Differential susceptibility STRONG")[ordering]
 	colnames(results)[1] = criterion
-	colnames(results)[2] = "crossover 95%"
-	colnames(results)[3] = "Within observable range?"
-	return(list(fits = fits, results = results))
+	colnames(results)[2] = "crossover"
+	colnames(results)[3] = "crossover 95%"
+	colnames(results)[4] = "Within observable range?"
+	colnames(results)[5] = "% of observations below crossover"
+	return(list(fits = fits, results = results, E_range=c(min(data$E),max(data$E))))
+}
+
+GxE_interaction_RoS = function(data, genes, env, formula_noGxE, t_alpha = .05, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, ylim=NULL, reverse_code=FALSE, rescale=FALSE){
+	formula = stats::as.formula(formula_noGxE)
+	formula = paste0(formula, " + G*E")
+	fit_LEGIT = LEGIT(data=data, genes=genes, env=env, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=gaussian, ylim=ylim, print=FALSE, print_steps=FALSE, crossover = NULL, crossover_fixed = FALSE, reverse_code=reverse_code, rescale=rescale)
+	fit = lm(formula, fit_LEGIT$fit_main$data)
+
+	b1 = coef(fit)["G"]
+	b3 = coef(fit)["G:E"]
+
+	b1_var = vcov(fit)["G","G"]
+	b3_var = vcov(fit)["G:E","G:E"]
+	b1_b3_cov = vcov(fit)["G","G:E"]
+  	t_crit = qt(t_alpha/2, fit$df.residual, lower.tail = FALSE)
+
+  	a = (t_crit^2)*b3_var - (b3^2)
+	b = 2*((t_crit^2)*b1_b3_cov - b1*b3)
+	c = (t_crit^2)*b1_var - (b1^2)	
+	if ((b^2) - 4*a*c < 0) return(list(RoS=c(NA,NA), int_type="Undetermined"))
+	RoS_results = c((-b + sqrt((b^2) - 4*a*c))/(2*a), (-b - sqrt((b^2) - 4*a*c))/(2*a))
+	RoS_results = sort(RoS_results)
+	names(RoS_results)=NULL
+	Lower_bounded = TRUE
+	Upper_bounded = TRUE
+	if (RoS_results[1] < min(fit$model$E)) Lower_bounded = FALSE
+	if (RoS_results[2] > max(fit$model$E)) Upper_bounded = FALSE
+	if (Lower_bounded && Upper_bounded) int_type = "Differential susceptibility"
+	else if (!Lower_bounded && Upper_bounded) int_type = "Vantage sensitivity"
+	else if (Lower_bounded && !Upper_bounded) int_type = "Diathesis-stress"
+	else int_type = "Undetermined"
+	return(list(RoS=RoS_results, int_type=int_type))
 }
 
 plot.LEGIT = function(x, cov_values = NULL, gene_quant = c(.025,.50,.975), env_quant = c(.025,.50,.975), outcome_quant = c(.025,.50,.975), cols = c("#3288BD", "#CAB176", "#D53E4F"), ylab="Outcome", xlab="Environment", leglab="Genetic score", xlim= NULL, ylim= NULL, x_at = NULL, y_at = NULL, cex.axis = 1.9, cex.lab=2, cex.main=2.2, cex.leg=2.2, legend="topleft", ...){
@@ -3877,7 +4031,7 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 				else if (search_criterion=="AICc") crit[p] = fit$true_model_parameters$AICc
 				else if (search_criterion=="BIC") crit[p] = fit$true_model_parameters$BIC
 				else{
-					fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+					fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed)
 					if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)	
 					else if (search_criterion=="cv_Huber") crit[p] = mean(fit_cv$Huber_cv)
 					else if (search_criterion=="cv_L1") crit[p] = mean(fit_cv$L1_cv)
@@ -3948,7 +4102,7 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 					else if (search_criterion=="AICc") crit[p] = fit$true_model_parameters$AICc
 					else if (search_criterion=="BIC") crit[p] = fit$true_model_parameters$BIC
 					else{
-						fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+						fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, seed=seed)
 						if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)
 						else if (search_criterion=="cv_Huber") crit[p] = mean(fit_cv$Huber_cv)
 						else if (search_criterion=="cv_L1") crit[p] = mean(fit_cv$L1_cv)
@@ -3992,4 +4146,176 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 	var_select = Reduce("+",lapply(results,function(x) x$r/popsize))/parallel_iter
 	names(var_select) = var
 	return(list(var_select=var_select, best_subsets_crit=list_best_latent_var_crit, best_subsets_start=list_best_latent_var_start, entropy=list_entropy, n_step=list_n_step))
+}
+
+nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_nes=.001, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE){
+	k = length(latent_var)
+	## Removing missing data and checks
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	#  Check for empty latent variable (Note: Probably shouldn't be named empty_start_dataset but empty_start_latent_var althought that would be even more confusing considering start_latent_var)
+	if (is.null(latent_var)) stop("latent_var cannot be null. However, if search=i, then you could set latent_var[[i]]=NULL.")
+	# Make it to have NULL elements but not be NULL
+	comp = rep(TRUE, NROW(data))
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) comp = comp & stats::complete.cases(data, latent_var[[i]])
+	}
+	data = data[comp,, drop=FALSE]
+	N_var = 0
+	var = c()
+	var_k = c()
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+		N_var = NCOL(latent_var[[i]]) + N_var
+		var = c(var, names(latent_var[[i]]))
+		var_k = c(var_k, c(rep(i,NCOL(latent_var[[i]]))))
+	}
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	# The names of the variables selected is going to be the names of start_latent_var_pop elements
+	start_latent_var_pop  = vector("list", popsize)
+	# theta is the vector of parameters of the bernouilli distributions
+	theta = vector("list", k)
+	names(theta) = names(latent_var)
+	for (i in 1:k){
+		theta[[i]] = rep(.50, NCOL(latent_var[[i]]))
+		names(theta[[i]]) = colnames(latent_var[[i]])
+	}
+	# Can't keep all X matrix because so big, so keeping the binary yes/no representing if a variable is kept in each subset of variable
+	indexes_pop = vector("list", popsize)
+	for (i in 1:popsize){
+		indexes_pop[[i]] = vector("list", k)
+		for (j in 1:k){
+			indexes_pop[[i]][[j]] = rep(FALSE, NCOL(latent_var[[j]]))
+		}
+	}
+	# cirterion of the individual
+	crit = rep(0, popsize)
+	crit_ranked = rep(0, popsize)
+	theta_diff = Inf
+	# Generate population
+	conv = FALSE
+	iter = 0
+	# Setting up parallel
+	cl <- snow::makeCluster(n_cluster)
+	doSNOW::registerDoSNOW(cl)
+	if (progress){
+		if (runif(1) < .50) char="(^._.^) "
+		else char="(=^o^=) "
+		pb = utils::txtProgressBar(max = parallel_iter, style = 3, char=char)
+		progress <- function(n) utils::setTxtProgressBar(pb, n)
+		opts <- list(progress = progress)
+	}
+	else opts <- list()
+	# Need to use this "with(c(),CODEHERE)" to prevent R check from returning a "no visible binding for global variable"
+	with(c(),{
+		results <- foreach::foreach(b = 1:parallel_iter, .options.snow = opts) %dopar% {
+			if (!is.null(seed)) set.seed(seed+b)
+			while(theta_diff > eps_nes){
+				iter = iter + 1
+				if (print){
+					toprint = paste0("i=", iter)
+					for (i in 1:k) toprint = paste0(toprint, " theta[",i,"]: ", paste0(round(theta[[i]],2), collapse=" "))
+					print(toprint)
+					flush.console()
+				} 
+				# grad is the gradient of the log-likelihood of the bernouilli distributions (has to be reinitialized every iteration)
+				grad = vector("list", k)
+				for (curr in 1:N_var){
+					grad[[curr]] = rep(0, popsize)
+				}
+				for (p in 1:popsize){
+					start_latent_var_pop[[p]] = vector("list", k)
+					names(start_latent_var_pop[[p]]) = names(latent_var)
+					# current latent_var (not to be retained, temporary)
+					latent_var_pop = vector("list", k)
+					names(latent_var_pop) = names(latent_var)
+					curr = 0
+					for (i in 1:k){
+						indexes = rep(FALSE, NCOL(latent_var[[i]]))
+						# Can't have no variables so looping until we get a correct subset
+						curr_backup = curr
+						while (sum(indexes)==0){
+							curr = curr_backup
+							for (j in 1:NCOL(latent_var[[i]])){
+								curr = curr + 1
+								indexes[j] = rbinom(1, 1, prob = theta[[i]][j])==1
+								if (indexes[j]) grad[[curr]][p] = 1/theta[[i]][j]
+								else grad[[curr]][p] = -1/(1 - theta[[i]][j])
+							}
+						}
+						latent_var_pop[[i]] = latent_var[[i]][,indexes,drop=FALSE]
+
+						# Keeping indexes 
+						indexes_pop[[p]][[i]] = indexes
+						# Starting point (Dirichlet distribution)
+						alpha_index = b %% length(b)
+						if (alpha_index == 0) alpha_index = length(b)
+						start_latent_var_pop[[p]][[i]] = rgamma(NCOL(latent_var_pop[[i]]),alpha[alpha_index])*(1-2*rbinom(NCOL(latent_var_pop[[i]]),1,.5))
+						start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(start_latent_var_pop[[p]][[i]])
+						names(start_latent_var_pop[[p]][[i]]) = colnames(latent_var_pop[[i]])
+					}
+					# Fit model
+					fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+					#fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+					start_latent_var_pop[[p]] = lapply(fit$fit_latent_var,coef)
+					if (search_criterion=="AIC") crit[p] = -fit$true_model_parameters$AIC
+					else if (search_criterion=="AICc") crit[p] = -fit$true_model_parameters$AICc
+					else if (search_criterion=="BIC") crit[p] = -fit$true_model_parameters$BIC
+					else{
+						fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+						if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)
+						else if (search_criterion=="cv_Huber") crit[p] = -mean(fit_cv$Huber_cv)
+						else if (search_criterion=="cv_L1") crit[p] = -mean(fit_cv$L1_cv)
+						else if (search_criterion=="cv_AUC") crit[p] = mean(fit_cv$AUC)
+					}
+				}
+				# Rank the criterion and apply fitness shaping function 2i-1 where i is rank in [0,1]
+				# Make all low ranks to have the same value so that bad examples are not too penalized but good examples are more prioritized
+				crit = (rank(crit)-1)/(length(crit)-1)*2-1
+				crit[crit < prop_ignored*2-1] = prop_ignored*2-1
+				# Gradient descent
+				curr = 0
+				theta_diff = 0
+				for (i in 1:k){
+					for (j in 1:NCOL(latent_var[[i]])){
+						curr = curr + 1
+						grad_theta = mean(crit*grad[[curr]])
+						theta_old = theta[[i]][j]
+						theta[[i]][j] = max(min(theta[[i]][j] + lr*grad_theta,1),0)
+						theta_diff = theta_diff + (theta[[i]][j] - theta_old)^2
+
+					}
+				}
+				theta_diff = sqrt(theta_diff)
+				if (theta_diff < eps_nes) conv = TRUE
+			}
+			p = order(crit, decreasing=TRUE)[1]
+			latent_var_best = vector("list", k)
+			names(latent_var_best) = names(latent_var)
+			for (i in 1:k) latent_var_best[[i]] = latent_var[[i]][,indexes_pop[[p]][[i]],drop=FALSE]
+			start_latent_var_best = start_latent_var_pop[[p]]
+			return(list(latent_var_best=latent_var_best,start_latent_var_best=start_latent_var_best, crit_best=max(crit)))
+		}
+		close(pb)
+		snow::stopCluster(cl)
+	})
+	latent_var_best = results[[1]]$latent_var_best
+	start_latent_var_best = results[[1]]$start_latent_var_best
+	crit = results[[1]]$crit_best
+	# Keeping the best ones
+	if (parallel_iter > 1){
+		for (i in 2:parallel_iter){
+			if (results[[i]]$crit_best > crit){
+				latent_var_best = results[[i]]$latent_var_best
+				start_latent_var_best = results[[i]]$start_latent_var_best
+				crit = results[[i]]$crit_best
+			}
+		}
+	}
+	best_fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_best, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+	best_fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_best, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+	return(list(fit=best_fit, fit_cv=best_fit_cv, latent_var=latent_var_best, start_latent_var=start_latent_var_best))
 }
