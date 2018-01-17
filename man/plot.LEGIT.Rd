@@ -7,9 +7,9 @@
 \method{plot}{LEGIT}(x, cov_values = NULL, gene_quant = c(0.025, 0.5,
   0.975), env_quant = c(0.025, 0.5, 0.975), outcome_quant = c(0.025, 0.5,
   0.975), cols = c("#3288BD", "#CAB176", "#D53E4F"), ylab = "Outcome",
-  xlab = "Environment", leglab = "Genetic score", xlim = NULL,
-  ylim = NULL, x_at = NULL, y_at = NULL, cex.axis = 1.9, cex.lab = 2,
-  cex.main = 2.2, cex.leg = 2.2, legend = "topleft", ...)
+  xlab = "Environment", legtitle = "Genetic score", leglab = NULL,
+  xlim = NULL, ylim = NULL, x_at = NULL, y_at = NULL, cex.axis = 1.9,
+  cex.lab = 2, cex.main = 2.2, cex.leg = 2.2, legend = "topleft", ...)
 }
 \arguments{
 \item{x}{An object of class "LEGIT", usually, a result of a call to LEGIT.}
@@ -28,7 +28,9 @@
 
 \item{xlab}{X-axis label (Default = "Environment")}
 
-\item{leglab}{Legend for the genes slopes label (Default = "Genetic score")}
+\item{legtitle}{Title of the Legend for the genes slopes label (Default = "Genetic score")}
+
+\item{leglab}{Optional vector of labels of the Legend for the genes slopes label}
 
 \item{xlim}{X-axis vector of size two with min and max (Default = NULL which leads to min="2.5 percentile" and max="97.5 percentile").}
 

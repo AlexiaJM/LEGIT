@@ -273,7 +273,8 @@
 #' @param cols Colors for the slopes with different genetic score. Must be a vector same length as "gene_range". (Default = c("#3288BD", "#CAB176", #D53E4F"))
 #' @param ylab Y-axis label (Default = "Outcome")
 #' @param xlab X-axis label (Default = "Environment")
-#' @param leglab Legend for the genes slopes label (Default = "Genetic score")
+#' @param legtitle Title of the Legend for the genes slopes label (Default = "Genetic score")
+#' @param leglab Optional vector of labels of the Legend for the genes slopes label
 #' @param cex.axis relative scale of axis (Default = 1.9)
 #' @param cex.lab relative scale of labels (Default = 2)
 #' @param cex.main relative scale overall (Default = 2.2)
@@ -1356,7 +1357,7 @@ GxE_interaction_RoS = function(data, genes, env, formula_noGxE, t_alpha = .05, s
 	return(list(RoS=RoS_results, int_type=int_type))
 }
 
-plot.LEGIT = function(x, cov_values = NULL, gene_quant = c(.025,.50,.975), env_quant = c(.025,.50,.975), outcome_quant = c(.025,.50,.975), cols = c("#3288BD", "#CAB176", "#D53E4F"), ylab="Outcome", xlab="Environment", leglab="Genetic score", xlim= NULL, ylim= NULL, x_at = NULL, y_at = NULL, cex.axis = 1.9, cex.lab=2, cex.main=2.2, cex.leg=2.2, legend="topleft", ...){
+plot.LEGIT = function(x, cov_values = NULL, gene_quant = c(.025,.50,.975), env_quant = c(.025,.50,.975), outcome_quant = c(.025,.50,.975), cols = c("#3288BD", "#CAB176", "#D53E4F"), ylab="Outcome", xlab="Environment", legtitle="Genetic score", leglab=NULL, xlim= NULL, ylim= NULL, x_at = NULL, y_at = NULL, cex.axis = 1.9, cex.lab=2, cex.main=2.2, cex.leg=2.2, legend="topleft", ...){
 	
 	# Better names (need to use x for S3 class consistency)
 	object = x
@@ -1423,7 +1424,8 @@ plot.LEGIT = function(x, cov_values = NULL, gene_quant = c(.025,.50,.975), env_q
 		graphics::polygon(c(E,rev(E)),c(ilink(preds$fit-2*preds$se.fit),rev(ilink(preds$fit+2*preds$se.fit))),col=grDevices::adjustcolor(cols[j], alpha.f = 0.2),border = NA)
 		graphics::lines(E,ilink(preds$fit), col=cols[j], lwd=2)
 	}
-	legend(legend, legend=paste0(gene_quant*100,"%"),col = cols, lty=1, lwd=3, xpd = TRUE, cex = cex.leg, title=leglab)
+	if (is.null(leglab)) leglab = paste0(gene_quant*100,"%")
+	legend(legend, legend=leglab,col = cols, lty=1, lwd=3, xpd = TRUE, cex = cex.leg, title=legtitle)
 }
 
 IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE)
