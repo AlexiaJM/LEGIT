@@ -14,7 +14,7 @@ GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
 
-\item{genes}{data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). Warning, using reverse_code=TRUE with GxG interactions could cause nonsensical results since GxG could be inverted and by default it is TRUE.}
+\item{genes}{data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).}
 
 \item{env}{data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).}
 
@@ -57,7 +57,7 @@ GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
 \item{seed}{Seed for cross-validation folds.}
 }
 \value{
-Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95% coverage of the crossover, whether the crossover 95% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
+Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95\% coverage of the crossover, whether the crossover 95\% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
 }
 \description{
 Testing of the GxE interaction using the competitive-confirmatory approach adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress, vantage-sensitivity, or differential susceptibility), assuming or not assuming a main effect for \emph{E} (WEAK vs STRONG) using the LEGIT model.
@@ -66,9 +66,9 @@ Testing of the GxE interaction using the competitive-confirmatory approach adapt
 \dontrun{
 ## Examples where x is in [0, 10]
 # Diathesis Stress WEAK
-ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
+ex_dia = example_with_crossover(250, c=10, coef_main = c(3,1,2), sigma=1)
 # Diathesis Stress STRONG
-ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
+ex_dia_s = example_with_crossover(250, c=10, coef_main = c(3,0,2), sigma=1)
 ## Assuming there is a crossover point at x=5
 # Differential Susceptibility WEAK
 ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)

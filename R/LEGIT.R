@@ -48,9 +48,9 @@
 #' @examples
 #' ## Examples
 #' # Diathesis Stress WEAK
-#' ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
+#' ex_dia = example_with_crossover(250, c=10, coef_main = c(3,1,2), sigma=1)
 #' # Diathesis Stress STRONG
-#' ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
+#' ex_dia_s = example_with_crossover(250, c=10, coef_main = c(3,0,2), sigma=1)
 #' # Differential Susceptibility WEAK
 #' ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 #' # Differential Susceptibility STRONG
@@ -166,7 +166,7 @@
 #' @title Testing of the GxE interaction
 #' @description Testing of the GxE interaction using the competitive-confirmatory approach adapted from Belsky, Pluess et Widaman (2013). Reports the different hypotheses (diathesis-stress, vantage-sensitivity, or differential susceptibility), assuming or not assuming a main effect for \emph{E} (WEAK vs STRONG) using the LEGIT model.
 #' @param data data.frame of the dataset to be used. 
-#' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic). Warning, using reverse_code=TRUE with GxG interactions could cause nonsensical results since GxG could be inverted and by default it is TRUE.
+#' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param formula_noGxE formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.
 #' @param crossover A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.
@@ -187,14 +187,14 @@
 #' @param classification Set to TRUE if you are doing classification (binary outcome).
 #' @param seed Seed for cross-validation folds.
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
-#' @return Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95% coverage of the crossover, whether the crossover 95% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
+#' @return Returns a list containing 1) the six models (vantage sensitivity WEAK/STRONG, diathesis-stress WEAK/STRONG, differential susceptibility WEAK/STRONG) and 2) a data frame with the criterion, the crossover, 95\% coverage of the crossover, whether the crossover 95\% interval is within the observable range and the percentage of observations below the crossover point in order from best to worst based on the selected criterion. Models not within the observable range should be rejected even if the criterion is slightly better. An extremely low percentage of observations below the crossover point is also evidence toward diathesis-stress. Note that we assume that the environmental score is from bad to good but if this is not the case, then the models labelled as "diathesis-stress" could actually reflect vantage sensitivity and vice-versa. If outcome is Good-to-Bad: C=min(E) is diathesis-stress, C=max(E) is vantage sensitivity. If outcome is Bad-to-Good: C=max(E) is diathesis-stress, C=min(E) is vantage sensitivity.
 #' @examples
 #' \dontrun{
 #' ## Examples where x is in [0, 10]
 #' # Diathesis Stress WEAK
-#' ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
+#' ex_dia = example_with_crossover(250, c=10, coef_main = c(3,1,2), sigma=1)
 #' # Diathesis Stress STRONG
-#' ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
+#' ex_dia_s = example_with_crossover(250, c=10, coef_main = c(3,0,2), sigma=1)
 #' ## Assuming there is a crossover point at x=5
 #' # Differential Susceptibility WEAK
 #' ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
@@ -924,6 +924,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	data = data[comp,, drop=FALSE]
 	genes = genes[comp,, drop=FALSE]
 	env = env[comp,, drop=FALSE]
+	env_ = env_[comp,, drop=FALSE]
 	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
 
 	# Rescale environments
@@ -1286,9 +1287,9 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("mi
 	if (!is.null(boot)){
 		# We must do bootstrap
 		LEGIT_boot = function(d, i){
-			data_ = d[i,]
-			genes_ = genes[i,]
-			env_ = env[i,]
+			data_ = d[i,,drop=FALSE]
+			genes_ = genes[i,,drop=FALSE]
+			env_ = env[i,,drop=FALSE]
 			diff_suscept_WEAK = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_WEAK_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
 			diff_suscept_STRONG = LEGIT(data=data_, genes=genes_, env=env_, formula=formula_STRONG_nocrossover, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
 			return (c(-coef(diff_suscept_WEAK$fit_main)[2]/coef(diff_suscept_WEAK$fit_main)[4],-coef(diff_suscept_STRONG$fit_main)[2]/coef(diff_suscept_STRONG$fit_main)[3]))

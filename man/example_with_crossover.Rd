@@ -47,9 +47,9 @@ Simulated example of a 2 way interaction GxE model with crossover point (where G
 \examples{
 ## Examples
 # Diathesis Stress WEAK
-ex_dia = example_with_crossover(250, c=0, coef_main = c(3,1,2), sigma=1)
+ex_dia = example_with_crossover(250, c=10, coef_main = c(3,1,2), sigma=1)
 # Diathesis Stress STRONG
-ex_dia_s = example_with_crossover(250, c=0, coef_main = c(3,0,2), sigma=1)
+ex_dia_s = example_with_crossover(250, c=10, coef_main = c(3,0,2), sigma=1)
 # Differential Susceptibility WEAK
 ex_ds = example_with_crossover(250, c=5, coef_main = c(3+5,1,2), sigma=1)
 # Differential Susceptibility STRONG

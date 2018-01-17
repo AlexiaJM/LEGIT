@@ -36,7 +36,7 @@ To test for vantage sensitivity and diathesis-stress, we can use the model above
 Let's look at a two-way interaction model with a cross-over point and a continuous outcome:
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
-$$\mathbf{e}_l \sim max(Poisson(\mu=0,\sigma=4), 10) \\ l = 1, 2, 3$$
+$$\mathbf{e}_l  \sim 10 Beta(\alpha=2,\beta=2) \\ l = 1, 2, 3$$
 $$\mathbf{g} = .30\mathbf{g}_1 + .10\mathbf{g}_2 + .20\mathbf{g}_3 + .40\mathbf{g}_4 $$
 $$ \mathbf{e} = .45\mathbf{e}_1 + .35\mathbf{e}_2 + .20\mathbf{e}_3$$
 $$\mathbf{\mu} = 3 + \beta_E(\mathbf{e}-c) + 2\mathbf{g}(\mathbf{e}-c) $$ 
