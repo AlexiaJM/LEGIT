@@ -28,8 +28,6 @@ To install the latest GitHub development version which could contain new or expe
 * install.packages("devtools")
 * devtools::install_github("AlexiaJM/LEGIT")
 
-(Note : The GitHub version currently contains an experimental feature to account for gene-environment correlation rGE which is not yet in the CRAN version)
-
 **Examples**
 
 Here is an example with 2 latent variables and a 2-way interaction (see https://arxiv.org/abs/1703.08111) :
