@@ -1,0 +1,12 @@
+LEGIT v1.2.1 (Release date: 2018-02-07)
+==============
+
+Changes:
+
+* Documentation fixes
+* Bug with missing data in LEGIT fixed
+* Model fits of GxE testing are now ordered from best to worse
+* Added Plot.LEGIT option to change label
+* Changed rescale option in LEGIT to use the range [-1,1] rather than [0,1]. Why? Because if you had negative weights, the score variable was not garanteed to be in [0,1] but with [-1,1], it always is going to be in [-1,1].
+* Updated vignettes
+* Small other fixes

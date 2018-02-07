@@ -40,7 +40,7 @@ LEGIT(data, genes, env, formula, start_genes = NULL, start_env = NULL,
 
 \item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).}
 
-\item{rescale}{If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).}
+\item{rescale}{If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).}
 }
 \value{
 Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly and the formula.

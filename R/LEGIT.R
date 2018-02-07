@@ -145,7 +145,7 @@
 #' @param crossover If not NULL, estimates the crossover point of \emph{E} using the provided value as starting point (To test for diathesis-stress vs differential susceptibility).
 #' @param crossover_fixed If TRUE, instead of estimating the crossover point of E, we force/fix it to the value of "crossover". (Used when creating a diathes-stress model) (Default = FALSE).
 #' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
-#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).
 #' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly and the formula.
 #' @examples
 #'	train = example_2way(500, 1, seed=777)
@@ -171,7 +171,7 @@
 #' @param formula_noGxE formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.
 #' @param crossover A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.
 #' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_{rev}} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
-#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).
 #' @param boot Optional number of bootstrap samples. If not NULL, we use bootstrap to find the confidence interval of the crossover point. This provides more realistic confidence intervals. Make sure to use a bigger number (>= 1000) to get good precision; also note that a too small number could return an error ("estimated adjustment 'a' is NA").
 #' @param criterion Criterion used to assess which model is the best. It can be set to "AIC", "AICc", "BIC", "cv", "cv_AUC", "cv_Huber" (Default="BIC").
 #' @param start_genes Optional starting points for genetic score (must be the same length as the number of columns of \code{genes}).
@@ -251,7 +251,7 @@
 #' @param maxiter Maximum number of iterations.
 #' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
 #' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
-#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).
+#' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).
 #' @return Returns a list containing the RoS and the predicted type of interaction.
 #' @examples
 #'	train = example_2way(500, 1, seed=777)
@@ -930,8 +930,9 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 
 	# Rescale environments
 	if (rescale){
-		if (!is.null(crossover) && !crossover_fixed) env[,-1] = apply(env[,-1, drop=FALSE], 2, function(x) (x - min(x))*10/(max(x)-min(x)))
-		else env = apply(env, 2, function(x) (x - min(x))*10/(max(x)-min(x)))
+		if (!is.null(crossover) && !crossover_fixed) env[,-1] = apply(env[,-1, drop=FALSE], 2, function(x) (x - min(x))*2/(max(x)-min(x))-1)
+		else env = apply(env, 2, function(x) (x - min(x))*2/(max(x)-min(x))-1)
+		env_ = apply(env_, 2, function(x) (x - min(x))*2/(max(x)-min(x))-1)
 	}
 
 	#Adding empty variables in main dataset for genes and env
@@ -1208,14 +1209,35 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("mi
 	crossover_vantage_sensitivity_STRONG = crossover[1]
 	crossover_diathesis_stress_WEAK = crossover[2]
 	crossover_diathesis_stress_STRONG = crossover[2]
+
+	# Need to take min if coef > 0 and max if coef < 0 to get lower bound
+	# Need to take max if coef > 0 and min if coef < 0 to get upper bound
+	get_LU = function(fit){
+		coef_env = coef(fit$fit_env)
+		env_lower_bound = rep(0, NCOL(env))
+		env_upper_bound = rep(0, NCOL(env))
+		for (i in 1:NCOL(env)){
+			if (coef_env[i] >= 0){
+				env_lower_bound[i] = min(fit$fit_main$data[,names(env)[i]])
+				env_upper_bound[i] = max(fit$fit_main$data[,names(env)[i]])
+			}
+			else{
+				env_lower_bound[i] = max(fit$fit_main$data[,names(env)[i]])
+				env_upper_bound[i] = min(fit$fit_main$data[,names(env)[i]])
+
+			}
+		}
+		return(list(L=env_lower_bound, U=env_upper_bound))
+	}
+
 	# Vantage sensitivity c = min
 	if (crossover[1] == "min"){
 		vantage_sensitivity_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
-		if (crossover[1] == "min") crossover_vantage_sensitivity_WEAK = as.numeric(apply(vantage_sensitivity_WEAK$fit_main$data[names(env)],2,min) %*% coef(vantage_sensitivity_WEAK$fit_env))
+		if (crossover[1] == "min") crossover_vantage_sensitivity_WEAK = as.numeric(get_LU(vantage_sensitivity_WEAK)$L %*% coef(vantage_sensitivity_WEAK$fit_env))
 		vantage_sensitivity_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(vantage_sensitivity_WEAK$fit_genes), start_env=coef(vantage_sensitivity_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_vantage_sensitivity_WEAK, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 
 		vantage_sensitivity_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
-		if (crossover[1] == "min") crossover_vantage_sensitivity_STRONG = as.numeric(apply(vantage_sensitivity_STRONG$fit_main$data[names(env)],2,min) %*% coef(vantage_sensitivity_STRONG$fit_env))
+		if (crossover[1] == "min") crossover_vantage_sensitivity_STRONG = as.numeric(get_LU(vantage_sensitivity_STRONG)$L %*% coef(vantage_sensitivity_STRONG$fit_env))
 		vantage_sensitivity_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(vantage_sensitivity_STRONG$fit_genes), start_env=coef(vantage_sensitivity_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_vantage_sensitivity_STRONG, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 	}
 	else{
@@ -1225,11 +1247,11 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("mi
 	# Diathesis-Stress c = max
 	if (crossover[2] == "max"){
 		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
-		if (crossover[2] == "max") crossover_diathesis_stress_WEAK = as.numeric(apply(diathesis_stress_WEAK$fit_main$data[names(env)],2,max) %*% coef(diathesis_stress_WEAK$fit_env))
+		if (crossover[2] == "max") crossover_diathesis_stress_WEAK = as.numeric(get_LU(diathesis_stress_WEAK)$U %*% coef(diathesis_stress_WEAK$fit_env))
 		diathesis_stress_WEAK = LEGIT(data=data, genes=genes, env=env, formula=formula_WEAK, start_genes=coef(diathesis_stress_WEAK$fit_genes), start_env=coef(diathesis_stress_WEAK$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_WEAK, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 
 		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, reverse_code=reverse_code, rescale=rescale)
-		if (crossover[2] == "max") crossover_diathesis_stress_STRONG = as.numeric(apply(diathesis_stress_STRONG$fit_main$data[names(env)],2,max) %*% coef(diathesis_stress_STRONG$fit_env))
+		if (crossover[2] == "max") crossover_diathesis_stress_STRONG = as.numeric(get_LU(diathesis_stress_STRONG)$U %*% coef(diathesis_stress_STRONG$fit_env))
 		diathesis_stress_STRONG = LEGIT(data=data, genes=genes, env=env, formula=formula_STRONG, start_genes=coef(diathesis_stress_STRONG$fit_genes), start_env=coef(diathesis_stress_STRONG$fit_env), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover_diathesis_stress_STRONG, crossover_fixed = TRUE, reverse_code=reverse_code, rescale=rescale)
 	}
 	else{
@@ -4320,5 +4342,5 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 	}
 	best_fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_best, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 	best_fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_best, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim)
-	return(list(fit=best_fit, fit_cv=best_fit_cv, latent_var=latent_var_best, start_latent_var=start_latent_var_best))
+	return(list(fit=best_fit, fit_cv=best_fit_cv, data=data, latent_var=latent_var_best, start_latent_var=start_latent_var_best))
 }

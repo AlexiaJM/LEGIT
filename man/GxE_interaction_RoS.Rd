@@ -31,7 +31,7 @@ GxE_interaction_RoS(data, genes, env, formula_noGxE, t_alpha = 0.05,
 
 \item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_rev} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).}
 
-\item{rescale}{If TRUE, the environmental variables are automatically rescaled to the range [0,10] using (value - min)/(max - min) * 10. This greatly improves interpretability (Default=FALSE).}
+\item{rescale}{If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).}
 }
 \value{
 Returns a list containing the RoS and the predicted type of interaction.
