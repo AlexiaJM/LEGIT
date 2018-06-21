@@ -170,6 +170,7 @@
 #' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
 #' @param formula_noGxE formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.
 #' @param crossover A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.
+#' @param include_noGxE_models If True, we test for models with only G, only E, both G and E, neither G and E (four models without a GxE). This is to verify for false positives, if one of those models has the best fit, then it is possible that there is no GxE, thus no type of GxE. With a single gene and environment, simply looking at the p-value of the GxE is good enough to get around 5-10 percent false positive rate, but with multiple genes and environments, we need to compare model fits to get a low false positive rate. Use your own judgment when using this because if you have multiple genes and environments and small/moderate N, a model without GxE could have a lower BIC but still not be the actual best model. However, if you see little difference in BIC between all 4 GxE models and the non-GxE models have much lower BIC, than it is likely that there is no GxE. Note that this is only implemented for AIC, AICc and BIC. (Default = True)
 #' @param reverse_code If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_{rev}} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).
 #' @param rescale If TRUE, the environmental variables are automatically rescaled to the range [-1,1]. This improves interpretability (Default=FALSE).
 #' @param boot Optional number of bootstrap samples. If not NULL, we use bootstrap to find the confidence interval of the crossover point. This provides more realistic confidence intervals. Make sure to use a bigger number (>= 1000) to get good precision; also note that a too small number could return an error ("estimated adjustment 'a' is NA").
@@ -696,13 +697,13 @@
 #' @export
 "genetic_var_select"
 
-#' @title Parallel natural evolutionary variable selection (nes) (for IMLEGIT)
-#' @description [Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. Note that this approach assumes that the inclusion of a variable does not depends on wether other variables are included (i.e. it assumes independent bernouilli distributions); this is generally not true but this approach still converge well and running it in parallel increases the probability of reaching the global optimum.
+#' @title Parallel natural evolutionary variable selection assuming bernouilli distribution (for IMLEGIT)
+#' @description [Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. Note that this approach assumes that the inclusion of a variable does not depends on whether other variables are included (i.e. it assumes independent bernouilli distributions); this is generally not true but this approach still converge well and running it in parallel increases the probability of reaching the global optimum.
 #' @param data data.frame of the dataset to be used.
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
 #' @param parallel_iter number of parallel tries (Default = 3). For speed, I recommend using the number of CPU cores.
 #' @param alpha vector of the parameter for the Dirichlet distribution of the starting points (Assuming a symmetric Dirichlet distribution with only one parameter). If the vector has size N and parralel_iter=K, we use alpha[1], ..., alpha[N], alpha[1], ... , alpha[N], ... for parallel_iter 1 to K respectively. We assume a dirichlet distribution for the starting points to get a bit more variability and make sure we are not missing on a great subset of variable that doesn't converge to the global optimum with the default starting points. Use bigger values for less variability and lower values for more variability (Default = c(1,5,10)).
-#' @param eps_nes Threshold for convergence, recommended not to change (Default = .001).
+#' @param entropy_threshold Entropy threshold for convergence of the population (Default = .10). The smaller the entropy is, the less diversity there is in the population, which means convergence.
 #' @param popsize Size of the population, the number of subsets of variables sampled at each iteration (Default = 25). Between 25 and 100 is generally adequate.
 #' @param lr learning rate of the gradient descent, higher will converge faster but more likely to get stuck in local optium (Default = .2).
 #' @param prop_ignored The proportion of the population that are given a fixed fitness value, thus their importance is greatly reduce. The higher it is, the longer it takes to converge. Highers values makes the algorithm focus more on favorizing the good subsets of variables than penalizing the bad subsets (Default = .50).
@@ -720,7 +721,7 @@
 #' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param classification Set to TRUE if you are doing classification and cross-validation (binary outcome).
-#' @param print If TRUE, print the bernouilli probabilities of the variables at each iteration. (Default = TRUE).
+#' @param print If TRUE, print the parameters of the search distribution and the entropy at each iteration. Note: Only works using Rterm.exe in Windows due to parallel clusters. (Default = FALSE).
 #' @return Returns a list containing the best subset's fit, cross-validation output, latent variables and starting points.
 #' @examples
 #'	\dontrun{
@@ -732,6 +733,43 @@
 #' @import foreach snow doSNOW utils iterators
 #' @export
 "nes_var_select"
+
+#' @title Parallel natural evolutionary variable selection assuming multivariate normal search distribution with a simple covariance matrix parametrization (for IMLEGIT)
+#' @description [Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. This is slower than nes_var_select but much less likely to get stuck into local optimum so the parallelization is not really needed.
+#' @param data data.frame of the dataset to be used.
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param parallel_iter number of parallel tries (Default = 3). For speed, I recommend using the number of CPU cores.
+#' @param alpha vector of the parameter for the Dirichlet distribution of the starting points (Assuming a symmetric Dirichlet distribution with only one parameter). If the vector has size N and parralel_iter=K, we use alpha[1], ..., alpha[N], alpha[1], ... , alpha[N], ... for parallel_iter 1 to K respectively. We assume a dirichlet distribution for the starting points to get a bit more variability and make sure we are not missing on a great subset of variable that doesn't converge to the global optimum with the default starting points. Use bigger values for less variability and lower values for more variability (Default = c(1,5,10)).
+#' @param entropy_threshold Entropy threshold for convergence of the population (Default = .10). The smaller the entropy is, the less diversity there is in the population, which means convergence.
+#' @param popsize Size of the population, the number of subsets of variables sampled at each iteration (Default = 25). Between 25 and 100 is generally adequate.
+#' @param lr learning rate of the gradient descent, higher will converge faster but more likely to get stuck in local optium (Default = .2).
+#' @param prop_ignored The proportion of the population that are given a fixed fitness value, thus their importance is greatly reduce. The higher it is, the longer it takes to converge. Highers values makes the algorithm focus more on favorizing the good subsets of variables than penalizing the bad subsets (Default = .50).
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...
+#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores (Default = 1).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
+#' @param maxiter Maximum number of iterations.
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param seed Optional seed.
+#' @param progress If TRUE, shows the progress done (Default=TRUE).
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
+#' @param classification Set to TRUE if you are doing classification and cross-validation (binary outcome).
+#' @param print If TRUE, print the parameters of the search distribution and the entropy at each iteration. Note: Only works using Rterm.exe in Windows due to parallel clusters. (Default = FALSE).
+#' @return Returns a list containing the best subset's fit, cross-validation output, latent variables and starting points.
+#' @examples
+#'	\dontrun{
+#'	## Example
+#'	train = example_3way_3latent(250, 2, seed=777)
+#'	nes = r1nes_var_select(train$data, latent_var=train$latent_var,
+#'	formula=y ~ E*G*Z)
+#'	}
+#' @import foreach snow doSNOW utils iterators
+#' @export
+"r1nes_var_select"
 
 example_2way = function(N, sigma=1, logit=FALSE, seed=NULL){
 	set.seed(seed)
@@ -1194,13 +1232,29 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	return(result)
 }
 
-GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("min","max"), reverse_code=FALSE, rescale = FALSE, boot = NULL, criterion="BIC", start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, id=NULL, classification=FALSE, seed=NULL)
+GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("min","max"), include_noGxE_models = TRUE, reverse_code=FALSE, rescale = FALSE, boot = NULL, criterion="BIC", start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, id=NULL, classification=FALSE, seed=NULL)
 {
 	formula = stats::as.formula(formula_noGxE)
 	formula_WEAK = paste0(formula, " + G*E - G")
 	formula_STRONG = paste0(formula, " + G*E - G - E")
 	formula_WEAK_nocrossover = paste0(formula, " + G*E")
 	formula_STRONG_nocrossover = paste0(formula, " + G*E - E")
+
+	if (include_noGxE_models){
+		if (criterion == "cv" || criterion == "cv_AUC" || criterion=="cv_Huber" || criterion=="cv_L1") warning("When using include_noGxE_models=TRUE, the criterion must be one of the following: AIC, AICc, or BIC.")
+
+		genes_formula = paste0(" + ", colnames(genes))
+		env_formula = paste0(" + ", colnames(env))
+		formula_model_E_only = paste0(formula, env_formula)
+		formula_model_intercept_only = formula
+		formula_model_GandE_only = paste0(formula, genes_formula, env_formula)
+		formula_model_G_only = paste0(formula, genes_formula)
+
+		model_E_only = glm(data=cbind(data, genes, env), formula=formula_model_E_only, family=family)
+		model_intercept_only = glm(data=cbind(data, genes, env), formula=formula_model_intercept_only, family=family)
+		model_GandE_only = glm(data=cbind(data, genes, env), formula=formula_model_GandE_only, family=family)
+		model_G_only = glm(data=cbind(data, genes, env), formula=formula_model_G_only, family=family)
+	}
 
 	# 4 Models
 	# If min or max, then we must find the min or max E and make it the crossover after
@@ -1301,11 +1355,21 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("mi
 		if (criterion == "AIC") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$AIC, vantage_sensitivity_STRONG$true_model_parameters$AIC,diathesis_stress_WEAK$true_model_parameters$AIC, diathesis_stress_STRONG$true_model_parameters$AIC, diff_suscept_WEAK$true_model_parameters$AIC, diff_suscept_STRONG$true_model_parameters$AIC)
 		else if (criterion == "AICc") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$AICc, vantage_sensitivity_STRONG$true_model_parameters$AICc,diathesis_stress_WEAK$true_model_parameters$AICc, diathesis_stress_STRONG$true_model_parameters$AICc, diff_suscept_WEAK$true_model_parameters$AICc, diff_suscept_STRONG$true_model_parameters$AICc)
 		else if (criterion == "BIC") model_criterion = c(vantage_sensitivity_WEAK$true_model_parameters$BIC, vantage_sensitivity_STRONG$true_model_parameters$BIC,diathesis_stress_WEAK$true_model_parameters$BIC, diathesis_stress_STRONG$true_model_parameters$BIC, diff_suscept_WEAK$true_model_parameters$BIC, diff_suscept_STRONG$true_model_parameters$BIC)
+		if (include_noGxE_models){
+			logLik_df1 =  attr(logLik(model_E_only), "df")
+			logLik_df2 =  attr(logLik(model_intercept_only), "df")
+			logLik_df3 =  attr(logLik(model_GandE_only), "df")
+			logLik_df4 =  attr(logLik(model_G_only), "df")
+			if (criterion == "AIC") model_criterion = c(model_criterion, 2*logLik_df1 - 2*logLik(model_E_only)[1], 2*logLik_df2 - 2*logLik(model_intercept_only)[1], 2*logLik_df3 - 2*logLik(model_GandE_only)[1], 2*logLik_df4 - 2*logLik(model_G_only)[1])
+			else if (criterion == "AICc") model_criterion = c(model_criterion, (2*logLik_df1 - 2*logLik(model_E_only)[1]) + ((2*logLik_df1*(logLik_df1+1))/(stats::nobs(model_E_only)-logLik_df1-1)), (2*logLik_df2 - 2*logLik(model_intercept_only)[1]) + ((2*logLik_df2*(logLik_df2+1))/(stats::nobs(model_intercept_only)-logLik_df2-1)), (2*logLik_df3 - 2*logLik(model_GandE_only)[1]) + ((2*logLik_df3*(logLik_df3+1))/(stats::nobs(model_GandE_only)-logLik_df3-1)),(2*logLik_df4 - 2*logLik(model_G_only)[1]) + ((2*logLik_df4*(logLik_df4+1))/(stats::nobs(model_G_only)-logLik_df4-1)))
+			else if (criterion == "BIC") model_criterion = c(model_criterion, log(stats::nobs(model_E_only))*logLik_df1 - 2*logLik(model_E_only)[1], log(stats::nobs(model_intercept_only))*logLik_df2 - 2*logLik(model_intercept_only)[1], log(stats::nobs(model_GandE_only))*logLik_df3 - 2*logLik(model_GandE_only)[1], log(stats::nobs(model_G_only))*logLik_df4 - 2*logLik(model_G_only)[1])
+		}
 		# List in order from best to worse
 		ordering = order(model_criterion)
 	}
 	model_criterion = round(model_criterion[ordering],2)
-	crossover_models = round(c(vantage_sensitivity_WEAK$crossover, vantage_sensitivity_STRONG$crossover, diathesis_stress_WEAK$crossover, diathesis_stress_STRONG$crossover, diff_suscept_WEAK$crossover, diff_suscept_STRONG$crossover)[ordering],2)
+	if (include_noGxE_models) crossover_models = round(c(vantage_sensitivity_WEAK$crossover, vantage_sensitivity_STRONG$crossover, diathesis_stress_WEAK$crossover, diathesis_stress_STRONG$crossover, diff_suscept_WEAK$crossover, diff_suscept_STRONG$crossover, NA, NA, NA, NA)[ordering],2)
+	else crossover_models = round(c(vantage_sensitivity_WEAK$crossover, vantage_sensitivity_STRONG$crossover, diathesis_stress_WEAK$crossover, diathesis_stress_STRONG$crossover, diff_suscept_WEAK$crossover, diff_suscept_STRONG$crossover)[ordering],2)
 	# 95% interval of crossover for differential susceptibility models
 	if (!is.null(boot)){
 		# We must do bootstrap
@@ -1333,12 +1397,20 @@ GxE_interaction_test = function(data, genes, env, formula_noGxE, crossover=c("mi
 	crossover_interval_STRONG = paste0("( ",crossover_interval_STRONG[1]," / ",crossover_interval_STRONG[2]," )")
 
 	# Proportion of observations below crossover point
-	prop_below = c(sum(vantage_sensitivity_WEAK$fit_main$data$E <= crossover_vantage_sensitivity_WEAK)/NROW(vantage_sensitivity_WEAK$fit_main$data), sum(vantage_sensitivity_STRONG$fit_main$data$E <= crossover_vantage_sensitivity_STRONG)/NROW(vantage_sensitivity_STRONG$fit_main$data), sum(diathesis_stress_WEAK$fit_main$data$E <= crossover_diathesis_stress_WEAK)/NROW(diathesis_stress_WEAK$fit_main$data), sum(diathesis_stress_STRONG$fit_main$data$E <= crossover_diathesis_stress_STRONG)/NROW(diathesis_stress_STRONG$fit_main$data), sum(diff_suscept_WEAK$fit_main$data$E <= crossover_diff_suscept_WEAK)/NROW(diff_suscept_WEAK$fit_main$data), sum(diff_suscept_STRONG$fit_main$data$E <= crossover_diff_suscept_STRONG)/NROW(diff_suscept_STRONG$fit_main$data))
+	if (include_noGxE_models) prop_below = c(sum(vantage_sensitivity_WEAK$fit_main$data$E <= crossover_vantage_sensitivity_WEAK)/NROW(vantage_sensitivity_WEAK$fit_main$data), sum(vantage_sensitivity_STRONG$fit_main$data$E <= crossover_vantage_sensitivity_STRONG)/NROW(vantage_sensitivity_STRONG$fit_main$data), sum(diathesis_stress_WEAK$fit_main$data$E <= crossover_diathesis_stress_WEAK)/NROW(diathesis_stress_WEAK$fit_main$data), sum(diathesis_stress_STRONG$fit_main$data$E <= crossover_diathesis_stress_STRONG)/NROW(diathesis_stress_STRONG$fit_main$data), sum(diff_suscept_WEAK$fit_main$data$E <= crossover_diff_suscept_WEAK)/NROW(diff_suscept_WEAK$fit_main$data), sum(diff_suscept_STRONG$fit_main$data$E <= crossover_diff_suscept_STRONG)/NROW(diff_suscept_STRONG$fit_main$data), NA, NA, NA, NA)
+	else prop_below = c(sum(vantage_sensitivity_WEAK$fit_main$data$E <= crossover_vantage_sensitivity_WEAK)/NROW(vantage_sensitivity_WEAK$fit_main$data), sum(vantage_sensitivity_STRONG$fit_main$data$E <= crossover_vantage_sensitivity_STRONG)/NROW(vantage_sensitivity_STRONG$fit_main$data), sum(diathesis_stress_WEAK$fit_main$data$E <= crossover_diathesis_stress_WEAK)/NROW(diathesis_stress_WEAK$fit_main$data), sum(diathesis_stress_STRONG$fit_main$data$E <= crossover_diathesis_stress_STRONG)/NROW(diathesis_stress_STRONG$fit_main$data), sum(diff_suscept_WEAK$fit_main$data$E <= crossover_diff_suscept_WEAK)/NROW(diff_suscept_WEAK$fit_main$data), sum(diff_suscept_STRONG$fit_main$data$E <= crossover_diff_suscept_STRONG)/NROW(diff_suscept_STRONG$fit_main$data))
 
 	# Aggregating results
-	fits = list(vantage_sensitivity_WEAK = vantage_sensitivity_WEAK, vantage_sensitivity_STRONG = vantage_sensitivity_STRONG, diathesis_stress_WEAK = diathesis_stress_WEAK, diathesis_stress_STRONG = diathesis_stress_STRONG, diff_suscept_WEAK = diff_suscept_WEAK, diff_suscept_STRONG = diff_suscept_STRONG)[ordering]
-	results = cbind(model_criterion, crossover_models,cbind("","","","",crossover_interval_WEAK,crossover_interval_STRONG)[ordering],cbind("","","","",c("No","Yes")[inside_WEAK+1],c("No","Yes")[inside_STRONG+1])[ordering], prop_below[ordering])
-	rownames(results) = c("Vantage sensitivity WEAK","Vantage sensitivity STRONG","Diathesis-stress WEAK","Diathesis-stress STRONG","Differential susceptibility WEAK","Differential susceptibility STRONG")[ordering]
+	if (include_noGxE_models){
+		fits = list(vantage_sensitivity_WEAK = vantage_sensitivity_WEAK, vantage_sensitivity_STRONG = vantage_sensitivity_STRONG, diathesis_stress_WEAK = diathesis_stress_WEAK, diathesis_stress_STRONG = diathesis_stress_STRONG, diff_suscept_WEAK = diff_suscept_WEAK, diff_suscept_STRONG = diff_suscept_STRONG, model_E_only = model_E_only , model_intercept_only = model_intercept_only, model_GandE_only = model_GandE_only, model_G_only = model_G_only)[ordering]
+		results = cbind(model_criterion, crossover_models,cbind("","","","",crossover_interval_WEAK,crossover_interval_STRONG,"","","","")[ordering],cbind("","","","",c("No","Yes")[inside_WEAK+1],c("No","Yes")[inside_STRONG+1],"","","","")[ordering], prop_below[ordering])
+		rownames(results) = c("Vantage sensitivity WEAK","Vantage sensitivity STRONG","Diathesis-stress WEAK","Diathesis-stress STRONG","Differential susceptibility WEAK","Differential susceptibility STRONG", "E only", "Intercept only", "G + E only", "G only")[ordering]
+	} 
+	else{
+		fits = list(vantage_sensitivity_WEAK = vantage_sensitivity_WEAK, vantage_sensitivity_STRONG = vantage_sensitivity_STRONG, diathesis_stress_WEAK = diathesis_stress_WEAK, diathesis_stress_STRONG = diathesis_stress_STRONG, diff_suscept_WEAK = diff_suscept_WEAK, diff_suscept_STRONG = diff_suscept_STRONG)[ordering]
+		results = cbind(model_criterion, crossover_models,cbind("","","","",crossover_interval_WEAK,crossover_interval_STRONG)[ordering],cbind("","","","",c("No","Yes")[inside_WEAK+1],c("No","Yes")[inside_STRONG+1])[ordering], prop_below[ordering])
+		rownames(results) = c("Vantage sensitivity WEAK","Vantage sensitivity STRONG","Diathesis-stress WEAK","Diathesis-stress STRONG","Differential susceptibility WEAK","Differential susceptibility STRONG")[ordering]
+	}
 	colnames(results)[1] = criterion
 	colnames(results)[2] = "crossover"
 	colnames(results)[3] = "crossover 95%"
@@ -4046,7 +4118,7 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 					indexes_pop[[p]] = c(indexes_pop[[p]], 1:NCOL(latent_var[[i]]) %in% indexes)
 					# Starting point generation  (Dirichlet distribution)
 					start_latent_var_pop[[p]][[i]] = rgamma(length(indexes),1)*(1-2*rbinom(length(indexes),1,.5))
-					start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(start_latent_var_pop[[p]][[i]])
+					start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(abs(start_latent_var_pop[[p]][[i]]))
 					names(start_latent_var_pop[[p]][[i]]) = colnames(latent_var_pop[[i]])
 				}
 				# Fit model
@@ -4076,6 +4148,7 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 				survivors = ordered_crit[1:(popsize/2)]
 				deaths = ordered_crit[((popsize/2)+1):popsize]
 				# Reproduction, make babies
+				indexes_pop_old = indexes_pop
 				for (p in deaths){
 					parents = sample(survivors,2)
 					# Mutation index, do not mutate yet until children is born
@@ -4086,12 +4159,12 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 					for (i in 1:k){
 						# crossover for latent variable i
 						crossover = sample(which(var_k == i),length(which(var_k==i))/2)
-						indexes_pop[[p]][var_k == i] = indexes_pop[[parents[1]]][var_k == i]
-						indexes_pop[[p]][crossover] = indexes_pop[[parents[2]]][crossover]
+						indexes_pop[[p]][var_k == i] = indexes_pop_old[[parents[1]]][var_k == i]
+						indexes_pop[[p]][crossover] = indexes_pop_old[[parents[2]]][crossover]
 						if (sum(indexes_pop[[p]][var_k == i])==0){
 							# We have no variable in child, we need to reverse order of parenting to fix this
-								indexes_pop[[p]][var_k == i] = indexes_pop[[parents[2]]][var_k == i]
-								indexes_pop[[p]][crossover] = indexes_pop[[parents[1]]][crossover]
+								indexes_pop[[p]][var_k == i] = indexes_pop_old[[parents[2]]][var_k == i]
+								indexes_pop[[p]][crossover] = indexes_pop_old[[parents[1]]][crossover]
 						}
 						# Mutation
 						if (var_k[Mutation_index]==i && Mutation_yesorno){
@@ -4173,7 +4246,7 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 	return(list(var_select=var_select, best_subsets_crit=list_best_latent_var_crit, best_subsets_start=list_best_latent_var_start, entropy=list_entropy, n_step=list_n_step))
 }
 
-nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_nes=.001, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE){
+nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), entropy_threshold=.05, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=FALSE){
 	k = length(latent_var)
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -4224,7 +4297,7 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 	conv = FALSE
 	iter = 0
 	# Setting up parallel
-	cl <- snow::makeCluster(n_cluster)
+	cl <- snow::makeCluster(n_cluster, outfile="")
 	doSNOW::registerDoSNOW(cl)
 	if (progress){
 		if (runif(1) < .50) char="(^._.^) "
@@ -4238,7 +4311,10 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 	with(c(),{
 		results <- foreach::foreach(b = 1:parallel_iter, .options.snow = opts) %dopar% {
 			if (!is.null(seed)) set.seed(seed+b)
-			while(theta_diff > eps_nes){
+			entropy = Inf
+			while(entropy > entropy_threshold){
+				# r if the frequency of appearance
+				r_entropy = rep(0, N_var)
 				iter = iter + 1
 				if (print){
 					toprint = paste0("i=", iter)
@@ -4259,10 +4335,11 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 					names(latent_var_pop) = names(latent_var)
 					curr = 0
 					for (i in 1:k){
-						indexes = rep(FALSE, NCOL(latent_var[[i]]))
 						# Can't have no variables so looping until we get a correct subset
 						curr_backup = curr
+						indexes = rep(FALSE, NCOL(latent_var[[i]]))
 						while (sum(indexes)==0){
+							indexes = rep(FALSE, NCOL(latent_var[[i]]))
 							curr = curr_backup
 							for (j in 1:NCOL(latent_var[[i]])){
 								curr = curr + 1
@@ -4275,11 +4352,12 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 
 						# Keeping indexes 
 						indexes_pop[[p]][[i]] = indexes
+						r_entropy = r_entropy + var %in% colnames(latent_var_pop[[i]])
 						# Starting point (Dirichlet distribution)
 						alpha_index = b %% length(b)
 						if (alpha_index == 0) alpha_index = length(b)
 						start_latent_var_pop[[p]][[i]] = rgamma(NCOL(latent_var_pop[[i]]),alpha[alpha_index])*(1-2*rbinom(NCOL(latent_var_pop[[i]]),1,.5))
-						start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(start_latent_var_pop[[p]][[i]])
+						start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(abs(start_latent_var_pop[[p]][[i]]))
 						names(start_latent_var_pop[[p]][[i]]) = colnames(latent_var_pop[[i]])
 					}
 					# Fit model
@@ -4303,19 +4381,237 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), eps_n
 				crit[crit < prop_ignored*2-1] = prop_ignored*2-1
 				# Gradient descent
 				curr = 0
-				theta_diff = 0
 				for (i in 1:k){
 					for (j in 1:NCOL(latent_var[[i]])){
 						curr = curr + 1
 						grad_theta = mean(crit*grad[[curr]])
-						theta_old = theta[[i]][j]
 						theta[[i]][j] = max(min(theta[[i]][j] + lr*grad_theta,1),0)
-						theta_diff = theta_diff + (theta[[i]][j] - theta_old)^2
 
 					}
 				}
-				theta_diff = sqrt(theta_diff)
-				if (theta_diff < eps_nes) conv = TRUE
+				r_ = r_entropy/popsize
+				entropy = - (1/N_var)*sum(r_*log2(r_) + (1-r_)*log2(1-r_), na.rm=TRUE)
+				if (print) print(entropy)
+			}
+			p = order(crit, decreasing=TRUE)[1]
+			latent_var_best = vector("list", k)
+			names(latent_var_best) = names(latent_var)
+			for (i in 1:k) latent_var_best[[i]] = latent_var[[i]][,indexes_pop[[p]][[i]],drop=FALSE]
+			start_latent_var_best = start_latent_var_pop[[p]]
+			return(list(latent_var_best=latent_var_best,start_latent_var_best=start_latent_var_best, crit_best=max(crit)))
+		}
+		close(pb)
+		snow::stopCluster(cl)
+	})
+	latent_var_best = results[[1]]$latent_var_best
+	start_latent_var_best = results[[1]]$start_latent_var_best
+	crit = results[[1]]$crit_best
+	# Keeping the best ones
+	if (parallel_iter > 1){
+		for (i in 2:parallel_iter){
+			if (results[[i]]$crit_best > crit){
+				latent_var_best = results[[i]]$latent_var_best
+				start_latent_var_best = results[[i]]$start_latent_var_best
+				crit = results[[i]]$crit_best
+			}
+		}
+	}
+	best_fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_best, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+	best_fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_best, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_best, eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+	return(list(fit=best_fit, fit_cv=best_fit_cv, data=data, latent_var=latent_var_best, start_latent_var=start_latent_var_best))
+}
+
+r1nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), entropy_threshold=.05, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=FALSE){
+	k = length(latent_var)
+	## Removing missing data and checks
+	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	#  Check for empty latent variable (Note: Probably shouldn't be named empty_start_dataset but empty_start_latent_var althought that would be even more confusing considering start_latent_var)
+	if (is.null(latent_var)) stop("latent_var cannot be null. However, if search=i, then you could set latent_var[[i]]=NULL.")
+	# Make it to have NULL elements but not be NULL
+	comp = rep(TRUE, NROW(data))
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) comp = comp & stats::complete.cases(data, latent_var[[i]])
+	}
+	data = data[comp,, drop=FALSE]
+	N_var = 0
+	index_var = c() # Number determine in which latent variable the observed variable is
+	var = c()
+	for (i in 1:k){
+		if (!is.null(latent_var[[i]])) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+		N_var = NCOL(latent_var[[i]]) + N_var
+		var = c(var, names(latent_var[[i]]))
+		index_var = c(index_var, rep(i, NCOL(latent_var[[i]])))
+	}
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	# The names of the variables selected is going to be the names of start_latent_var_pop elements
+	start_latent_var_pop  = vector("list", popsize)
+	## Parameters of the Normal distribution with mean mu and covariance (sigma^2(I + vv^T))
+	# mu (Mean)
+	# s (e^2s = sigma^2)
+	# c (e^c = length of u)
+	# z (||z||=1, z is direction of u)
+	# v (z*e^c, principal direction used to form covariance matrix)
+	mu = rep(0, N_var)
+	s = 0 # Lead to sigma^2 = 1
+	c = 0 # Lead to length of 1
+	z = rep(1/sqrt(N_var), N_var) # sqrt((1/sqrt(n))^2 + ... + (1/sqrt(n))^2) = sqrt(n * (1/n)) = sqrt(1) = 1
+	v = z
+	# Can't keep all X matrix because so big, so keeping the binary yes/no representing if a variable is kept in each subset of variable
+	indexes_pop = vector("list", popsize)
+	for (i in 1:popsize){
+		indexes_pop[[i]] = vector("list", k)
+		for (j in 1:k){
+			indexes_pop[[i]][[j]] = rep(FALSE, NCOL(latent_var[[j]]))
+		}
+	}
+	# cirterion of the individual
+	crit = rep(0, popsize)
+	crit_prev = rep(0, popsize)
+	crit_ranked = rep(0, popsize)
+	mu_diff = Inf
+	# Generate population
+	conv = FALSE
+	iter = 0
+	# Setting up parallel
+	cl <- snow::makeCluster(n_cluster, outfile="")
+	doSNOW::registerDoSNOW(cl)
+	if (progress){
+		if (runif(1) < .50) char="(^._.^) "
+		else char="(=^o^=) "
+		pb = utils::txtProgressBar(max = parallel_iter, style = 3, char=char)
+		progress <- function(n) utils::setTxtProgressBar(pb, n)
+		opts <- list(progress = progress)
+	}
+	else opts <- list()
+	# Need to use this "with(c(),CODEHERE)" to prevent R check from returning a "no visible binding for global variable"
+	with(c(),{
+		results <- foreach::foreach(b = 1:parallel_iter, .options.snow = opts) %dopar% {
+			if (!is.null(seed)) set.seed(seed+b)
+			entropy = Inf
+			while(entropy > entropy_threshold){
+				# r if the frequency of appearance
+				r_entropy = rep(0, N_var)
+				iter = iter + 1
+				if (print){
+					toprint = paste0("i=", iter)
+					for (i in 1:N_var) toprint = paste0(toprint, " mu[",i,"]: ", paste0(round(mu[i],2), collapse=" "))
+					for (i in 1:N_var) toprint = paste0(toprint, " v[",i,"]: ", paste0(round(v[i],2), collapse=" "))
+					toprint = paste0(toprint, " s: ", paste0(round(exp(s),2), collapse=" "))
+					print(toprint)
+					flush.console()
+				}
+				# List with the population generated samples (Need to keep them for gradient descent)
+				X_pop = vector("list", popsize)
+				W_pop = vector("list", popsize)
+				for (p in 1:popsize){
+					start_latent_var_pop[[p]] = vector("list", k)
+					names(start_latent_var_pop[[p]]) = names(latent_var)
+					# current latent_var (not to be retained, temporary)
+					latent_var_pop = vector("list", k)
+					names(latent_var_pop) = names(latent_var)
+					curr = 0
+					# Need to generate example and make sure its proper (i.e. that there is no empty latent variable)
+					proper_example = FALSE
+					while(!proper_example){
+						proper_example = TRUE
+						y = rnorm(N_var)
+						a = rnorm(1)
+						w = y+a*v
+						W_pop[[p]] = w
+						X_pop[[p]] = exp(s)*w + mu
+						# Cutoff here to make into binary (variable selected, yes/no)
+						indexes = X_pop[[p]] > 0
+						for (i in 1:k) if(sum(indexes[index_var==i]) == 0) proper_example = FALSE
+					}
+					# Now that we have sample, we translate it into proper format and we generate a starting point
+					for (i in 1:k){
+						latent_var_pop[[i]] = latent_var[[i]][,indexes[index_var==i],drop=FALSE]
+						# Keeping indexes 
+						indexes_pop[[p]][[i]] = indexes[index_var==i]
+						r_entropy = r_entropy + var %in% colnames(latent_var_pop[[i]])
+						# Starting point (Dirichlet distribution)
+						alpha_index = b %% length(b)
+						if (alpha_index == 0) alpha_index = length(b)
+						start_latent_var_pop[[p]][[i]] = rgamma(NCOL(latent_var_pop[[i]]),alpha[alpha_index])*(1-2*rbinom(NCOL(latent_var_pop[[i]]),1,.5))
+						start_latent_var_pop[[p]][[i]] = start_latent_var_pop[[p]][[i]]/sum(abs(start_latent_var_pop[[p]][[i]]))
+						names(start_latent_var_pop[[p]][[i]]) = colnames(latent_var_pop[[i]])
+					}
+					# Fit model
+					fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+					#fit = IMLEGIT(data=data, formula=formula, latent_var = latent_var_pop, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+					start_latent_var_pop[[p]] = lapply(fit$fit_latent_var,coef)
+					if (search_criterion=="AIC") crit[p] = -fit$true_model_parameters$AIC
+					else if (search_criterion=="AICc") crit[p] = -fit$true_model_parameters$AICc
+					else if (search_criterion=="BIC") crit[p] = -fit$true_model_parameters$BIC
+					else{
+						fit_cv = IMLEGIT_cv(data=data, formula=formula, latent_var = latent_var_pop, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification, start_latent_var=start_latent_var_pop[[p]], eps=eps, maxiter=maxiter, family=family, ylim=ylim)
+						if (search_criterion=="cv") crit[p] = mean(fit_cv$R2_cv)
+						else if (search_criterion=="cv_Huber") crit[p] = -mean(fit_cv$Huber_cv)
+						else if (search_criterion=="cv_L1") crit[p] = -mean(fit_cv$L1_cv)
+						else if (search_criterion=="cv_AUC") crit[p] = mean(fit_cv$AUC)
+					}
+				}
+				# Rank the criterion and apply fitness shaping function 2i-1 where i is rank in [0,1]
+				# Make all low ranks to have the same value so that bad examples are not too penalized but good examples are more prioritized
+				crit_new = crit
+				crit = (rank(crit)-1)/(length(crit)-1)*2-1
+				crit[crit < prop_ignored*2-1] = prop_ignored*2-1
+				### Natural gradient descent
+				# initialize gradients of J at 0
+				mu_diff = rep(0, N_var)
+				s_diff = 0
+				c_diff = 0
+				z_diff = rep(0, N_var)
+				v_diff = rep(0, N_var)
+				r_2 = sum(v^2)
+				r = sqrt(r_2)
+				for (p in 1:popsize){
+					x = X_pop[[p]]
+					w = W_pop[[p]]
+					z = v/r
+					w_w = c(w %*% w)
+					w_z = c(w %*% z)
+					# Gradients
+					grad_mu = (x - mu)
+					grad_s = (1/(2*(N_var-1)))*((w_w-N_var) - (((w_z)^2)-1))
+					grad_v = ((1/(2*(N_var-1)*r))*((r_2 - N_var + 2)*((w_z)^2) - ((r_2+1)*w_w)))*z + ((w_z)/r)*w
+					grad_c = (1/r)*c(grad_v %*% z)
+					grad_z = (1/r)*(grad_v - c(grad_v %*% z)*z)
+					# Gradient of J (diff)
+					mu_diff = mu_diff + crit[p]*grad_mu
+					s_diff = s_diff + crit[p]*grad_s
+					v_diff = v_diff + crit[p]*grad_v
+					c_diff = c_diff + crit[p]*grad_c
+					z_diff = z_diff + crit[p]*grad_z
+				}
+				mu_diff = lr*mu_diff/popsize
+				mu = mu + mu_diff
+				s_diff = lr*s_diff/popsize
+				s = s + s_diff
+				c_diff = lr*c_diff/popsize
+				v_diff = lr*v_diff/popsize
+				z_diff = lr*z_diff/popsize
+				if (c_diff < 0){
+					c = c + c_diff
+					z_new = z + z_diff
+					z = z_new/sqrt(sum(z_new^2))
+					v_old = v
+					v = exp(c)*z
+					v_diff = v - v_old
+				}
+				else{
+					v = v + v_diff
+					v_norm = sqrt(sum(v^2))
+					c = log(v_norm)
+					z = v/v_norm
+				}
+				r_ = r_entropy/popsize
+				entropy = - (1/N_var)*sum(r_*log2(r_) + (1-r_)*log2(1-r_), na.rm=TRUE)
+				if (print) print(entropy)
 			}
 			p = order(crit, decreasing=TRUE)[1]
 			latent_var_best = vector("list", k)

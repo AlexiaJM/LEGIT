@@ -5,11 +5,11 @@
 \title{Testing of the GxE interaction}
 \usage{
 GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
-  "max"), reverse_code = FALSE, rescale = FALSE, boot = NULL,
-  criterion = "BIC", start_genes = NULL, start_env = NULL, eps = 0.001,
-  maxiter = 100, family = gaussian, ylim = NULL, cv_iter = 5,
-  cv_folds = 10, folds = NULL, Huber_p = 1.345, id = NULL,
-  classification = FALSE, seed = NULL)
+  "max"), include_noGxE_models = TRUE, reverse_code = FALSE,
+  rescale = FALSE, boot = NULL, criterion = "BIC", start_genes = NULL,
+  start_env = NULL, eps = 0.001, maxiter = 100, family = gaussian,
+  ylim = NULL, cv_iter = 5, cv_folds = 10, folds = NULL,
+  Huber_p = 1.345, id = NULL, classification = FALSE, seed = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -21,6 +21,8 @@ GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
 \item{formula_noGxE}{formula WITHOUT \emph{G} or \emph{E} (y ~ covariates). \emph{G} and \emph{E} will automatically be added properly based on the hypotheses tested.}
 
 \item{crossover}{A tuple containting the minimum and maximum of the environment used as crossover point of \emph{E} used in the vantage sensitivity and diathesis-stress models. Instead of providing two number, you can also write c("min","max") to automatically choose the expected minimum or maximum of the environmental score which is calculated based on the min/max of the environments and the current weights.}
+
+\item{include_noGxE_models}{If True, we test for models with only G, only E, both G and E, neither G and E (four models without a GxE). This is to verify for false positives, if one of those models has the best fit, then it is possible that there is no GxE, thus no type of GxE. With a single gene and environment, simply looking at the p-value of the GxE is good enough to get around 5-10 percent false positive rate, but with multiple genes and environments, we need to compare model fits to get a low false positive rate. Use your own judgment when using this because if you have multiple genes and environments and small/moderate N, a model without GxE could have a lower BIC but still not be the actual best model. However, if you see little difference in BIC between all 4 GxE models and the non-GxE models have much lower BIC, than it is likely that there is no GxE. Note that this is only implemented for AIC, AICc and BIC. (Default = True)}
 
 \item{reverse_code}{If TRUE, after fitting the model, the genes with negative weights are reverse coded (ex: \eqn{g_{rev}} = 1 - \eqn{g}). It assumes that the original coding is in [0,1]. The purpose of this option is to prevent genes with negative weights which cause interpretation problems (ex: depression normally decreases attention but with a negative genetic score, it increases attention). Warning, using this option with GxG interactions could cause nonsensical results since GxG could be inverted. Also note that this may fail with certain models (Default=FALSE).}
 

@@ -2,14 +2,14 @@
 % Please edit documentation in R/LEGIT.R
 \name{nes_var_select}
 \alias{nes_var_select}
-\title{Parallel natural evolutionary variable selection (nes) (for IMLEGIT)}
+\title{Parallel natural evolutionary variable selection assuming bernouilli distribution (for IMLEGIT)}
 \usage{
 nes_var_select(data, formula, parallel_iter = 3, alpha = c(1, 5, 10),
-  eps_nes = 0.001, popsize = 25, lr = 0.2, prop_ignored = 0.5,
+  entropy_threshold = 0.05, popsize = 25, lr = 0.2, prop_ignored = 0.5,
   latent_var = NULL, search_criterion = "AICc", n_cluster = 3,
   eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
   seed = NULL, progress = TRUE, cv_iter = 5, cv_folds = 5,
-  folds = NULL, Huber_p = 1.345, classification = FALSE, print = TRUE)
+  folds = NULL, Huber_p = 1.345, classification = FALSE, print = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -20,7 +20,7 @@ nes_var_select(data, formula, parallel_iter = 3, alpha = c(1, 5, 10),
 
 \item{alpha}{vector of the parameter for the Dirichlet distribution of the starting points (Assuming a symmetric Dirichlet distribution with only one parameter). If the vector has size N and parralel_iter=K, we use alpha[1], ..., alpha[N], alpha[1], ... , alpha[N], ... for parallel_iter 1 to K respectively. We assume a dirichlet distribution for the starting points to get a bit more variability and make sure we are not missing on a great subset of variable that doesn't converge to the global optimum with the default starting points. Use bigger values for less variability and lower values for more variability (Default = c(1,5,10)).}
 
-\item{eps_nes}{Threshold for convergence, recommended not to change (Default = .001).}
+\item{entropy_threshold}{Entropy threshold for convergence of the population (Default = .10). The smaller the entropy is, the less diversity there is in the population, which means convergence.}
 
 \item{popsize}{Size of the population, the number of subsets of variables sampled at each iteration (Default = 25). Between 25 and 100 is generally adequate.}
 
@@ -56,13 +56,13 @@ nes_var_select(data, formula, parallel_iter = 3, alpha = c(1, 5, 10),
 
 \item{classification}{Set to TRUE if you are doing classification and cross-validation (binary outcome).}
 
-\item{print}{If TRUE, print the bernouilli probabilities of the variables at each iteration. (Default = TRUE).}
+\item{print}{If TRUE, print the parameters of the search distribution and the entropy at each iteration. Note: Only works using Rterm.exe in Windows due to parallel clusters. (Default = FALSE).}
 }
 \value{
 Returns a list containing the best subset's fit, cross-validation output, latent variables and starting points.
 }
 \description{
-[Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. Note that this approach assumes that the inclusion of a variable does not depends on wether other variables are included (i.e. it assumes independent bernouilli distributions); this is generally not true but this approach still converge well and running it in parallel increases the probability of reaching the global optimum.
+[Slow, highly recommended when the number of variables is large] Use natural evolution strategy (nes) gradient descent ran in parallel to find the best subset of variables. It is often as good as genetic algorithms but much faster so it is the recommended variable selection function to use as default. Note that this approach assumes that the inclusion of a variable does not depends on whether other variables are included (i.e. it assumes independent bernouilli distributions); this is generally not true but this approach still converge well and running it in parallel increases the probability of reaching the global optimum.
 }
 \examples{
 \dontrun{

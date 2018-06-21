@@ -6,13 +6,18 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{GxE Testing}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEncoding{latin1}
 ---
+
+**Note that you can cite this work as: **
+
+*Jolicoeur-Martineau, A., Wazana, A., Székely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., Meaney M. J. & Greenwood, C.M. (2017). Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study. arXiv preprint arXiv:1703.08111.*
+
+*Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K. F., Pluess, M., Greenwood, C., & Wazana, A. (2017). Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model. arXiv preprint arXiv:1712.04058.*
 
 ## GxE testing
 
 From version 1.2.0 of the LEGIT package, we introduce a function to test for different types of gene-by-environment interactions (GxE) as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013). See our preprint: https://psyarxiv.com/27uw8. We want to test if the GxE reflects diathesis stress, differential susceptibility or vantage sensitivity.
-
 
 The figure below is a graphical representation of the different types of interactions assuming a STRONG model:
 ```{r, out.width = "700px"}
@@ -36,7 +41,7 @@ To test for vantage sensitivity and diathesis-stress, we can use the model above
 Let's look at a two-way interaction model with a cross-over point and a continuous outcome:
 
 $$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
-$$\mathbf{e}_l \sim max(Poisson(\mu=0,\sigma=4), 10) \\ l = 1, 2, 3$$
+$$\mathbf{e}_l  \sim 10 Beta(\alpha=2,\beta=2) \\ l = 1, 2, 3$$
 $$\mathbf{g} = .30\mathbf{g}_1 + .10\mathbf{g}_2 + .20\mathbf{g}_3 + .40\mathbf{g}_4 $$
 $$ \mathbf{e} = .45\mathbf{e}_1 + .35\mathbf{e}_2 + .20\mathbf{e}_3$$
 $$\mathbf{\mu} = 3 + \beta_E(\mathbf{e}-c) + 2\mathbf{g}(\mathbf{e}-c) $$ 
@@ -59,14 +64,14 @@ ex_dia = example_with_crossover(N=250, c=0, coef_main = c(3,1,2), sigma=1, seed=
 GxE_test_BIC = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = c("min","max"), criterion="BIC")
 GxE_test_BIC$results
 ```
-Here we see the results. Notice that vantage sensitivity WEAK is the model with the lowest BIC. Differential susceptibility WEAK has a slightly lower fit and the crossover point is not within observable range, thus we reject it. Note that we only show the element *results* of the output, but the 6 models (weak/strong vantage sensitivity, diathesis-stress and differential susceptibility) are also returned.
+Here we see the results. Notice that vantage sensitivity WEAK is the model with the lowest BIC. Differential susceptibility WEAK has a slightly worse fit and the crossover point is not within observable range, thus we reject it. Note that we only show the element *results* of the output, but the 6 models (weak/strong vantage sensitivity, diathesis-stress and differential susceptibility) are also returned.
 
 Considering that we know that the minimum and maximum of E are 0 and 10 respectively, we can also refit the models with *crossover = c(0, 10)*.
 ```{r}
 GxE_test_BIC_ = GxE_interaction_test(data=ex_dia$data, genes=ex_dia$G, env=ex_dia$E, formula_noGxE = y ~ 1, crossover = c(0, 10), criterion="BIC")
 GxE_test_BIC_$results
 ```
-This gave the same results because it already estimated properly the minimum and maximum environmental score, but it might not always.
+We obtain similar results.
 
 We can then plot the best model:
 ```{r fig1, fig.height = 5, fig.width = 5}
