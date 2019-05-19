@@ -5,13 +5,13 @@
 \title{Bootstrap variable selection (for IMLEGIT)}
 \usage{
 bootstrap_var_select(data, formula, boot_iter = 1000, boot_size = NULL,
-  boot_group = NULL, latent_var_original = NULL, latent_var_extra = NULL,
-  search_type = "bidirectional-forward", search = 0,
-  search_criterion = "AIC", forward_exclude_p_bigger = 0.2,
-  backward_exclude_p_smaller = 0.01, exclude_worse_AIC = TRUE,
-  max_steps = 100, start_latent_var = NULL, eps = 0.01, maxiter = 100,
-  family = gaussian, ylim = NULL, seed = NULL, progress = TRUE,
-  n_cluster = 1, best_subsets = 5)
+  boot_group = NULL, latent_var_original = NULL,
+  latent_var_extra = NULL, search_type = "bidirectional-forward",
+  search = 0, search_criterion = "AIC",
+  forward_exclude_p_bigger = 0.2, backward_exclude_p_smaller = 0.01,
+  exclude_worse_AIC = TRUE, max_steps = 100, start_latent_var = NULL,
+  eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
+  seed = NULL, progress = TRUE, n_cluster = 1, best_subsets = 5)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}

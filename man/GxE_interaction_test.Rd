@@ -4,12 +4,13 @@
 \alias{GxE_interaction_test}
 \title{Testing of the GxE interaction}
 \usage{
-GxE_interaction_test(data, genes, env, formula_noGxE, crossover = c("min",
-  "max"), include_noGxE_models = TRUE, reverse_code = FALSE,
-  rescale = FALSE, boot = NULL, criterion = "BIC", start_genes = NULL,
-  start_env = NULL, eps = 0.001, maxiter = 100, family = gaussian,
-  ylim = NULL, cv_iter = 5, cv_folds = 10, folds = NULL,
-  Huber_p = 1.345, id = NULL, classification = FALSE, seed = NULL)
+GxE_interaction_test(data, genes, env, formula_noGxE,
+  crossover = c("min", "max"), include_noGxE_models = TRUE,
+  reverse_code = FALSE, rescale = FALSE, boot = NULL,
+  criterion = "BIC", start_genes = NULL, start_env = NULL,
+  eps = 0.001, maxiter = 100, family = gaussian, ylim = NULL,
+  cv_iter = 5, cv_folds = 10, folds = NULL, Huber_p = 1.345,
+  id = NULL, classification = FALSE, seed = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}

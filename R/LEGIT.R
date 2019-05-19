@@ -1030,7 +1030,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	formula_elem_withG = gsub(":G ","",formula_elem_withG, fixed=TRUE)
 	formula_elem_withG[-length(formula_elem_withG)] = paste0(formula_elem_withG[-length(formula_elem_withG)], " + ")
 	formula_withG = paste0(formula_outcome, " ~ ", paste0(formula_elem_withG,collapse=""))
-	if (!(grepl("1",formula_elem_withG, fixed=TRUE) && TRUE)) formula_withG = paste0(formula_withG, " - 1")
+	if (sum(grepl("1",formula_elem_withG, fixed=TRUE))==0) formula_withG = paste0(formula_withG, " - 1")
 	formula_withG = stats::as.formula(formula_withG)
 
 	## Formulas for reparametrization in step c (estimating E)
@@ -1048,7 +1048,7 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 	formula_elem_withE = gsub(":E ","",formula_elem_withE, fixed=TRUE)
 	formula_elem_withE[-length(formula_elem_withE)] = paste0(formula_elem_withE[-length(formula_elem_withE)], " + ")
 	formula_withE = paste0(formula_outcome, " ~ ", paste0(formula_elem_withE,collapse=""))
-	if (!(grepl("1",formula_elem_withE, fixed=TRUE) && TRUE)) formula_withE = paste0(formula_withE, " - 1")
+	if (sum(grepl("1",formula_elem_withE, fixed=TRUE))==0) formula_withE = paste0(formula_withE, " - 1")
 	formula_withE = stats::as.formula(formula_withE)
 
 	# Making formula for step b (estimating G)
@@ -1632,7 +1632,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 		formula_elem_withlatent_var = gsub(paste0(":",names(latent_var)[i]," "),"",formula_elem_withlatent_var, fixed=TRUE)
 		formula_elem_withlatent_var[-length(formula_elem_withlatent_var)] = paste0(formula_elem_withlatent_var[-length(formula_elem_withlatent_var)], " + ")
 		formula_withlatent_var[[i]] = paste0(formula_outcome, " ~ ", paste0(formula_elem_withlatent_var,collapse=""))
-		if (!(grepl("1",formula_elem_withlatent_var, fixed=TRUE) && TRUE)) formula_withlatent_var[[i]] = paste0(formula_withlatent_var[[i]], " - 1")
+		if (sum(grepl("1",formula_elem_withlatent_var, fixed=TRUE))==0) formula_withlatent_var[[i]] = paste0(formula_withlatent_var[[i]], " - 1")
 		formula_withlatent_var[[i]] = stats::as.formula(formula_withlatent_var[[i]])
 
 		# Making formula for step i

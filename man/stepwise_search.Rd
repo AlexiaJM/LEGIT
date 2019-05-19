@@ -9,11 +9,11 @@ stepwise_search(data, formula, interactive_mode = FALSE,
   env_extra = NULL, search_type = "bidirectional-forward",
   search = "both", search_criterion = "AIC",
   forward_exclude_p_bigger = 0.2, backward_exclude_p_smaller = 0.01,
-  exclude_worse_AIC = TRUE, max_steps = 100, cv_iter = 5, cv_folds = 10,
-  folds = NULL, Huber_p = 1.345, classification = FALSE,
-  start_genes = NULL, start_env = NULL, eps = 0.01, maxiter = 100,
-  family = gaussian, ylim = NULL, seed = NULL, print = TRUE,
-  remove_miss = FALSE)
+  exclude_worse_AIC = TRUE, max_steps = 100, cv_iter = 5,
+  cv_folds = 10, folds = NULL, Huber_p = 1.345,
+  classification = FALSE, start_genes = NULL, start_env = NULL,
+  eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
+  seed = NULL, print = TRUE, remove_miss = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}

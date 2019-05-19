@@ -5,12 +5,13 @@
 \title{Internal function that does the backward step for the stepwise IM function.}
 \usage{
 backward_step_IM(fit, data, formula, interactive_mode = FALSE,
-  latent_var_current = NULL, latent_var_dropped = NULL, search = NULL,
-  search_criterion = "AIC", p_threshold = 0.2, exclude_worse_AIC = TRUE,
-  max_steps = 100, cv_iter = 5, cv_folds = 10, folds = NULL,
-  Huber_p = 1.345, classification = FALSE,
-  start_latent_var = start_latent_var, eps = 0.01, maxiter = 100,
-  family = gaussian, ylim = NULL, seed = NULL, print = TRUE)
+  latent_var_current = NULL, latent_var_dropped = NULL,
+  search = NULL, search_criterion = "AIC", p_threshold = 0.2,
+  exclude_worse_AIC = TRUE, max_steps = 100, cv_iter = 5,
+  cv_folds = 10, folds = NULL, Huber_p = 1.345,
+  classification = FALSE, start_latent_var = start_latent_var,
+  eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
+  seed = NULL, print = TRUE)
 }
 \arguments{
 \item{fit}{Current best fit.}

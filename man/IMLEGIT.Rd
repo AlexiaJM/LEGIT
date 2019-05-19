@@ -4,8 +4,9 @@
 \alias{IMLEGIT}
 \title{Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model}
 \usage{
-IMLEGIT(data, latent_var, formula, start_latent_var = NULL, eps = 0.001,
-  maxiter = 100, family = gaussian, ylim = NULL, print = TRUE)
+IMLEGIT(data, latent_var, formula, start_latent_var = NULL,
+  eps = 0.001, maxiter = 100, family = gaussian, ylim = NULL,
+  print = TRUE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}

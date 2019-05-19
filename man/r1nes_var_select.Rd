@@ -5,11 +5,12 @@
 \title{Parallel natural evolutionary variable selection assuming multivariate normal search distribution with a simple covariance matrix parametrization (for IMLEGIT)}
 \usage{
 r1nes_var_select(data, formula, parallel_iter = 3, alpha = c(1, 5, 10),
-  entropy_threshold = 0.05, popsize = 25, lr = 0.2, prop_ignored = 0.5,
-  latent_var = NULL, search_criterion = "AICc", n_cluster = 3,
-  eps = 0.01, maxiter = 100, family = gaussian, ylim = NULL,
-  seed = NULL, progress = TRUE, cv_iter = 5, cv_folds = 5,
-  folds = NULL, Huber_p = 1.345, classification = FALSE, print = FALSE)
+  entropy_threshold = 0.05, popsize = 25, lr = 0.2,
+  prop_ignored = 0.5, latent_var = NULL, search_criterion = "AICc",
+  n_cluster = 3, eps = 0.01, maxiter = 100, family = gaussian,
+  ylim = NULL, seed = NULL, progress = TRUE, cv_iter = 5,
+  cv_folds = 5, folds = NULL, Huber_p = 1.345,
+  classification = FALSE, print = FALSE)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
