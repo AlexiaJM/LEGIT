@@ -1,3 +1,10 @@
+LEGIT v1.3 (Release date: 2019-07-16)
+==============
+
+Changes:
+
+* Added Elastic Net variable selection. This is much faster and better than other methods.
+
 LEGIT v1.2.1 (Release date: 2018-02-07)
 ==============
 
