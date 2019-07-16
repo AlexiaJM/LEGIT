@@ -1923,7 +1923,6 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 		for (i in 1:k){
 			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
 			latent_var[[i]] = as.matrix(sx, ncol = NCOL(latent_var[[i]]), nrow = dim(data)[1])
-			data[,formula_outcome] = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
 		}
 	}
 
@@ -1959,7 +1958,7 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 	return(out)
 }
 
-IMLEGIT_net = function(data, latent_var, formula, cross_validation, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
