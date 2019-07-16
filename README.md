@@ -5,9 +5,11 @@
 
 This is a R implementation of the *Latent Environmental &amp; Genetic InTeraction* (LEGIT) model. 
 
+![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT.png)
+
 **Update (2019/07/16): GitHub version now contains the ability to do variable selection on LEGIT models with Elastic Net! This is much faster than other methods and it works generally very well. It works through glmnet, a very popular package for variable selection.**
 
-![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT.png)
+![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/elasticnet_LEGIT.png)
 
 **Description**
 
