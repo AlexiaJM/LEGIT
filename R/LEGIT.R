@@ -326,6 +326,115 @@
 #' @export
 "IMLEGIT"
 
+#' @title Elastic net for variable selection in IMLEGIT model
+#' @description [Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with LEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
+#' @param data data.frame of the dataset to be used. 
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param cross_validation If TRUE, will return cross-validation criterion (slower). We recommend that you run elastic_net_var_select once with cross_validation=FALSE and then extract the lambda values for the models that you care about and only then rerun elastic_net_var_select with cross_validation=TRUE with this custom lambda_path. This will prevent doing cross-validation multiple times for the same model and will make things much faster.
+#' @param alpha The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.
+#' @param standardize If TRUE, standardize all variables inside every latent_var component. Note that if FALSE, glmnet will still standardize and unstandardize, but it will do so for each model (i.e., when at the step of estimating the parameters of latent variable G it standardize them, apply glmnet, then unstandarize them). This means that fixed parameters in the alternating steps are not standardized when standardize=FALSE. In practice, we found that standardize=FALSE leads to weird paths that do not always make sense. In the end, we only care about the order of the variable removal from the glmnet. We highly recommend standardize=TRUE for best results.
+#' @param lambda_path Optional vector of all lambda (penalty term for elastic net, see glmnet package manual). By default, we automatically determine it.
+#' @param lambda_mult scalar which multiplies the maximum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path determined automatically. Sometimes, the maximum lambda found automatically is too big or too small and you may not want to spend the effort to manually set your own lambda path. This is where this comes in, you can simply scale lambda max up or down. (Default = 1)
+#' @param lambda_min minimum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path. (Default = .0001)
+#' @param n_lambda Number of lambda (penalty term for elastic net, see glmnet package manual) in lambda path. Make lower for faster training, or higher for more precision.
+#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param classification Set to TRUE if you are doing classification (binary outcome).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
+#' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
+#' @return Returns an object of the class "elastic_net_var_select" which is list containing, in the following order: the criterion at each lambda, the coefficients of the latent variables at each lambda, the fits of each IMLEGIT models for each variable retained at each lambda, and the vector of lambda used.
+#' @examples
+#'	\dontrun{
+#'	train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
+#'	g1_bad = rbinom(1000,1,.30)
+#'	g2_bad = rbinom(1000,1,.30)
+#'	g3_bad = rbinom(1000,1,.30)
+#'	g4_bad = rbinom(1000,1,.30)
+#'	g5_bad = rbinom(1000,1,.30)
+#'	train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+#'	lv = list(G=train$G, E=train$E)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
+#'	fit$glmnet_coef
+#'	plot(fit)
+#'	}
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"elastic_net_var_select"
+
+
+#' @title Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model with Elastic Net on the latent variables. Do not use on it's own, use elastic_net_var_select instead.
+#' @description Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
+#' @param data data.frame of the dataset to be used. 
+#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
+#' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param cross_validation If TRUE, will return cross-validation criterion (slower)
+#' @param alpha The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.
+#' @param lambda Lambda (penalty term for elastic net, see glmnet package manual) (Default = .0001)
+#' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param cv_iter Number of cross-validation iterations (Default = 5).
+#' @param cv_folds Number of cross-validation folds (Default = 10). Using \code{cv_folds=NROW(data)} will lead to leave-one-out cross-validation.
+#' @param folds Optional list of vectors containing the fold number for each observation. Bypass cv_iter and cv_folds. Setting your own folds could be important for certain data types like time series or longitudinal data.
+#' @param classification Set to TRUE if you are doing classification (binary outcome).
+#' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
+#' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
+#' @param warn If FALSE, it will not show warnings when all variables inside a latent variable are removed. This serves to prevent lots of warning when running elastic_net_var_select (Default = TRUE).
+#' @param family_string Optional String version of the family (gaussian leads to "gaussian"). This is only needed when using elastic_net_var_select. Please ignore this.
+#' @return Returns a list containing, in the following order: a IMLEGIT model, the coefficients of the variables in the latent variables from glmnet models, and the cross-validation results (if asked).
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
+#'	list(train$coef_G, train$coef_E))
+#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#'	train = example_3way_3latent(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
+#'	list(train$coef_G, train$coef_E, train$coef_Z))
+#'	fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"IMLEGIT_net"
+
+#' @title Plot function for the output of elastic_net_var_select
+#' @description Plot of the coefficients of variables inside the latent variables with respect to the log(lambda). This is your typical elastic-net plot.
+#' @param x An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
+#' @param lwd Thickness of the lines (Default = 2)
+#' @param start At which lambda to start (from large lambda to small lambda). If start is not 1, we remove some of the large lambda, this can make plot easier to visualize (Default = 1).
+#' @return Returns the plot of the coefficients of variables inside the latent variables with respect to the log(lambda).
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
+#'	list(train$coef_G, train$coef_E))
+#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#'	train = example_3way_3latent(500, 1, seed=777)
+#'	fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
+#'	list(train$coef_G, train$coef_E, train$coef_Z))
+#'	fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
+#'	summary(fit_default)
+#'	summary(fit_best)
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"plot.elastic_net_var_select"
+
+
 #' @title Predictions of LEGIT fits
 #' @description Predictions of LEGIT fits.
 #' @param object An object of class "LEGIT", usually, a result of a call to LEGIT.
@@ -1730,6 +1839,334 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	else result = list(fit_main = fit_a, fit_latent_var = fit_, true_model_parameters=list(AIC = true_aic, AICc = true_aicc, BIC = true_bic, rank = true_rank, df.residual = true_df.residual, null.deviance=true_null.deviance), ylim=ylim)
 	class(result) <- "IMLEGIT"
 	return(result)
+}
+
+elastic_net_var_select = function(data, latent_var, formula, cross_validation=FALSE, alpha=.75, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
+{
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
+	# Setting up latent_var and checks
+	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
+	k = length(latent_var)
+	if (k==0) stop("latent_var cannot be an empty list")
+	if (is.null(names(latent_var))){
+		if (print) cat("You have not specified names for the latent variables, assigning names to latent_var is highly recommended to prevent confusion. For now, they will be named L1, L2, ...\n")
+		names(latent_var) = paste0("L",1:k)
+	}
+	for (i in 1:k){
+		latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+		if (sum(colnames(latent_var[[i]])=="") > 0){
+			if (print) cat(paste0("You have not specified column names for certain elements in ",names(latent_var)[i], ", elements of this latent variable will be named ",names(latent_var)[i],1,", ",names(latent_var)[i],2," ...\n"))
+			colnames(latent_var[[i]]) = paste0(names(latent_var)[i],1:NCOL(latent_var[[i]]))
+		}
+	}
+	# More checks
+	if (maxiter <= 0) warning("maxiter must be > 0")
+	if (k > 1) for (i in 1:(k-1)) if (NROW(latent_var[[i]]) != NROW(latent_var[[i+1]])) stop("Some datasets in latent_var don't have the same number of observations")
+	if(!is.null(start_latent_var)){
+		if (class(start_latent_var)!="list") stop("start_latent_var must be a lit of vectors (or NULL)")
+		if (k!=length(start_latent_var)) stop("start_latent_var must have the same size as latent_var")
+		for (i in 1:k){
+			if (!is.null(latent_var[[i]])){
+				if (NCOL(latent_var[[i]])!=length(start_latent_var[[i]])) stop("All elements of start_latent_var must either be NULL or have the same length as the number of the elements in its associated latent variable")
+			}
+		}
+	}
+	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
+
+	# getting right formats
+	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+	for (i in 1:k) if (sum(apply(latent_var[[i]],2,is.numeric)) != NCOL(latent_var[[i]])) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+
+	# remove missing data
+	comp = stats::complete.cases(data,latent_var[[1]])
+	if (k > 1) for (i in 2:k) comp = comp & stats::complete.cases(latent_var[[i]])
+	data = data[comp,, drop=FALSE]
+	for (i in 1:k) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	#Adding empty variables in main dataset for latent_var
+	for (i in 1:k){
+		data[,colnames(latent_var[[i]])]=0
+		data[,paste0("R0_",i)]=0
+	}
+
+	formula_outcome = get.vars(formula)[1]
+
+	#### Lambda path (taken from https://stackoverflow.com/questions/23686067/default-lambda-sequence-in-glmnet-for-cross-validation)
+	if (is.null(lambda_path)){
+		## Standardize variables: (need to use n instead of (n-1) as denominator)
+		mysd <- function(y) sqrt(sum((y-mean(y))^2)/length(y))
+
+		# We find lambda max for all latent_var and use the maximum
+		n = dim(data)[1]
+		latent_var_all = latent_var[[1]]
+		for (i in 2:k) latent_var_all = cbind(latent_var_all, latent_var[[i]])
+		sx = scale(latent_var_all, scale = apply(latent_var_all, 2, mysd))
+		sx = as.matrix(sx, ncol = NCOL(latent_var_all), nrow = n)
+		sy = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
+		lambda_max = max(lambda_mult*abs(colSums(sx*sy)))/n # Multiplying by k because otherwise its too small
+
+		## Calculate lambda path (first get lambda_max):
+		lambdapath = round(exp(seq(log(lambda_max), log(lambda_max*lambda_min), length.out = n_lambda)), digits = 10)
+	}
+
+	if (standardize){
+		for (i in 1:k){
+			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
+			latent_var[[i]] = as.matrix(sx, ncol = NCOL(latent_var[[i]]), nrow = dim(data)[1])
+			data[,formula_outcome] = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
+		}
+	}
+
+	if (cross_validation){
+		if (classification) results = matrix(NA,length(lambdapath),7)
+		else results = matrix(NA,length(lambdapath),6)
+	}
+	else results = matrix(NA,length(lambdapath),3)
+	fit = vector("list", length(lambdapath))
+	glmnet_coef = vector("list", length(lambdapath))
+	for (i in 1:length(lambdapath)){
+		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, cross_validation = cross_validation, alpha=alpha, lambda=lambdapath[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		fit[[i]] = result$fit
+		glmnet_coef[[i]] = result$glmnet_coef
+		if (is.null(fit[[i]])){
+			if (cross_validation & classification) results[i,] = rep(NA, 7)
+			else if (cross_validation & !classification) results[i,] = rep(NA, 6)
+			else results[i,] = rep(NA, 3)
+
+		}
+		else{
+			if (cross_validation & classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, mean(result$fit_cv$R2_cv), mean(result$fit_cv$Huber_cv), mean(result$fit_cv$L1_cv), mean(result$fit_cv$AUC))
+			else if (cross_validation & !classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, mean(result$fit_cv$R2_cv), mean(result$fit_cv$Huber_cv), mean(result$fit_cv$L1_cv))
+			else results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC)
+		}
+		if (cross_validation & classification) colnames(results) = c("AIC","AICc","BIC","R2_cv","Huber_cv","L1_cv","AUC_cv")
+		else if (cross_validation & !classification) colnames(results) = c("AIC","AICc","BIC","R2_cv","Huber_cv","L1_cv")
+		else colnames(results) = c("AIC","AICc","BIC")
+
+	}
+	out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambdapath=lambdapath)
+	class(out) = "elastic_net_var_select"
+	return(out)
+}
+
+IMLEGIT_net = function(data, latent_var, formula, cross_validation, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+{
+	if (!is.null(ylim)){
+		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
+	}
+	# Setting up latent_var and checks
+	if (class(latent_var)!="list") stop("latent_var must be a list of datasets")
+	k = length(latent_var)
+	if (k==0) stop("latent_var cannot be an empty list")
+	if (is.null(names(latent_var))){
+		if (print) cat("You have not specified names for the latent variables, assigning names to latent_var is highly recommended to prevent confusion. For now, they will be named L1, L2, ...\n")
+		names(latent_var) = paste0("L",1:k)
+	}
+	for (i in 1:k){
+		latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+		if (sum(colnames(latent_var[[i]])=="") > 0){
+			if (print) cat(paste0("You have not specified column names for certain elements in ",names(latent_var)[i], ", elements of this latent variable will be named ",names(latent_var)[i],1,", ",names(latent_var)[i],2," ...\n"))
+			colnames(latent_var[[i]]) = paste0(names(latent_var)[i],1:NCOL(latent_var[[i]]))
+		}
+	}
+
+	# More checks
+	if (maxiter <= 0) warning("maxiter must be > 0")
+	if (k > 1) for (i in 1:(k-1)) if (NROW(latent_var[[i]]) != NROW(latent_var[[i+1]])) stop("Some datasets in latent_var don't have the same number of observations")
+	if(!is.null(start_latent_var)){
+		if (class(start_latent_var)!="list") stop("start_latent_var must be a lit of vectors (or NULL)")
+		if (k!=length(start_latent_var)) stop("start_latent_var must have the same size as latent_var")
+		for (i in 1:k){
+			if (!is.null(latent_var[[i]])){
+				if (NCOL(latent_var[[i]])!=length(start_latent_var[[i]])) stop("All elements of start_latent_var must either be NULL or have the same length as the number of the elements in its associated latent variable")
+			}
+		}
+	}
+	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
+
+	# getting right formats
+	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
+	data=data.frame(data)
+	for (i in 1:k) data[,names(latent_var)[i]] = 0
+	data = stats::model.frame(formula, data=data, na.action=na.pass)
+	formula = stats::as.formula(formula)
+
+	# Error message about factors
+	if (sum(apply(data,2,is.numeric)) != NCOL(data)) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+	for (i in 1:k) if (sum(apply(latent_var[[i]],2,is.numeric)) != NCOL(latent_var[[i]])) stop("All variables used must be numeric, factors are not allowed. Please dummy code all categorical variables inside your datasets (data, latent_var[[1]], latent_var[[2]], ...)")
+
+	# remove missing data
+	comp = stats::complete.cases(data,latent_var[[1]])
+	if (k > 1) for (i in 2:k) comp = comp & stats::complete.cases(latent_var[[i]])
+	data = data[comp,, drop=FALSE]
+	for (i in 1:k) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
+
+	#Adding empty variables in main dataset for latent_var
+	for (i in 1:k){
+		data[,colnames(latent_var[[i]])]=0
+		data[,paste0("R0_",i)]=0
+	}
+
+	# Setting up initial weighted latent_var
+	weights_latent_var_old = vector("list", k)
+	weights_latent_var = vector("list", k)
+	if (is.null(start_latent_var)){
+		for (i in 1:k) weights_latent_var[[i]] = rep(1/dim(latent_var[[i]])[2],dim(latent_var[[i]])[2])
+	}
+	else{
+		for (i in 1:k){
+			if (sum(abs(start_latent_var[[i]]))==0) weights_latent_var[[i]] = rep(1/dim(latent_var[[i]])[2],dim(latent_var[[i]])[2])
+			else weights_latent_var[[i]] = start_latent_var[[i]]/sum(abs(start_latent_var[[i]]))
+		}		
+	}
+	for (i in 1:k) data[,names(latent_var)[i]] = latent_var[[i]]%*%weights_latent_var[[i]]
+
+	# Lists needed for later
+	index_with_latent_var = vector("list", k)
+	formula_withoutlatent_var  = vector("list", k)
+	formula_withlatent_var  = vector("list", k)
+	formula_step  = vector("list", k)
+	fit_ = vector("list", k)
+	names(fit_) = names(latent_var)
+
+	# Deconstructing formula into parts (With latent_var and without latent_var)
+	formula_full = stats::terms(formula,simplify=TRUE)
+	formula_outcome = get.vars(formula)[1]
+	formula_elem_ = attributes(formula_full)$term.labels
+	# Adding white spaces before and after to recognize a "E" as opposed to another string like "Elephant"
+	formula_elem = paste("", formula_elem_,"")
+	for (i in 1:k) index_with_latent_var[[i]] = grepl(paste0(" ",names(latent_var)[i]," "),formula_elem, fixed=TRUE) | grepl(paste0(" ",names(latent_var)[i],":"),formula_elem, fixed=TRUE) | grepl(paste0(":",names(latent_var)[i],":"),formula_elem, fixed=TRUE) | grepl(paste0(":",names(latent_var)[i]," "),formula_elem, fixed=TRUE)
+	data_expanded = stats::model.matrix(formula, data=data)
+	if (colnames(data_expanded)[1] == "(Intercept)"){
+		intercept=TRUE
+		formula_elem = c("1",formula_elem)
+		for (i in 1:k) index_with_latent_var[[i]] = c(FALSE,index_with_latent_var[[i]])
+	}
+	else intercept=FALSE
+
+	for (i in 1:k){
+		## Formulas for reparametrizations in each steps
+		formula_elem_withoutlatent_var = formula_elem[!index_with_latent_var[[i]]]
+		formula_elem_withoutlatent_var[-length(formula_elem_withoutlatent_var)] = paste0(formula_elem_withoutlatent_var[-length(formula_elem_withoutlatent_var)], " + ")
+		formula_withoutlatent_var[[i]] = paste0(formula_outcome, " ~ ", paste0(formula_elem_withoutlatent_var,collapse=""))
+		if (formula_elem[1] != "1") formula_withoutlatent_var[[i]] = paste0(formula_withoutlatent_var[[i]], " - 1")
+		formula_withoutlatent_var[[i]] = stats::as.formula(formula_withoutlatent_var[[i]])
+
+		formula_elem_withlatent_var = formula_elem[index_with_latent_var[[i]]]
+		# Remove G elements from formula because we want (b1 + b2*E + ...)*G rather than b1*G + b2*E*G + ...
+		formula_elem_withlatent_var = gsub(paste0(" ",names(latent_var)[i]," "),"1",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(" ",names(latent_var)[i],":"),"",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(":",names(latent_var)[i],":"),":",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var = gsub(paste0(":",names(latent_var)[i]," "),"",formula_elem_withlatent_var, fixed=TRUE)
+		formula_elem_withlatent_var[-length(formula_elem_withlatent_var)] = paste0(formula_elem_withlatent_var[-length(formula_elem_withlatent_var)], " + ")
+		formula_withlatent_var[[i]] = paste0(formula_outcome, " ~ ", paste0(formula_elem_withlatent_var,collapse=""))
+		if (sum(grepl("1",formula_elem_withlatent_var, fixed=TRUE))==0) formula_withlatent_var[[i]] = paste0(formula_withlatent_var[[i]], " - 1")
+		formula_withlatent_var[[i]] = stats::as.formula(formula_withlatent_var[[i]])
+
+		# Making formula for step i
+		latent_var_names = colnames(latent_var[[i]])
+		latent_var_names[-length(latent_var[[i]])] = paste0(colnames(latent_var[[i]])[-length(latent_var[[i]])], " + ")
+		formula_step[[i]] = paste0(formula_outcome, " ~ ", paste0(latent_var_names,collapse=""))
+		formula_step[[i]] = paste0(formula_step[[i]], " offset(R0_",i,") - 1")
+		formula_step[[i]] = stats::as.formula(formula_step[[i]])
+	}
+
+	done = FALSE
+	for (j in 1:maxiter){
+		## Step a : fit main model
+		fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
+		# L1 standardize the parameters of the main model
+		weights_a = stats::coef(fit_a)
+		weights_a = weights_a/sum(abs(weights_a))
+
+		conv_latent_var = TRUE
+		for (i in 1:k){
+			if (NCOL(latent_var[[i]])>1){
+				# Reparametrizing variables for step i (estimating i-th latent_var)
+				data_expanded_withoutlatent_var = stats::model.matrix(formula_withoutlatent_var[[i]], data=data)
+				data[,paste0("R0_",i)] = data_expanded_withoutlatent_var%*%weights_a[!index_with_latent_var[[i]]]
+				data_expanded_withlatent_var = stats::model.matrix(formula_withlatent_var[[i]], data=data)
+				R1 = data_expanded_withlatent_var%*%weights_a[index_with_latent_var[[i]]]
+				R1_latent_var = latent_var[[i]]*as.vector(R1)
+				data[,colnames(latent_var[[i]])]=R1_latent_var
+
+				## Step i-th : fit model for i-th latent_var
+				if (mean(is.na(R1))){
+					if (warn) warning(paste0("Lambda is too big, one latent variable has weight 0 everywhere. Use a smaller lambda."))
+					weights_latent_var[[i]] = rep(0, NCOL(latent_var[[i]]))
+					return(list(fit=NULL, glmnet_coef=unlist(weights_latent_var)))
+				}
+				else{
+					if (is.null(family_string)) fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=as.character(substitute(family)), alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE, standardize=FALSE)
+					else fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=family_string, alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE)
+					weights_latent_var_ = as.numeric(stats::coef(fit_[[i]])[-1]) # removing the 0 intercept
+
+					# Updating latent_var estimates and checking convergence
+					weights_latent_var_old[[i]] = weights_latent_var[[i]]
+					weights_latent_var[[i]] = weights_latent_var_
+					data[,names(latent_var)[i]] = latent_var[[i]]%*%weights_latent_var[[i]]
+					if(sqrt(sum((weights_latent_var_old[[i]]-weights_latent_var[[i]])^2)) < eps) conv_latent_var = conv_latent_var & TRUE
+					else conv_latent_var = FALSE
+					#print(weights_latent_var_)
+				}
+			}
+			else conv_latent_var = conv_latent_var & TRUE
+		}
+		if (conv_latent_var) break
+	}
+
+	# Rerunning last time and scaling to return as results
+	# We simply fit a IMLEGIT with the same starting points (they are automatically standardized by IMLEGIT).
+	removed = rep(FALSE,k)
+	weights_latent_var_backup = weights_latent_var
+	for (i in 1:k){
+		names(weights_latent_var_backup[[i]]) = colnames(latent_var[[i]]) # backup names
+		latent_var[[i]] = latent_var[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0]] # Returns only the elements of each latent var which has weight non-zero
+		weights_latent_var[[i]] = weights_latent_var[[i]][weights_latent_var[[i]]!=0]
+	}
+	result = IMLEGIT(data=data, latent_var=latent_var, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
+	if (cross_validation) result_cv = IMLEGIT_cv(data=data, latent_var=latent_var, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification)
+	else result_cv = NULL
+	# print convergences stuff;
+	if (conv_latent_var){
+		if (print) cat(paste0("Converged in ",j, " iterations\n"))
+	} 
+	else{
+		warning(paste0("Did not reach convergence in maxiter iterations. Try increasing maxiter or make eps smaller."))
+	}
+	return(list(fit=result, glmnet_coef=unlist(weights_latent_var_backup), fit_cv=result_cv))
+}
+
+plot.elastic_net_var_select = function(x, lwd=2, start=1, ...){
+	object = x
+	n = length(object$glmnet_coef)
+	k = length(object$fit[[length(object$glmnet_coef)]]$fit_latent_var)
+	lty_ = c()
+	n_var = vector("list", k)
+	n_var_total = 0
+	for (i in 1:k){
+		n_var[[i]] = length(coef(object$fit[[length(object$glmnet_coef)]]$fit_latent_var[[i]]))
+		lty_ = c(lty_, rep(i,n_var[[i]]))
+		n_var_total = n_var_total + n_var[[i]]
+	}
+	A = matrix(unlist(object$glmnet_coef), ncol = n_var_total, byrow = TRUE)
+	path = object$lambdapath[start:n]
+	A = A[start:n,]
+
+	matplot(path,A,type="l", col=RColorBrewer::brewer.pal(n_var_total,"Paired"), xlab="log(lambda)", ylab="Coefficients", lty=lty_, lwd=lwd)
+	abline(0,0, col="grey", lty=3)
+	legend("topright",legend=names(object$glmnet_coef[[n]]), col=RColorBrewer::brewer.pal(n_var_total,"Paired"), lty=lty_, bg="white", lwd=lwd)
 }
 
 predict.LEGIT = function(object, data, genes, env, ...){

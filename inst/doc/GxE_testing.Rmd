@@ -6,12 +6,12 @@ output: rmarkdown::html_vignette
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{GxE Testing}
-  %\VignetteEncoding{latin1}
+  %\VignetteEncoding{UTF-8}
 ---
 
 **Note that you can cite this work as: **
 
-*Jolicoeur-Martineau, A., Wazana, A., Székely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., Meaney M. J. & Greenwood, C.M. (2017). Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study. arXiv preprint arXiv:1703.08111.*
+*Jolicoeur-Martineau, A., Wazana, A., Szekely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., Meaney M. J. & Greenwood, C.M. (2017). Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study. arXiv preprint arXiv:1703.08111.*
 
 *Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K. F., Pluess, M., Greenwood, C., & Wazana, A. (2017). Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model. arXiv preprint arXiv:1712.04058.*
 
