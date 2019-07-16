@@ -327,7 +327,7 @@
 "IMLEGIT"
 
 #' @title Elastic net for variable selection in IMLEGIT model
-#' @description [Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with LEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
+#' @description [Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with IMLEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
 #' @param data data.frame of the dataset to be used. 
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
@@ -371,7 +371,7 @@
 
 
 #' @title Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model with Elastic Net on the latent variables. Do not use on it's own, use elastic_net_var_select instead.
-#' @description Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
+#' @description Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
 #' @param data data.frame of the dataset to be used. 
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
@@ -1923,7 +1923,6 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 		for (i in 1:k){
 			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
 			latent_var[[i]] = as.matrix(sx, ncol = NCOL(latent_var[[i]]), nrow = dim(data)[1])
-			data[,formula_outcome] = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
 		}
 	}
 
@@ -1959,7 +1958,7 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 	return(out)
 }
 
-IMLEGIT_net = function(data, latent_var, formula, cross_validation, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
