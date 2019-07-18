@@ -5,11 +5,11 @@
 \title{Elastic net for variable selection in IMLEGIT model}
 \usage{
 elastic_net_var_select(data, latent_var, formula,
-  cross_validation = FALSE, alpha = 0.75, standardize = TRUE,
-  lambda_path = NULL, lambda_mult = 1, lambda_min = 1e-04,
-  n_lambda = 100, start_latent_var = NULL, eps = 0.001,
-  maxiter = 100, family = gaussian, ylim = NULL, cv_iter = 5,
-  cv_folds = 10, folds = NULL, Huber_p = 1.345,
+  latent_var_searched = NULL, cross_validation = FALSE, alpha = 0.75,
+  standardize = TRUE, lambda_path = NULL, lambda_mult = 1,
+  lambda_min = 1e-04, n_lambda = 100, start_latent_var = NULL,
+  eps = 0.001, maxiter = 100, family = gaussian, ylim = NULL,
+  cv_iter = 5, cv_folds = 10, folds = NULL, Huber_p = 1.345,
   classification = FALSE, print = TRUE)
 }
 \arguments{
@@ -19,7 +19,9 @@ elastic_net_var_select(data, latent_var, formula,
 
 \item{formula}{Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).}
 
-\item{cross_validation}{If TRUE, will return cross-validation criterion (slower). We recommend that you run elastic_net_var_select once with cross_validation=FALSE and then extract the lambda values for the models that you care about and only then rerun elastic_net_var_select with cross_validation=TRUE with this custom lambda_path. This will prevent doing cross-validation multiple times for the same model and will make things much faster.}
+\item{latent_var_searched}{Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.}
+
+\item{cross_validation}{(Optional) If TRUE, will return cross-validation criterion (slower, but very good criterion).}
 
 \item{alpha}{The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.}
 
@@ -59,20 +61,27 @@ elastic_net_var_select(data, latent_var, formula,
 Returns an object of the class "elastic_net_var_select" which is list containing, in the following order: the criterion at each lambda, the coefficients of the latent variables at each lambda, the fits of each IMLEGIT models for each variable retained at each lambda, and the vector of lambda used.
 }
 \description{
-[Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with LEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
+[Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with IMLEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
 }
 \examples{
 \dontrun{
-train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
-g1_bad = rbinom(1000,1,.30)
-g2_bad = rbinom(1000,1,.30)
-g3_bad = rbinom(1000,1,.30)
-g4_bad = rbinom(1000,1,.30)
-g5_bad = rbinom(1000,1,.30)
+N = 1000
+train = example_3way(N, sigma=1, logit=FALSE, seed=7)
+g1_bad = rbinom(N,1,.30)
+g2_bad = rbinom(N,1,.30)
+g3_bad = rbinom(N,1,.30)
+g4_bad = rbinom(N,1,.30)
+g5_bad = rbinom(N,1,.30)
 train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 lv = list(G=train$G, E=train$E)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E)
-fit$glmnet_coef
+summary(fit)
+ best_model(fit)
+plot(fit)
+# With Cross-validation
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+summary(fit)
+best_model(fit)
 plot(fit)
 }
 }

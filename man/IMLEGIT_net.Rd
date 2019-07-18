@@ -4,12 +4,12 @@
 \alias{IMLEGIT_net}
 \title{Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model with Elastic Net on the latent variables. Do not use on it's own, use elastic_net_var_select instead.}
 \usage{
-IMLEGIT_net(data, latent_var, formula, cross_validation, alpha = 1,
-  lambda = 1e-04, start_latent_var = NULL, eps = 0.001,
-  maxiter = 100, family = gaussian, ylim = NULL, cv_iter = 5,
-  cv_folds = 10, folds = NULL, Huber_p = 1.345,
-  classification = FALSE, print = TRUE, warn = TRUE,
-  family_string = NULL)
+IMLEGIT_net(data, latent_var, formula, latent_var_searched = NULL,
+  cross_validation = FALSE, alpha = 1, lambda = 1e-04,
+  start_latent_var = NULL, eps = 0.001, maxiter = 100,
+  family = gaussian, ylim = NULL, cv_iter = 5, cv_folds = 10,
+  folds = NULL, Huber_p = 1.345, classification = FALSE,
+  print = TRUE, warn = TRUE, family_string = NULL)
 }
 \arguments{
 \item{data}{data.frame of the dataset to be used.}
@@ -17,6 +17,8 @@ IMLEGIT_net(data, latent_var, formula, cross_validation, alpha = 1,
 \item{latent_var}{list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)}
 
 \item{formula}{Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).}
+
+\item{latent_var_searched}{Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.}
 
 \item{cross_validation}{If TRUE, will return cross-validation criterion (slower)}
 
@@ -54,21 +56,7 @@ IMLEGIT_net(data, latent_var, formula, cross_validation, alpha = 1,
 Returns a list containing, in the following order: a IMLEGIT model, the coefficients of the variables in the latent variables from glmnet models, and the cross-validation results (if asked).
 }
 \description{
-Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalize. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
-}
-\examples{
-train = example_2way(500, 1, seed=777)
-fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
-list(train$coef_G, train$coef_E))
-fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
-summary(fit_default)
-summary(fit_best)
-train = example_3way_3latent(500, 1, seed=777)
-fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
-list(train$coef_G, train$coef_E, train$coef_Z))
-fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
-summary(fit_default)
-summary(fit_best)
+Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
 }
 \references{
 Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
