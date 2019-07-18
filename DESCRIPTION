@@ -26,6 +26,6 @@ RoxygenNote: 6.1.1
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2018-06-21 20:22:05 UTC; alexia.jolicoeur
+Packaged: 2019-07-18 21:12:12 UTC; alexia.jolicoeur
 Repository: CRAN
 Date/Publication: 2018-06-21 20:57:56 UTC

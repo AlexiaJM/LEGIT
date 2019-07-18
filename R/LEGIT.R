@@ -2249,7 +2249,7 @@ summary.elastic_net_var_select = function(object, ...){
 	return(results)
 }
 
-best_model <- function(x) UseMethod("best_model")
+best_model <- function(x, ...) UseMethod("best_model")
 
 best_model.elastic_net_var_select = function(object, criterion="AICc", ...){
 	print(paste0("Showing best model based on ", criterion))
