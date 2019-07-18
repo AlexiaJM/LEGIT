@@ -331,7 +331,8 @@
 #' @param data data.frame of the dataset to be used. 
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
-#' @param cross_validation If TRUE, will return cross-validation criterion (slower). We recommend that you run elastic_net_var_select once with cross_validation=FALSE and then extract the lambda values for the models that you care about and only then rerun elastic_net_var_select with cross_validation=TRUE with this custom lambda_path. This will prevent doing cross-validation multiple times for the same model and will make things much faster.
+#' @param latent_var_searched Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.
+#' @param cross_validation (Optional) If TRUE, will return cross-validation criterion (slower, but very good criterion).
 #' @param alpha The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.
 #' @param standardize If TRUE, standardize all variables inside every latent_var component. Note that if FALSE, glmnet will still standardize and unstandardize, but it will do so for each model (i.e., when at the step of estimating the parameters of latent variable G it standardize them, apply glmnet, then unstandarize them). This means that fixed parameters in the alternating steps are not standardized when standardize=FALSE. In practice, we found that standardize=FALSE leads to weird paths that do not always make sense. In the end, we only care about the order of the variable removal from the glmnet. We highly recommend standardize=TRUE for best results.
 #' @param lambda_path Optional vector of all lambda (penalty term for elastic net, see glmnet package manual). By default, we automatically determine it.
@@ -352,16 +353,23 @@
 #' @return Returns an object of the class "elastic_net_var_select" which is list containing, in the following order: the criterion at each lambda, the coefficients of the latent variables at each lambda, the fits of each IMLEGIT models for each variable retained at each lambda, and the vector of lambda used.
 #' @examples
 #'	\dontrun{
-#'	train = example_3way(N=250, sigma=1, logit=FALSE, seed=7)
-#'	g1_bad = rbinom(1000,1,.30)
-#'	g2_bad = rbinom(1000,1,.30)
-#'	g3_bad = rbinom(1000,1,.30)
-#'	g4_bad = rbinom(1000,1,.30)
-#'	g5_bad = rbinom(1000,1,.30)
+#'	N = 1000
+#'	train = example_3way(N, sigma=1, logit=FALSE, seed=7)
+#'	g1_bad = rbinom(N,1,.30)
+#'	g2_bad = rbinom(N,1,.30)
+#'	g3_bad = rbinom(N,1,.30)
+#'	g4_bad = rbinom(N,1,.30)
+#'	g5_bad = rbinom(N,1,.30)
 #'	train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
-#'	fit$glmnet_coef
+#'	summary(fit)
+#'  best_model(fit)
+#'	plot(fit)
+#'	# With Cross-validation
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+#'	summary(fit)
+#'	best_model(fit)
 #'	plot(fit)
 #'	}
 #' @import formula.tools stats
@@ -375,6 +383,7 @@
 #' @param data data.frame of the dataset to be used. 
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
+#' @param latent_var_searched Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.
 #' @param cross_validation If TRUE, will return cross-validation criterion (slower)
 #' @param alpha The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.
 #' @param lambda Lambda (penalty term for elastic net, see glmnet package manual) (Default = .0001)
@@ -392,19 +401,6 @@
 #' @param warn If FALSE, it will not show warnings when all variables inside a latent variable are removed. This serves to prevent lots of warning when running elastic_net_var_select (Default = TRUE).
 #' @param family_string Optional String version of the family (gaussian leads to "gaussian"). This is only needed when using elastic_net_var_select. Please ignore this.
 #' @return Returns a list containing, in the following order: a IMLEGIT model, the coefficients of the variables in the latent variables from glmnet models, and the cross-validation results (if asked).
-#' @examples
-#'	train = example_2way(500, 1, seed=777)
-#'	fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
-#'	list(train$coef_G, train$coef_E))
-#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
-#'	summary(fit_default)
-#'	summary(fit_best)
-#'	train = example_3way_3latent(500, 1, seed=777)
-#'	fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
-#'	list(train$coef_G, train$coef_E, train$coef_Z))
-#'	fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
-#'	summary(fit_default)
-#'	summary(fit_best)
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
 #' @export
@@ -417,23 +413,76 @@
 #' @param start At which lambda to start (from large lambda to small lambda). If start is not 1, we remove some of the large lambda, this can make plot easier to visualize (Default = 1).
 #' @return Returns the plot of the coefficients of variables inside the latent variables with respect to the log(lambda).
 #' @examples
-#'	train = example_2way(500, 1, seed=777)
-#'	fit_best = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E, 
-#'	list(train$coef_G, train$coef_E))
-#'	fit_default = IMLEGIT(train$data, list(G=train$G, E=train$E), y ~ G*E)
-#'	summary(fit_default)
-#'	summary(fit_best)
-#'	train = example_3way_3latent(500, 1, seed=777)
-#'	fit_best = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z, 
-#'	list(train$coef_G, train$coef_E, train$coef_Z))
-#'	fit_default = IMLEGIT(train$data, train$latent_var, y ~ G*E*Z)
-#'	summary(fit_default)
-#'	summary(fit_best)
+#'	\dontrun{
+#'	N = 1000
+#'	train = example_3way(N, sigma=1, logit=FALSE, seed=7)
+#'	g1_bad = rbinom(N,1,.30)
+#'	g2_bad = rbinom(N,1,.30)
+#'	g3_bad = rbinom(N,1,.30)
+#'	g4_bad = rbinom(N,1,.30)
+#'	g5_bad = rbinom(N,1,.30)
+#'	train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+#'	lv = list(G=train$G, E=train$E)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
+#'	summary(fit)
+#'  best_model(fit)
+#'	plot(fit)
+#'	}
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
 #' @export
 "plot.elastic_net_var_select"
 
+#' @title Summary function for the output of elastic_net_var_select
+#' @description Summary function for the output of elastic_net_var_select
+#' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
+#' @return Returns the unique IMLEGIT models resulting from the glmnet path with associated information. Also gives the cross-validation information if asked.
+#' @examples
+#'	\dontrun{
+#'	N = 1000
+#'	train = example_3way(N, sigma=1, logit=FALSE, seed=7)
+#'	g1_bad = rbinom(N,1,.30)
+#'	g2_bad = rbinom(N,1,.30)
+#'	g3_bad = rbinom(N,1,.30)
+#'	g4_bad = rbinom(N,1,.30)
+#'	g5_bad = rbinom(N,1,.30)
+#'	train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+#'	lv = list(G=train$G, E=train$E)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
+#'	summary(fit)
+#'  best_model(fit)
+#'	plot(fit)
+#'	}
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"summary.elastic_net_var_select"
+
+#' @title Best model from elastic net variable selection
+#' @description Best model from elastic net variable selection (based on selected criteria)
+#' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
+#' @param criteria Criteria used to determine which model is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv_R2"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @return Returns the best IMLEGIT model resulting from the glmnet path with associated information.
+#' @examples
+#'	\dontrun{
+#'	N = 1000
+#'	train = example_3way(N, sigma=1, logit=FALSE, seed=7)
+#'	g1_bad = rbinom(N,1,.30)
+#'	g2_bad = rbinom(N,1,.30)
+#'	g3_bad = rbinom(N,1,.30)
+#'	g4_bad = rbinom(N,1,.30)
+#'	g5_bad = rbinom(N,1,.30)
+#'	train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+#'	lv = list(G=train$G, E=train$E)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
+#'	summary(fit)
+#'  best_model(fit)
+#'	plot(fit)
+#'	}
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"best_model.elastic_net_var_select"
 
 #' @title Predictions of LEGIT fits
 #' @description Predictions of LEGIT fits.
@@ -626,7 +675,7 @@
 #' @param env_extra data.frame of the variables to try including inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental). Set to NULL if using a backward search.
 #' @param search_type If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).
 #' @param search If \code{search="genes"}, uses a stepwise search for the genetic score variables. If \code{search="env"}, uses a stepwise search for the environmental score variables. If \code{search="both"}, uses a stepwise search for both the gene and environmental score variables (Default = "both").
-#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param forward_exclude_p_bigger If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to 1 to prevent any exclusion here.
 #' @param backward_exclude_p_smaller If p-value < \code{backward_exclude_p_smaller}, we do not consider the variable for removal in the backward steps (Default = .01). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to 0 to prevent any exclusion here.
 #' @param exclude_worse_AIC If AIC with variable > AIC without variable, we ignore the variable (Default = TRUE). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to FALSE to prevent any exclusion here.
@@ -680,7 +729,7 @@
 #' @param latent_var_extra list of data.frame (with the same structure as latent_var_original) containing the additionnal elements to try including inside the latent variables. Set to NULL if using a backward search.
 #' @param search_type If \code{search_type="forward"}, uses a forward search. If \code{search_type="backward"}, uses backward search. If \code{search_type="bidirectional-forward"}, uses bidirectional search (that starts as a forward search). If \code{search_type="bidirectional-backward"}, uses bidirectional search (that starts as a backward search).
 #' @param search If \code{search=0}, uses a stepwise search for all latent variables. Otherwise, if search = i, uses a stepwise search on the i-th latent variable (Default = 0).
-#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param forward_exclude_p_bigger If p-value > \code{forward_exclude_p_bigger}, we do not consider the variable for inclusion in the forward steps (Default = .20). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to 1 to prevent any exclusion here.
 #' @param backward_exclude_p_smaller If p-value < \code{backward_exclude_p_smaller}, we do not consider the variable for removal in the backward steps (Default = .01). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to 0 to prevent any exclusion here.
 #' @param exclude_worse_AIC If AIC with variable > AIC without variable, we ignore the variable (Default = TRUE). This is an exclusion option which purpose is skipping variables that are likely not worth looking to make the algorithm faster, especially with cross-validation. Set to FALSE to prevent any exclusion here.
@@ -776,7 +825,7 @@
 #' @param mutation_prob Probability of mutation (Default = .50). A single variable is selected for mutation and it is mutated with probability \code{mutation_prob}. If the mutation causes a latent variable to become empty, no mutation is done. Using a small value (close to .05) will lead to getting more stuck in suboptimal solutions but using a large value (close to 1) will greatly increase the computing time because it will have a hard time reaching the entropy threshold.
 #' @param first_pop optional Starting initial population which is used instead of a fully random one. Mutation is also done on the initial population to increase variability.
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...
-#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param search_criterion Criterion used to determine which variable is the best to add or worst to drop. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param maxgen Maximum number of generations (iterations) of the genetic algorithm (Default = 100). Between 50 and 200 generations is generally adequate.
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
 #' @param maxiter Maximum number of iterations.
@@ -817,7 +866,7 @@
 #' @param lr learning rate of the gradient descent, higher will converge faster but more likely to get stuck in local optium (Default = .2).
 #' @param prop_ignored The proportion of the population that are given a fixed fitness value, thus their importance is greatly reduce. The higher it is, the longer it takes to converge. Highers values makes the algorithm focus more on favorizing the good subsets of variables than penalizing the bad subsets (Default = .50).
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...
-#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores (Default = 1).
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
 #' @param maxiter Maximum number of iterations.
@@ -854,7 +903,7 @@
 #' @param lr learning rate of the gradient descent, higher will converge faster but more likely to get stuck in local optium (Default = .2).
 #' @param prop_ignored The proportion of the population that are given a fixed fitness value, thus their importance is greatly reduce. The higher it is, the longer it takes to converge. Highers values makes the algorithm focus more on favorizing the good subsets of variables than penalizing the bad subsets (Default = .50).
 #' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ...
-#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_AUC"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param search_criterion Criterion used to determine which variable subset is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
 #' @param n_cluster Number of parallel clusters, I recommend using the number of CPU cores (Default = 1).
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results). Note that using .001 rather than .01 (default) can more than double or triple the computing time of genetic_var_select.
 #' @param maxiter Maximum number of iterations.
@@ -1841,7 +1890,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	return(result)
 }
 
-elastic_net_var_select = function(data, latent_var, formula, cross_validation=FALSE, alpha=.75, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
+elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.75, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
@@ -1900,23 +1949,27 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 	}
 
 	formula_outcome = get.vars(formula)[1]
+	if (is.null(latent_var_searched)) latent_var_searched = c(1:k)
+
+	## Standardize variables: (need to use n instead of (n-1) as denominator)
+	mysd <- function(y) sqrt(sum((y-mean(y))^2)/length(y))
 
 	#### Lambda path (taken from https://stackoverflow.com/questions/23686067/default-lambda-sequence-in-glmnet-for-cross-validation)
 	if (is.null(lambda_path)){
-		## Standardize variables: (need to use n instead of (n-1) as denominator)
-		mysd <- function(y) sqrt(sum((y-mean(y))^2)/length(y))
 
 		# We find lambda max for all latent_var and use the maximum
 		n = dim(data)[1]
-		latent_var_all = latent_var[[1]]
-		for (i in 2:k) latent_var_all = cbind(latent_var_all, latent_var[[i]])
-		sx = scale(latent_var_all, scale = apply(latent_var_all, 2, mysd))
-		sx = as.matrix(sx, ncol = NCOL(latent_var_all), nrow = n)
-		sy = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
-		lambda_max = max(lambda_mult*abs(colSums(sx*sy)))/n # Multiplying by k because otherwise its too small
+		lambda_max = -Inf
+		for (i in latent_var_searched){
+			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
+			sx = as.matrix(sx, ncol = NCOL(latent_var[[i]]), nrow = n)
+			sy = as.vector(scale(data[,formula_outcome], scale = mysd(data[,formula_outcome])))
+			lambda_max_current = max(lambda_mult*abs(colSums(sx*sy)))/n # Multiplying by k because otherwise its too small
+			if (lambda_max < lambda_max_current) lambda_max = lambda_max_current
+		}
 
 		## Calculate lambda path (first get lambda_max):
-		lambdapath = round(exp(seq(log(lambda_max), log(lambda_max*lambda_min), length.out = n_lambda)), digits = 10)
+		lambda_path = round(exp(seq(log(lambda_max), log(lambda_max*lambda_min), length.out = n_lambda)), digits = 10)
 	}
 
 	if (standardize){
@@ -1927,15 +1980,22 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 	}
 
 	if (cross_validation){
-		if (classification) results = matrix(NA,length(lambdapath),7)
-		else results = matrix(NA,length(lambdapath),6)
+		if (classification) results = matrix(NA,length(lambda_path),7)
+		else results = matrix(NA,length(lambda_path),6)
 	}
-	else results = matrix(NA,length(lambdapath),3)
-	fit = vector("list", length(lambdapath))
-	glmnet_coef = vector("list", length(lambdapath))
-	for (i in 1:length(lambdapath)){
-		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, cross_validation = cross_validation, alpha=alpha, lambda=lambdapath[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
-		fit[[i]] = result$fit
+	else results = matrix(NA,length(lambda_path),3)
+	fit = vector("list", length(lambda_path))
+	glmnet_coef = vector("list", length(lambda_path))
+	n_var_zero_prev = -Inf
+	for (i in 1:length(lambda_path)){
+		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		
+		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
+		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
+		if (cross_validation & n_var_zero_prev != n_var_zero) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		n_var_zero_prev = n_var_zero
+
+		if (!is.null(result$fit)) fit[[i]] = result$fit
 		glmnet_coef[[i]] = result$glmnet_coef
 		if (is.null(fit[[i]])){
 			if (cross_validation & classification) results[i,] = rep(NA, 7)
@@ -1944,21 +2004,32 @@ elastic_net_var_select = function(data, latent_var, formula, cross_validation=FA
 
 		}
 		else{
-			if (cross_validation & classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, mean(result$fit_cv$R2_cv), mean(result$fit_cv$Huber_cv), mean(result$fit_cv$L1_cv), mean(result$fit_cv$AUC))
-			else if (cross_validation & !classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, mean(result$fit_cv$R2_cv), mean(result$fit_cv$Huber_cv), mean(result$fit_cv$L1_cv))
+			if (is.null(result$fit_cv)) R2_cv = NA
+			else R2_cv = mean(result$fit_cv$R2_cv)
+			if (is.null(result$fit_cv)) R2_h = NA
+			else R2_h = mean(result$fit_cv$Huber_cv)
+			if (is.null(result$fit_cv)) R2_l1 = NA
+			else R2_l1 = mean(result$fit_cv$L1_cv)
+			if (classification){
+				if (is.null(result$fit_cv)) AUC = NA
+				else AUC = mean(result$fit_cv$AUC)
+			}
+
+			if (cross_validation & classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, R2_cv, R2_h, R2_l1, AUC)
+			else if (cross_validation & !classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, R2_cv,R2_h, R2_l1)
 			else results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC)
 		}
-		if (cross_validation & classification) colnames(results) = c("AIC","AICc","BIC","R2_cv","Huber_cv","L1_cv","AUC_cv")
-		else if (cross_validation & !classification) colnames(results) = c("AIC","AICc","BIC","R2_cv","Huber_cv","L1_cv")
+		if (cross_validation & classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1","cv_AUC")
+		else if (cross_validation & !classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1")
 		else colnames(results) = c("AIC","AICc","BIC")
 
 	}
-	out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambdapath=lambdapath)
+	out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambda_path=lambda_path)
 	class(out) = "elastic_net_var_select"
 	return(out)
 }
 
-IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
@@ -2081,6 +2152,8 @@ IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=
 		formula_step[[i]] = stats::as.formula(formula_step[[i]])
 	}
 
+	if (is.null(latent_var_searched)) latent_var_searched = c(1:k)
+
 	done = FALSE
 	for (j in 1:maxiter){
 		## Step a : fit main model
@@ -2107,13 +2180,21 @@ IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=
 					return(list(fit=NULL, glmnet_coef=unlist(weights_latent_var)))
 				}
 				else{
-					if (is.null(family_string)) fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=as.character(substitute(family)), alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE, standardize=FALSE)
-					else fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=family_string, alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE)
-					weights_latent_var_ = as.numeric(stats::coef(fit_[[i]])[-1]) # removing the 0 intercept
+
+					if (i %in% latent_var_searched){ #glmnet
+						if (is.null(family_string)) fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=as.character(substitute(family)), alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE, standardize=FALSE)
+						else fit_[[i]] = glmnet::glmnet(as.matrix(latent_var[[i]]), data[,formula_outcome], family=family_string, alpha=alpha, lambda=lambda, offset=data$R0_1, intercept=FALSE)
+						weights_latent_var_ = as.numeric(stats::coef(fit_[[i]])[-1]) # removing the 0 intercept
+					}
+					else{ #glm
+						fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
+						weights_latent_var_ = stats::coef(fit_[[i]])
+					}
 
 					# Updating latent_var estimates and checking convergence
 					weights_latent_var_old[[i]] = weights_latent_var[[i]]
-					weights_latent_var[[i]] = weights_latent_var_
+					if (i %in% latent_var_searched) weights_latent_var[[i]] = weights_latent_var_
+					else weights_latent_var[[i]] = weights_latent_var_/sum(abs(weights_latent_var_))
 					data[,names(latent_var)[i]] = latent_var[[i]]%*%weights_latent_var[[i]]
 					if(sqrt(sum((weights_latent_var_old[[i]]-weights_latent_var[[i]])^2)) < eps) conv_latent_var = conv_latent_var & TRUE
 					else conv_latent_var = FALSE
@@ -2147,6 +2228,35 @@ IMLEGIT_net = function(data, latent_var, formula, cross_validation=FALSE, alpha=
 	return(list(fit=result, glmnet_coef=unlist(weights_latent_var_backup), fit_cv=result_cv))
 }
 
+summary.elastic_net_var_select = function(object, ...){
+	# Only grab the index of the unique IMLEGIT models (we only care when a variable is dropped out)
+	n_var_zero_prev = -Inf
+	indexes_zero = c()
+
+	for (i in 1:length(object$lambda_path)){
+		n_var_zero = sum(ceiling(abs(object$glmnet_coef[[i]]))==0)
+		if (n_var_zero_prev != n_var_zero){
+			indexes_zero = c(indexes_zero, i)
+			if (i == 1) coef = ceiling(abs(object$glmnet_coef[[i]]))
+			else coef = rbind(coef,ceiling(abs(object$glmnet_coef[[i]])))
+		}
+		n_var_zero_prev = n_var_zero
+	}
+	results = cbind(object$lambda_path[indexes_zero], indexes_zero, object$results[indexes_zero,,drop=FALSE],coef)
+	colnames(results)[1] = "Lambda"
+	colnames(results)[2] = "Model index"
+	rownames(results) = NULL
+	return(results)
+}
+
+best_model <- function(x) UseMethod("best_model")
+
+best_model.elastic_net_var_select = function(object, criterion="AICc", ...){
+	print(paste0("Showing best model based on ", criterion))
+	i = which.min(object$results[,criterion])
+	return(list(results=object$results[i,], fit=object$fit[[i]], coef=ceiling(abs(object$glmnet_coef[[i]])), lambda=object$lambda_path[i], index = i))
+}
+
 plot.elastic_net_var_select = function(x, lwd=2, start=1, ...){
 	object = x
 	n = length(object$glmnet_coef)
@@ -2155,12 +2265,13 @@ plot.elastic_net_var_select = function(x, lwd=2, start=1, ...){
 	n_var = vector("list", k)
 	n_var_total = 0
 	for (i in 1:k){
+		if (is.null(object$fit[[length(object$glmnet_coef)]])) stop("No fit to plot. This must be because all your choices of lambda were extremely large.")
 		n_var[[i]] = length(coef(object$fit[[length(object$glmnet_coef)]]$fit_latent_var[[i]]))
 		lty_ = c(lty_, rep(i,n_var[[i]]))
 		n_var_total = n_var_total + n_var[[i]]
 	}
 	A = matrix(unlist(object$glmnet_coef), ncol = n_var_total, byrow = TRUE)
-	path = object$lambdapath[start:n]
+	path = object$lambda_path[start:n]
 	A = A[start:n,]
 
 	matplot(path,A,type="l", col=RColorBrewer::brewer.pal(n_var_total,"Paired"), xlab="log(lambda)", ylab="Coefficients", lty=lty_, lwd=lwd)
