@@ -421,6 +421,7 @@
 #' @param x An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
 #' @param lwd Thickness of the lines (Default = 2)
 #' @param start At which lambda to start (from large lambda to small lambda). If start is not 1, we remove some of the large lambda, this can make plot easier to visualize (Default = 1).
+#' @param ... Further arguments passed to or from other methods.
 #' @return Returns the plot of the coefficients of variables inside the latent variables with respect to the log(lambda).
 #' @examples
 #'	\dontrun{
@@ -461,6 +462,7 @@
 #' @title Summary function for the output of elastic_net_var_select
 #' @description Summary function for the output of elastic_net_var_select
 #' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
+#' @param ... Further arguments passed to or from other methods.
 #' @return Returns the unique IMLEGIT models resulting from the glmnet path with associated information. Also gives the cross-validation information if asked.
 #' @examples
 #'	\dontrun{
@@ -501,6 +503,7 @@
 #' @title Best model
 #' @description Best model
 #' @param object An object
+#' @param ... Further arguments passed to or from other methods.
 #' @return Best model
 #' @export
 "best_model"
@@ -509,6 +512,7 @@
 #' @description Best model from elastic net variable selection (based on selected criteria)
 #' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
 #' @param criterion Criteria used to determine which model is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv_R2"}, uses the cross-validation R-squared, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers. For all criterion, lower is better, with the exception of \code{search_criterion="cv_R2"} and \code{search_criterion="cv_AUC"}.
+#' @param ... Further arguments passed to or from other methods.
 #' @return Returns the best IMLEGIT model resulting from the glmnet path with associated information.
 #' @examples
 #'	\dontrun{
@@ -2310,7 +2314,7 @@ summary.elastic_net_var_select = function(object, ...){
 	return(results)
 }
 
-best_model <- function(x, ...) UseMethod("best_model")
+best_model <- function(object, ...) UseMethod("best_model")
 
 best_model.elastic_net_var_select = function(object, criterion, ...){
 	if (criterion == "cv_R2" | criterion=="cv_AUC") i = which.max(object$results[,criterion])

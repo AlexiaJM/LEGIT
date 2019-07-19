@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{object}{An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.}
+
+\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 Returns the unique IMLEGIT models resulting from the glmnet path with associated information. Also gives the cross-validation information if asked.

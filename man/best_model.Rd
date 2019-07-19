@@ -4,10 +4,12 @@
 \alias{best_model}
 \title{Best model}
 \usage{
-best_model(x, ...)
+best_model(object, ...)
 }
 \arguments{
 \item{object}{An object}
+
+\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 Best model

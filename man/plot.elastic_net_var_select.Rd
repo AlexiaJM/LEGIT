@@ -12,6 +12,8 @@
 \item{lwd}{Thickness of the lines (Default = 2)}
 
 \item{start}{At which lambda to start (from large lambda to small lambda). If start is not 1, we remove some of the large lambda, this can make plot easier to visualize (Default = 1).}
+
+\item{...}{Further arguments passed to or from other methods.}
 }
 \value{
 Returns the plot of the coefficients of variables inside the latent variables with respect to the log(lambda).
