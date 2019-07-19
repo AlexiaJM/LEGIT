@@ -373,11 +373,11 @@
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
 #'	# Elastic net only applied on E
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+#'	# Most E variables not removed, use lambda_mult > 1 to remove more
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
 #'	# Lasso (only L1 regularization)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
-#'	# Remove more variables than the default lambda path
-#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, lambda_mult=2)
-#'	# Want see more lambdas (useful if # of variables is large)
+#'	# Want more lambdas (useful if # of variables is large)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 #'	}
 #' @import formula.tools stats
@@ -433,13 +433,21 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit, criterion="BIC")
+#'	best_model(fit, criterion="BIC")
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-#'	summary(fit)
 #'	best_model(fit, criterion="cv_R2")
-#'	plot(fit)
+#'	# Elastic net only applied on G
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+#'	# Elastic net only applied on E
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+#'	# Most E variables not removed, use lambda_mult > 1 to remove more
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
+#'	# Lasso (only L1 regularization)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+#'	# Want more lambdas (useful if # of variables is large)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 #'	}
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
@@ -463,13 +471,21 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit, criterion="BIC")
+#'	best_model(fit, criterion="BIC")
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-#'	summary(fit)
 #'	best_model(fit, criterion="cv_R2")
-#'	plot(fit)
+#'	# Elastic net only applied on G
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+#'	# Elastic net only applied on E
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+#'	# Most E variables not removed, use lambda_mult > 1 to remove more
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
+#'	# Lasso (only L1 regularization)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+#'	# Want more lambdas (useful if # of variables is large)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 #'	}
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
@@ -501,13 +517,21 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit, criterion="BIC")
+#'	best_model(fit, criterion="BIC")
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-#'	summary(fit)
 #'	best_model(fit, criterion="cv_R2")
-#'	plot(fit)
+#'	# Elastic net only applied on G
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+#'	# Elastic net only applied on E
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+#'	# Most E variables not removed, use lambda_mult > 1 to remove more
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
+#'	# Lasso (only L1 regularization)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+#'	# Want more lambdas (useful if # of variables is large)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 #'	}
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
@@ -2060,7 +2084,6 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 
 IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
-	print(latent_var[[2]])
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
 	}
