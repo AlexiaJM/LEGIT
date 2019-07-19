@@ -458,6 +458,13 @@
 #' @export
 "summary.elastic_net_var_select"
 
+#' @title Best model
+#' @description Best model
+#' @param object An object
+#' @return Best model
+#' @export
+"best_model"
+
 #' @title Best model from elastic net variable selection
 #' @description Best model from elastic net variable selection (based on selected criteria)
 #' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
@@ -2237,8 +2244,8 @@ summary.elastic_net_var_select = function(object, ...){
 		n_var_zero = sum(ceiling(abs(object$glmnet_coef[[i]]))==0)
 		if (n_var_zero_prev != n_var_zero){
 			indexes_zero = c(indexes_zero, i)
-			if (i == 1) coef = ceiling(abs(object$glmnet_coef[[i]]))
-			else coef = rbind(coef,ceiling(abs(object$glmnet_coef[[i]])))
+			if (i == 1) coef = pmin(ceiling(abs(object$glmnet_coef[[i]])),1)
+			else coef = rbind(coef,pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
 		}
 		n_var_zero_prev = n_var_zero
 	}
@@ -2254,7 +2261,7 @@ best_model <- function(x, ...) UseMethod("best_model")
 best_model.elastic_net_var_select = function(object, criterion="AICc", ...){
 	print(paste0("Showing best model based on ", criterion))
 	i = which.min(object$results[,criterion])
-	return(list(results=object$results[i,], fit=object$fit[[i]], coef=ceiling(abs(object$glmnet_coef[[i]])), lambda=object$lambda_path[i], index = i))
+	return(list(results=object$results[i,], fit=object$fit[[i]], coef=pmin(ceiling(abs(object$glmnet_coef[[i]])),1), lambda=object$lambda_path[i], index = i))
 }
 
 plot.elastic_net_var_select = function(x, lwd=2, start=1, ...){
