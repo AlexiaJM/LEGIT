@@ -338,7 +338,7 @@
 #' @param lambda_path Optional vector of all lambda (penalty term for elastic net, see glmnet package manual). By default, we automatically determine it.
 #' @param lambda_mult scalar which multiplies the maximum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path determined automatically. Sometimes, the maximum lambda found automatically is too big or too small and you may not want to spend the effort to manually set your own lambda path. This is where this comes in, you can simply scale lambda max up or down. (Default = 1)
 #' @param lambda_min minimum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path. (Default = .0001)
-#' @param n_lambda Number of lambda (penalty term for elastic net, see glmnet package manual) in lambda path. Make lower for faster training, or higher for more precision.
+#' @param n_lambda Number of lambda (penalty term for elastic net, see glmnet package manual) in lambda path. Make lower for faster training, or higher for more precision. If you have many variables, make it bigger than 100 (Default = 100).
 #' @param start_latent_var Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).
 #' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
 #' @param maxiter Maximum number of iterations.
@@ -364,13 +364,21 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit)
+#'	best_model(fit, criterion="BIC")
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-#'	summary(fit)
-#'	best_model(fit)
-#'	plot(fit)
+#'	best_model(fit, criterion="cv_R2")
+#'	# Elastic net only applied on G
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+#'	# Elastic net only applied on E
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+#'	# Lasso (only L1 regularization)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+#'	# Remove more variables than the default lambda path
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, lambda_mult=2)
+#'	# Want see more lambdas (useful if # of variables is large)
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 #'	}
 #' @import formula.tools stats
 #' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
@@ -425,7 +433,12 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit)
+#'  best_model(fit, criterion="BIC")
+#'	plot(fit)
+#'	# With Cross-validation
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+#'	summary(fit)
+#'	best_model(fit, criterion="cv_R2")
 #'	plot(fit)
 #'	}
 #' @import formula.tools stats
@@ -450,7 +463,12 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit)
+#'  best_model(fit, criterion="BIC")
+#'	plot(fit)
+#'	# With Cross-validation
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+#'	summary(fit)
+#'	best_model(fit, criterion="cv_R2")
 #'	plot(fit)
 #'	}
 #' @import formula.tools stats
@@ -468,7 +486,7 @@
 #' @title Best model from elastic net variable selection
 #' @description Best model from elastic net variable selection (based on selected criteria)
 #' @param object An object of class "elastic_net_var_select", usually, a result of a call to elastic_net_var_select.
-#' @param criteria Criteria used to determine which model is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv_R2"}, uses the cross-validation error, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers, the lower the values the better.
+#' @param criterion Criteria used to determine which model is the best. If \code{search_criterion="AIC"}, uses the AIC, if \code{search_criterion="AICc"}, uses the AICc, if \code{search_criterion="BIC"}, uses the BIC, if \code{search_criterion="cv_R2"}, uses the cross-validation R-squared, if \cr \code{search_criterion="cv_AUC"}, uses the cross-validated AUC, if \code{search_criterion="cv_Huber"}, uses the Huber cross-validation error, if \code{search_criterion="cv_L1"}, uses the L1-norm cross-validation error (Default = "AIC"). The Huber and L1-norm cross-validation errors are alternatives to the usual cross-validation L2-norm error (which the \eqn{R^2} is based on) that are more resistant to outliers. For all criterion, lower is better, with the exception of \code{search_criterion="cv_R2"} and \code{search_criterion="cv_AUC"}.
 #' @return Returns the best IMLEGIT model resulting from the glmnet path with associated information.
 #' @examples
 #'	\dontrun{
@@ -483,7 +501,12 @@
 #'	lv = list(G=train$G, E=train$E)
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
-#'  best_model(fit)
+#'  best_model(fit, criterion="BIC")
+#'	plot(fit)
+#'	# With Cross-validation
+#'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+#'	summary(fit)
+#'	best_model(fit, criterion="cv_R2")
 #'	plot(fit)
 #'	}
 #' @import formula.tools stats
@@ -1991,15 +2014,18 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 		else results = matrix(NA,length(lambda_path),6)
 	}
 	else results = matrix(NA,length(lambda_path),3)
+	if (cross_validation & classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1","cv_AUC")
+	else if (cross_validation & !classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1")
+	else colnames(results) = c("AIC","AICc","BIC")
 	fit = vector("list", length(lambda_path))
 	glmnet_coef = vector("list", length(lambda_path))
 	n_var_zero_prev = -Inf
 	for (i in 1:length(lambda_path)){
 		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
-		
+
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
-		if (cross_validation & n_var_zero_prev != n_var_zero) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
 		n_var_zero_prev = n_var_zero
 
 		if (!is.null(result$fit)) fit[[i]] = result$fit
@@ -2008,28 +2034,24 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 			if (cross_validation & classification) results[i,] = rep(NA, 7)
 			else if (cross_validation & !classification) results[i,] = rep(NA, 6)
 			else results[i,] = rep(NA, 3)
-
 		}
 		else{
-			if (is.null(result$fit_cv)) R2_cv = NA
-			else R2_cv = mean(result$fit_cv$R2_cv)
-			if (is.null(result$fit_cv)) R2_h = NA
-			else R2_h = mean(result$fit_cv$Huber_cv)
-			if (is.null(result$fit_cv)) R2_l1 = NA
-			else R2_l1 = mean(result$fit_cv$L1_cv)
-			if (classification){
-				if (is.null(result$fit_cv)) AUC = NA
-				else AUC = mean(result$fit_cv$AUC)
+			if (cross_validation){
+				if (is.null(result$fit_cv)) R2_cv = results[max(i-1,1),"cv_R2"]
+				else R2_cv = mean(result$fit_cv$R2_cv)
+				if (is.null(result$fit_cv)) R2_h = results[max(i-1,1),"cv_Huber"]
+				else R2_h = mean(result$fit_cv$Huber_cv)
+				if (is.null(result$fit_cv)) R2_l1 = results[max(i-1,1),"cv_L1"]
+				else R2_l1 = mean(result$fit_cv$L1_cv)
+				if (classification){
+					if (is.null(result$fit_cv)) AUC = results[max(i-1,1),"cv_AUC"]
+					else AUC = mean(result$fit_cv$AUC)
+				}
 			}
-
 			if (cross_validation & classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, R2_cv, R2_h, R2_l1, AUC)
 			else if (cross_validation & !classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, R2_cv,R2_h, R2_l1)
 			else results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC)
 		}
-		if (cross_validation & classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1","cv_AUC")
-		else if (cross_validation & !classification) colnames(results) = c("AIC","AICc","BIC","cv_R2","cv_Huber","cv_L1")
-		else colnames(results) = c("AIC","AICc","BIC")
-
 	}
 	out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambda_path=lambda_path)
 	class(out) = "elastic_net_var_select"
@@ -2038,6 +2060,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 
 IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
+	print(latent_var[[2]])
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
 	}
@@ -2219,7 +2242,7 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	weights_latent_var_backup = weights_latent_var
 	for (i in 1:k){
 		names(weights_latent_var_backup[[i]]) = colnames(latent_var[[i]]) # backup names
-		latent_var[[i]] = latent_var[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0]] # Returns only the elements of each latent var which has weight non-zero
+		latent_var[[i]] = latent_var[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0],drop=FALSE] # Returns only the elements of each latent var which has weight non-zero
 		weights_latent_var[[i]] = weights_latent_var[[i]][weights_latent_var[[i]]!=0]
 	}
 	result = IMLEGIT(data=data, latent_var=latent_var, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
@@ -2244,7 +2267,7 @@ summary.elastic_net_var_select = function(object, ...){
 		n_var_zero = sum(ceiling(abs(object$glmnet_coef[[i]]))==0)
 		if (n_var_zero_prev != n_var_zero){
 			indexes_zero = c(indexes_zero, i)
-			if (i == 1) coef = pmin(ceiling(abs(object$glmnet_coef[[i]])),1)
+			if (i == 1) coef = rbind(pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
 			else coef = rbind(coef,pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
 		}
 		n_var_zero_prev = n_var_zero
@@ -2258,9 +2281,9 @@ summary.elastic_net_var_select = function(object, ...){
 
 best_model <- function(x, ...) UseMethod("best_model")
 
-best_model.elastic_net_var_select = function(object, criterion="AICc", ...){
-	print(paste0("Showing best model based on ", criterion))
-	i = which.min(object$results[,criterion])
+best_model.elastic_net_var_select = function(object, criterion, ...){
+	if (criterion == "cv_R2" | criterion=="cv_AUC") i = which.max(object$results[,criterion])
+	else i = which.min(object$results[,criterion])
 	return(list(results=object$results[i,], fit=object$fit[[i]], coef=pmin(ceiling(abs(object$glmnet_coef[[i]])),1), lambda=object$lambda_path[i], index = i))
 }
 

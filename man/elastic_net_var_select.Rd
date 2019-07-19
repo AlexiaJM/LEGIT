@@ -33,7 +33,7 @@ elastic_net_var_select(data, latent_var, formula,
 
 \item{lambda_min}{minimum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path. (Default = .0001)}
 
-\item{n_lambda}{Number of lambda (penalty term for elastic net, see glmnet package manual) in lambda path. Make lower for faster training, or higher for more precision.}
+\item{n_lambda}{Number of lambda (penalty term for elastic net, see glmnet package manual) in lambda path. Make lower for faster training, or higher for more precision. If you have many variables, make it bigger than 100 (Default = 100).}
 
 \item{start_latent_var}{Optional list of starting points for each latent variable (The list must have the same length as the number of latent variables and each element of the list must have the same length as the number of variables of the corresponding latent variable).}
 
@@ -76,13 +76,21 @@ train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 lv = list(G=train$G, E=train$E)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 summary(fit)
- best_model(fit)
+best_model(fit, criterion="BIC")
 plot(fit)
 # With Cross-validation
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-summary(fit)
-best_model(fit)
-plot(fit)
+best_model(fit, criterion="cv_R2")
+# Elastic net only applied on G
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+# Elastic net only applied on E
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+# Lasso (only L1 regularization)
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+# Remove more variables than the default lambda path
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, lambda_mult=2)
+# Want see more lambdas (useful if # of variables is large)
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 }
 }
 \references{

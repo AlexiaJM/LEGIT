@@ -32,7 +32,12 @@ train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 lv = list(G=train$G, E=train$E)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 summary(fit)
- best_model(fit)
+ best_model(fit, criterion="BIC")
+plot(fit)
+# With Cross-validation
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
+summary(fit)
+best_model(fit, criterion="cv_R2")
 plot(fit)
 }
 }
