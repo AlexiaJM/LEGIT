@@ -365,6 +365,8 @@
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
 #'	best_model(fit, criterion="BIC")
+#'  # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
+#   fit_mychoice = fit$fit[[17]]
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
@@ -434,6 +436,8 @@
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
 #'	best_model(fit, criterion="BIC")
+#'  # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
+#   fit_mychoice = fit$fit[[17]]
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
@@ -472,6 +476,8 @@
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
 #'	best_model(fit, criterion="BIC")
+#'  # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
+#   fit_mychoice = fit$fit[[17]]
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
@@ -518,6 +524,8 @@
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 #'	summary(fit)
 #'	best_model(fit, criterion="BIC")
+#'  # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
+#   fit_mychoice = fit$fit[[17]]
 #'	plot(fit)
 #'	# With Cross-validation
 #'	fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)

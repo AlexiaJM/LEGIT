@@ -77,6 +77,7 @@ lv = list(G=train$G, E=train$E)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 summary(fit)
 best_model(fit, criterion="BIC")
+ # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
 plot(fit)
 # With Cross-validation
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
@@ -85,11 +86,11 @@ best_model(fit, criterion="cv_R2")
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
 # Elastic net only applied on E
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+# Most E variables not removed, use lambda_mult > 1 to remove more
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
 # Lasso (only L1 regularization)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
-# Remove more variables than the default lambda path
-fit = elastic_net_var_select(train$data, lv, y ~ G*E, lambda_mult=2)
-# Want see more lambdas (useful if # of variables is large)
+# Want more lambdas (useful if # of variables is large)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 }
 }

@@ -28,13 +28,22 @@ train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
 lv = list(G=train$G, E=train$E)
 fit = elastic_net_var_select(train$data, lv, y ~ G*E)
 summary(fit)
- best_model(fit, criterion="BIC")
+best_model(fit, criterion="BIC")
+ # Instead of taking the best, if you want the model with "Model index"=17 from summary, do
 plot(fit)
 # With Cross-validation
 fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=1, cv_folds=5)
-summary(fit)
 best_model(fit, criterion="cv_R2")
-plot(fit)
+# Elastic net only applied on G
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+# Elastic net only applied on E
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+# Most E variables not removed, use lambda_mult > 1 to remove more
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
+# Lasso (only L1 regularization)
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, alpha=1)
+# Want more lambdas (useful if # of variables is large)
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
 }
 }
 \references{
