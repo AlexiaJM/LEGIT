@@ -326,6 +326,52 @@
 #' @export
 "IMLEGIT"
 
+#' @title LEGIT to IMLEGIT
+#' @description Transforms a LEGIT model into a IMLEGIT model (Useful if you want to do plot() or GxE_interaction_test() with a model resulting from a variable selection method which gave a IMLEGIT model)
+#' @param fit LEGIT model
+#' @param data data.frame of the dataset to be used. 
+#' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
+#' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
+#' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param print If FALSE, nothing except warnings will be printed (Default = TRUE).
+#' @return Returns an object of the class "IMLEGIT" which is list containing, in the following order: a glm fit of the main model, a list of the glm fits of the latent variables and a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly.
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	fit = LEGIT(train$data, train$G, train$E, y ~ G*E, train$coef_G, train$coef_E)
+#'	fit_IMLEGIT = LEGIT_to_IMLEGIT(fit,train$data, train$G, train$E, y ~ G*E)
+#'	fit_LEGIT = IMLEGIT_to_LEGIT(fit_IMLEGIT,train$data, train$G, train$E, y ~ G*E)
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"LEGIT_to_IMLEGIT"
+
+#' @title IMLEGIT to LEGIT
+#' @description Transforms a IMLEGIT model into a LEGIT model
+#' @param fit IMLEGIT model
+#' @param data data.frame of the dataset to be used. 
+#' @param genes data.frame of the variables inside the genetic score \emph{G} (can be any sort of variable, doesn't even have to be genetic).
+#' @param env data.frame of the variables inside the environmental score \emph{E} (can be any sort of variable, doesn't even have to be environmental).
+#' @param formula Model formula. Use \emph{E} for the environmental score and \emph{G} for the genetic score. Do not manually code interactions, write them in the formula instead (ex: G*E*z or G:E:z).
+#' @param eps Threshold for convergence (.01 for quick batch simulations, .0001 for accurate results).
+#' @param maxiter Maximum number of iterations.
+#' @param family Outcome distribution and link function (Default = gaussian).
+#' @param ylim Optional vector containing the known min and max of the outcome variable. Even if your outcome is known to be in [a,b], if you assume a Gaussian distribution, predict() could return values outside this range. This parameter ensures that this never happens. This is not necessary with a distribution that already assumes the proper range (ex: [0,1] with binomial distribution).
+#' @param print If FALSE, nothing except warnings will be printed (Default = TRUE).
+#' @return Returns an object of the class "LEGIT" which is list containing, in the following order: a glm fit of the main model, a glm fit of the genetic score, a glm fit of the environmental score, a list of the true model parameters (AIC, BIC, rank, df.residual, null.deviance) for which the individual model parts (main, genetic, environmental) don't estimate properly and the formula.
+#' @examples
+#'	train = example_2way(500, 1, seed=777)
+#'	fit = LEGIT(train$data, train$G, train$E, y ~ G*E, train$coef_G, train$coef_E)
+#'	fit_IMLEGIT = LEGIT_to_IMLEGIT(fit,train$data, train$G, train$E, y ~ G*E)
+#'	fit_LEGIT = IMLEGIT_to_LEGIT(fit_IMLEGIT,train$data, train$G, train$E, y ~ G*E)
+#' @import formula.tools stats
+#' @references Alexia Jolicoeur-Martineau, Ashley Wazana, Eszter Szekely, Meir Steiner, Alison S. Fleming, James L. Kennedy, Michael J. Meaney, Celia M.T. Greenwood and the MAVAN team. \emph{Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study} (2017). arXiv:1703.08111.
+#' @export
+"IMLEGIT_to_LEGIT"
+
 #' @title Elastic net for variable selection in IMLEGIT model
 #' @description [Fast and accurate, highly recommended] Apply Elastic Net (from the glmnet package) with IMLEGIT to obtain the order of variable removal that makes the most sense. The output shows the information criterion at every step, so you can decide which variable to retain. It is significantly faster (seconds/minutes instead of hours) than all other variable selection approaches (except for stepwise) and it is very accurate. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only output the IMLEGIT models without elastic net penalization.
 #' @param data data.frame of the dataset to be used. 
@@ -1126,13 +1172,13 @@ longitudinal_folds = function(cv_iter=1, cv_folds=10, id, formula=NULL, data=NUL
 	folds = vector("list", cv_iter)
 	for (i in 1:cv_iter){
 		s = sample(sort(unique(id)))
-	 	id_new = cut(1:length(s),breaks=cv_folds,labels=FALSE)
-	 	folds[[i]] = rep(NA, length(id))
-	 	for (j in 1:cv_folds){
-	 		folds[[i]][id %in% s[id_new==j]] = j
-	 	}
+		id_new = cut(1:length(s),breaks=cv_folds,labels=FALSE)
+		folds[[i]] = rep(NA, length(id))
+		for (j in 1:cv_folds){
+			folds[[i]][id %in% s[id_new==j]] = j
+		}
 	}
- 	return(folds)
+	return(folds)
 }
 
 LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE, print_steps=FALSE, crossover = NULL, crossover_fixed = FALSE, reverse_code=FALSE, rescale=FALSE)
@@ -1655,9 +1701,9 @@ GxE_interaction_RoS = function(data, genes, env, formula_noGxE, t_alpha = .05, s
 	b1_var = vcov(fit)["G","G"]
 	b3_var = vcov(fit)["G:E","G:E"]
 	b1_b3_cov = vcov(fit)["G","G:E"]
-  	t_crit = qt(t_alpha/2, fit$df.residual, lower.tail = FALSE)
+	t_crit = qt(t_alpha/2, fit$df.residual, lower.tail = FALSE)
 
-  	a = (t_crit^2)*b3_var - (b3^2)
+	a = (t_crit^2)*b3_var - (b3^2)
 	b = 2*((t_crit^2)*b1_b3_cov - b1*b3)
 	c = (t_crit^2)*b1_var - (b1^2)	
 	if ((b^2) - 4*a*c < 0) return(list(RoS=c(NA,NA), int_type="Undetermined"))
@@ -1744,6 +1790,16 @@ plot.LEGIT = function(x, cov_values = NULL, gene_quant = c(.025,.50,.975), env_q
 	}
 	if (is.null(leglab)) leglab = paste0(gene_quant*100,"%")
 	legend(legend, legend=leglab,col = cols, lty=1, lwd=3, xpd = TRUE, cex = cex.leg, title=legtitle)
+}
+
+IMLEGIT_to_LEGIT = function(fit, data, genes, env, formula, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE){
+	fit = LEGIT(data = data, formula = formula, genes = genes[,names(coef(fit$fit_latent_var$G)),drop=FALSE], env = env[,names(coef(fit$fit_latent_var$E)),drop=FALSE], start_genes = coef(fit$fit_latent_var$G), start_env = coef(fit$fit_latent_var$E), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
+	return(fit)
+}
+
+LEGIT_to_IMLEGIT = function(fit, data, genes, env, formula, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE){
+	fit = IMLEGIT(data = data, formula = formula, latent_var = list(G = genes[,names(coef(fit$fit_genes)),drop=FALSE], E = env[,names(coef(fit$fit_env)),drop=FALSE]), start_latent_var = list(coef(fit$fit_genes),coef(fit$fit_env)), eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
+	return(fit)
 }
 
 IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, print=TRUE)
@@ -1958,6 +2014,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 
 elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.75, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
 {
+
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
 	}
@@ -2061,7 +2118,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
-		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, classification = classification, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
 		n_var_zero_prev = n_var_zero
 
 		if (!is.null(result$fit)) fit[[i]] = result$fit
@@ -2304,6 +2361,7 @@ summary.elastic_net_var_select = function(object, ...){
 			indexes_zero = c(indexes_zero, i)
 			if (i == 1) coef = rbind(pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
 			else coef = rbind(coef,pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
+			colnames(coef) = names(pmin(ceiling(abs(object$glmnet_coef[[i]])),1))
 		}
 		n_var_zero_prev = n_var_zero
 	}
@@ -2386,73 +2444,73 @@ summary.LEGIT = function(object, ...){
 		object_current$rank = object$true_model_parameters$rank
 		object_current$df.residual = object$true_model_parameters$df.residual
 		object_current$null.deviance = object$true_model_parameters$null.deviance
-	    est.disp <- FALSE
-	    df.r <- object_current$df.residual
-	    if (is.null(dispersion)) 
-	        dispersion <- if (object_current$family$family %in% c("poisson", "binomial")) 1
-	        else if (df.r > 0) {
-	            est.disp <- TRUE
-	            if (any(object_current$weights == 0)) 
-	                warning("observations with zero weight not used for calculating dispersion")
-	            sum((object_current$weights * object_current$residuals^2)[object_current$weights > 
-	                0])/df.r
-	        }
-	        else {
-	            est.disp <- TRUE
-	            NaN
-	        }
-	    aliased <- is.na(stats::coef(object_current))
-	    p <- object_current$qr$rank
-	    if (p > 0) {
-	        p1 <- 1L:p
-	        coef.p <- object_current$coefficients[object_current$qr$pivot[p1]]
-	        covmat.unscaled <- chol2inv(object_current$qr$qr)
-	        dimnames(covmat.unscaled) <- list(names(coef.p), names(coef.p))
-	        covmat <- dispersion * covmat.unscaled
-	        var.cf <- diag(covmat)
-	        s.err <- sqrt(var.cf)
-	        tvalue <- coef.p/s.err
-	        dn <- c("Estimate", "Std. Error")
-	        if (!est.disp) {
-	            pvalue <- 2 * pnorm(-abs(tvalue))
-	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "z value", "Pr(>|z|)"))
-	        }
-	        else if (df.r > 0) {
-	            pvalue <- 2 * stats::pt(-abs(tvalue), df.r)
-	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "t value", "Pr(>|t|)"))
-	        }
-	        else {
-	            coef.table <- cbind(coef.p, NaN, NaN, NaN)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "t value", "Pr(>|t|)"))
-	        }
-	        df.f <- NCOL(object_current$qr$qr)
-	    }
-	    else {
-	        coef.table <- matrix(, 0L, 4L)
-	        dimnames(coef.table) <- list(NULL, c("Estimate", "Std. Error", 
-	            "t value", "Pr(>|t|)"))
-	        covmat.unscaled <- covmat <- matrix(, 0L, 0L)
-	        df.f <- length(aliased)
-	    }
-	    keep <- match(c("call", "terms", "family", "deviance", "aic", 
-	        "contrasts", "df.residual", "null.deviance", "df.null", 
-	        "iter", "na.action"), names(object_current), 0L)
-	    ans <- c(object_current[keep], list(deviance.resid = stats::residuals(object_current, 
-	        type = "deviance"), coefficients = coef.table, aliased = aliased, 
-	        dispersion = dispersion, df = c(object_current$rank, df.r, df.f), 
-	        cov.unscaled = covmat.unscaled, cov.scaled = covmat))
-	    if (correlation && p > 0) {
-	        dd <- sqrt(diag(covmat.unscaled))
-	        ans$correlation <- covmat.unscaled/outer(dd, dd)
-	        ans$symbolic.cor <- symbolic.cor
-	    }
-	    class(ans) <- "summary.glm"
-	    return(ans)
+		est.disp <- FALSE
+		df.r <- object_current$df.residual
+		if (is.null(dispersion)) 
+			dispersion <- if (object_current$family$family %in% c("poisson", "binomial")) 1
+			else if (df.r > 0) {
+				est.disp <- TRUE
+				if (any(object_current$weights == 0)) 
+					warning("observations with zero weight not used for calculating dispersion")
+				sum((object_current$weights * object_current$residuals^2)[object_current$weights > 
+					0])/df.r
+			}
+			else {
+				est.disp <- TRUE
+				NaN
+			}
+		aliased <- is.na(stats::coef(object_current))
+		p <- object_current$qr$rank
+		if (p > 0) {
+			p1 <- 1L:p
+			coef.p <- object_current$coefficients[object_current$qr$pivot[p1]]
+			covmat.unscaled <- chol2inv(object_current$qr$qr)
+			dimnames(covmat.unscaled) <- list(names(coef.p), names(coef.p))
+			covmat <- dispersion * covmat.unscaled
+			var.cf <- diag(covmat)
+			s.err <- sqrt(var.cf)
+			tvalue <- coef.p/s.err
+			dn <- c("Estimate", "Std. Error")
+			if (!est.disp) {
+				pvalue <- 2 * pnorm(-abs(tvalue))
+				coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"z value", "Pr(>|z|)"))
+			}
+			else if (df.r > 0) {
+				pvalue <- 2 * stats::pt(-abs(tvalue), df.r)
+				coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"t value", "Pr(>|t|)"))
+			}
+			else {
+				coef.table <- cbind(coef.p, NaN, NaN, NaN)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"t value", "Pr(>|t|)"))
+			}
+			df.f <- NCOL(object_current$qr$qr)
+		}
+		else {
+			coef.table <- matrix(, 0L, 4L)
+			dimnames(coef.table) <- list(NULL, c("Estimate", "Std. Error", 
+				"t value", "Pr(>|t|)"))
+			covmat.unscaled <- covmat <- matrix(, 0L, 0L)
+			df.f <- length(aliased)
+		}
+		keep <- match(c("call", "terms", "family", "deviance", "aic", 
+			"contrasts", "df.residual", "null.deviance", "df.null", 
+			"iter", "na.action"), names(object_current), 0L)
+		ans <- c(object_current[keep], list(deviance.resid = stats::residuals(object_current, 
+			type = "deviance"), coefficients = coef.table, aliased = aliased, 
+			dispersion = dispersion, df = c(object_current$rank, df.r, df.f), 
+			cov.unscaled = covmat.unscaled, cov.scaled = covmat))
+		if (correlation && p > 0) {
+			dd <- sqrt(diag(covmat.unscaled))
+			ans$correlation <- covmat.unscaled/outer(dd, dd)
+			ans$symbolic.cor <- symbolic.cor
+		}
+		class(ans) <- "summary.glm"
+		return(ans)
 	})
 }
 
@@ -2466,73 +2524,73 @@ summary.IMLEGIT = function(object, ...){
 		object_current$rank = object$true_model_parameters$rank
 		object_current$df.residual = object$true_model_parameters$df.residual
 		object_current$null.deviance = object$true_model_parameters$null.deviance
-	    est.disp <- FALSE
-	    df.r <- object_current$df.residual
-	    if (is.null(dispersion)) 
-	        dispersion <- if (object_current$family$family %in% c("poisson", "binomial")) 1
-	        else if (df.r > 0) {
-	            est.disp <- TRUE
-	            if (any(object_current$weights == 0)) 
-	                warning("observations with zero weight not used for calculating dispersion")
-	            sum((object_current$weights * object_current$residuals^2)[object_current$weights > 
-	                0])/df.r
-	        }
-	        else {
-	            est.disp <- TRUE
-	            NaN
-	        }
-	    aliased <- is.na(stats::coef(object_current))
-	    p <- object_current$qr$rank
-	    if (p > 0) {
-	        p1 <- 1L:p
-	        coef.p <- object_current$coefficients[object_current$qr$pivot[p1]]
-	        covmat.unscaled <- chol2inv(object_current$qr$qr)
-	        dimnames(covmat.unscaled) <- list(names(coef.p), names(coef.p))
-	        covmat <- dispersion * covmat.unscaled
-	        var.cf <- diag(covmat)
-	        s.err <- sqrt(var.cf)
-	        tvalue <- coef.p/s.err
-	        dn <- c("Estimate", "Std. Error")
-	        if (!est.disp) {
-	            pvalue <- 2 * pnorm(-abs(tvalue))
-	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "z value", "Pr(>|z|)"))
-	        }
-	        else if (df.r > 0) {
-	            pvalue <- 2 * stats::pt(-abs(tvalue), df.r)
-	            coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "t value", "Pr(>|t|)"))
-	        }
-	        else {
-	            coef.table <- cbind(coef.p, NaN, NaN, NaN)
-	            dimnames(coef.table) <- list(names(coef.p), c(dn, 
-	                "t value", "Pr(>|t|)"))
-	        }
-	        df.f <- NCOL(object_current$qr$qr)
-	    }
-	    else {
-	        coef.table <- matrix(, 0L, 4L)
-	        dimnames(coef.table) <- list(NULL, c("Estimate", "Std. Error", 
-	            "t value", "Pr(>|t|)"))
-	        covmat.unscaled <- covmat <- matrix(, 0L, 0L)
-	        df.f <- length(aliased)
-	    }
-	    keep <- match(c("call", "terms", "family", "deviance", "aic", 
-	        "contrasts", "df.residual", "null.deviance", "df.null", 
-	        "iter", "na.action"), names(object_current), 0L)
-	    ans <- c(object_current[keep], list(deviance.resid = stats::residuals(object_current, 
-	        type = "deviance"), coefficients = coef.table, aliased = aliased, 
-	        dispersion = dispersion, df = c(object_current$rank, df.r, df.f), 
-	        cov.unscaled = covmat.unscaled, cov.scaled = covmat))
-	    if (correlation && p > 0) {
-	        dd <- sqrt(diag(covmat.unscaled))
-	        ans$correlation <- covmat.unscaled/outer(dd, dd)
-	        ans$symbolic.cor <- symbolic.cor
-	    }
-	    class(ans) <- "summary.glm"
-	    return(ans)
+		est.disp <- FALSE
+		df.r <- object_current$df.residual
+		if (is.null(dispersion)) 
+			dispersion <- if (object_current$family$family %in% c("poisson", "binomial")) 1
+			else if (df.r > 0) {
+				est.disp <- TRUE
+				if (any(object_current$weights == 0)) 
+					warning("observations with zero weight not used for calculating dispersion")
+				sum((object_current$weights * object_current$residuals^2)[object_current$weights > 
+					0])/df.r
+			}
+			else {
+				est.disp <- TRUE
+				NaN
+			}
+		aliased <- is.na(stats::coef(object_current))
+		p <- object_current$qr$rank
+		if (p > 0) {
+			p1 <- 1L:p
+			coef.p <- object_current$coefficients[object_current$qr$pivot[p1]]
+			covmat.unscaled <- chol2inv(object_current$qr$qr)
+			dimnames(covmat.unscaled) <- list(names(coef.p), names(coef.p))
+			covmat <- dispersion * covmat.unscaled
+			var.cf <- diag(covmat)
+			s.err <- sqrt(var.cf)
+			tvalue <- coef.p/s.err
+			dn <- c("Estimate", "Std. Error")
+			if (!est.disp) {
+				pvalue <- 2 * pnorm(-abs(tvalue))
+				coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"z value", "Pr(>|z|)"))
+			}
+			else if (df.r > 0) {
+				pvalue <- 2 * stats::pt(-abs(tvalue), df.r)
+				coef.table <- cbind(coef.p, s.err, tvalue, pvalue)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"t value", "Pr(>|t|)"))
+			}
+			else {
+				coef.table <- cbind(coef.p, NaN, NaN, NaN)
+				dimnames(coef.table) <- list(names(coef.p), c(dn, 
+					"t value", "Pr(>|t|)"))
+			}
+			df.f <- NCOL(object_current$qr$qr)
+		}
+		else {
+			coef.table <- matrix(, 0L, 4L)
+			dimnames(coef.table) <- list(NULL, c("Estimate", "Std. Error", 
+				"t value", "Pr(>|t|)"))
+			covmat.unscaled <- covmat <- matrix(, 0L, 0L)
+			df.f <- length(aliased)
+		}
+		keep <- match(c("call", "terms", "family", "deviance", "aic", 
+			"contrasts", "df.residual", "null.deviance", "df.null", 
+			"iter", "na.action"), names(object_current), 0L)
+		ans <- c(object_current[keep], list(deviance.resid = stats::residuals(object_current, 
+			type = "deviance"), coefficients = coef.table, aliased = aliased, 
+			dispersion = dispersion, df = c(object_current$rank, df.r, df.f), 
+			cov.unscaled = covmat.unscaled, cov.scaled = covmat))
+		if (correlation && p > 0) {
+			dd <- sqrt(diag(covmat.unscaled))
+			ans$correlation <- covmat.unscaled/outer(dd, dd)
+			ans$symbolic.cor <- symbolic.cor
+		}
+		class(ans) <- "summary.glm"
+		return(ans)
 	})
 }
 
@@ -2616,14 +2674,14 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 			# Train and test datasets
 			data_train = subset(data_n, id != i, drop = FALSE)
 			genes_train = subset(genes_n, id != i, drop = FALSE)
-	 		env_train = subset(env_n, id != i, drop = FALSE)
-	 		data_test = subset(data_n, id == i, drop = FALSE)
-	 		genes_test = subset(genes_n, id == i, drop = FALSE)
-	 		env_test = subset(env_n, id == i, drop = FALSE)
-	 		y_test_new = data_test[,formula_outcome]
+			env_train = subset(env_n, id != i, drop = FALSE)
+			data_test = subset(data_n, id == i, drop = FALSE)
+			genes_test = subset(genes_n, id == i, drop = FALSE)
+			env_test = subset(env_n, id == i, drop = FALSE)
+			y_test_new = data_test[,formula_outcome]
 
-	 		# Fit model and add predictions
-	 		fit_train = LEGIT(data=data_train, genes=genes_train, env=env_train, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover, crossover_fixed = crossover_fixed)
+			# Fit model and add predictions
+			fit_train = LEGIT(data=data_train, genes=genes_train, env=env_train, formula=formula, start_genes=start_genes, start_env=start_env, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE, crossover = crossover, crossover_fixed = crossover_fixed)
 			pred_new = predict(fit_train, data=data_test,genes=genes_test,env=env_test,type="response", crossover = crossover, crossover_fixed = crossover_fixed)
 			pred = c(pred,pred_new)
 			y_test = c(y_test, y_test_new)
@@ -2677,6 +2735,7 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 }
 
 IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, id=NULL){
+
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
 	}
@@ -2772,13 +2831,13 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 			data_train = subset(data_n, id != i, drop = FALSE)
 			latent_var_train = latent_var_new
 			for (l in 1:k) latent_var_train[[l]] = subset(latent_var_new[[l]], id != i, drop = FALSE)
-	 		data_test = subset(data_n, id == i, drop = FALSE)
-	 		latent_var_test = latent_var_new
-	 		for (l in 1:k) latent_var_test[[l]] = subset(latent_var_new[[l]], id == i, drop = FALSE)
-	 		y_test_new = data_test[,formula_outcome]
+			data_test = subset(data_n, id == i, drop = FALSE)
+			latent_var_test = latent_var_new
+			for (l in 1:k) latent_var_test[[l]] = subset(latent_var_new[[l]], id == i, drop = FALSE)
+			y_test_new = data_test[,formula_outcome]
 
-	 		# Fit model and add predictions
-	 		fit_train = IMLEGIT(data=data_train, latent_var=latent_var_train, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
+			# Fit model and add predictions
+			fit_train = IMLEGIT(data=data_train, latent_var=latent_var_train, formula=formula, start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=FALSE)
 			pred_new = predict(fit_train, data=data_test,latent_var=latent_var_test,type="response")
 			pred = c(pred,pred_new)
 			y_test = c(y_test, y_test_new)
@@ -2797,10 +2856,10 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 
 		#Cross-validated confusion matrix and ROC curve
 		if (classification){
-			roc_curve_n = pROC::roc(y_test,pred)
+			roc_curve_n = pROC::roc(y_test,pred, quiet=TRUE)
 			roc_curve = append(roc_curve, list(roc_curve_n))
 			AUC = c(AUC, pROC::auc(roc_curve_n))
-			best_threshold =  rbind(pROC::coords(roc_curve_n, "best"),best_threshold)
+			best_threshold =  rbind(pROC::coords(roc_curve_n, "best", transpose = FALSE),best_threshold)
 		}
 
 		#Residuals (To detect outliers)
@@ -2832,6 +2891,9 @@ IMLEGIT_cv = function (data, latent_var, formula, cv_iter=5, cv_folds=10, folds=
 }
 
 forward_step = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_toadd=NULL, env_toadd=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_toadd)
 	if (search=="env") elements_N = NCOL(env_toadd)
@@ -3090,6 +3152,9 @@ forward_step = function(empty_start_dataset, fit, data, formula, interactive_mod
 }
 
 forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_toadd=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = length(latent_var_current)
 	# How much genes or env to add
 	elements_N = NCOL(latent_var_toadd[[search]])
@@ -3333,6 +3398,9 @@ forward_step_IM = function(empty_start_dataset, fit, data, formula, interactive_
 
 
 backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_current=NULL, env_current=NULL, genes_dropped=NULL, env_dropped=NULL, search="genes", search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	# How much genes or env to add
 	if (search=="genes") elements_N = NCOL(genes_current)
 	if (search=="env") elements_N = NCOL(env_current)
@@ -3555,6 +3623,9 @@ backward_step = function(fit, data, formula, interactive_mode=FALSE, genes_curre
 }
 
 backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_var_current=NULL, latent_var_dropped=NULL, search=NULL, search_criterion="AIC", p_threshold = .20, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=start_latent_var, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = length(latent_var_current)
 	# How much genes or env to add
 	elements_N = NCOL(latent_var_current[[search]])
@@ -3767,6 +3838,9 @@ backward_step_IM = function(fit, data, formula, interactive_mode=FALSE, latent_v
 
 
 stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original=NULL, env_original=NULL, genes_extra=NULL, env_extra=NULL, search_type="bidirectional-forward", search="both", search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_genes=NULL, start_env=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE, remove_miss=FALSE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
 	if (search_criterion=="AIC") string_choice="lowest AIC"
@@ -4177,6 +4251,9 @@ stepwise_search = function(data, formula, interactive_mode=FALSE, genes_original
 
 
 stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, print=TRUE, remove_miss=FALSE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = max(length(latent_var_original),length(latent_var_extra))
 	if (forward_exclude_p_bigger > 1 || forward_exclude_p_bigger <= 0) stop("forward_exclude_p_bigger must be between 0 and 1 (Set to 1 to ignore p-values in forward step)")
 	if (backward_exclude_p_smaller >= 1 || backward_exclude_p_smaller < 0) stop("backward_exclude_p_smaller must be between 0 and 1 (Set to 0 to ignore p-values in backward step)")
@@ -4508,6 +4585,9 @@ stepwise_search_IM = function(data, formula, interactive_mode=FALSE, latent_var_
 
 
 bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, boot_group=NULL, latent_var_original=NULL, latent_var_extra=NULL, search_type="bidirectional-forward", search=0, search_criterion="AIC", forward_exclude_p_bigger = .20, backward_exclude_p_smaller = .01, exclude_worse_AIC=TRUE, max_steps = 100, start_latent_var=NULL, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = max(length(latent_var_original),length(latent_var_extra))
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -4648,6 +4728,9 @@ bootstrap_var_select = function(data, formula, boot_iter=1000, boot_size=NULL, b
 
 
 genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold=.10, popsize=25, mutation_prob=.50, first_pop=NULL, latent_var=NULL, search_criterion="AIC", maxgen = 100, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, n_cluster = 1, best_subsets=5, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = length(latent_var)
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -4859,6 +4942,9 @@ genetic_var_select = function(data, formula, parallel_iter=10, entropy_threshold
 }
 
 nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), entropy_threshold=.05, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=FALSE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = length(latent_var)
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
@@ -5034,6 +5120,9 @@ nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), entro
 }
 
 r1nes_var_select = function(data, formula, parallel_iter=3, alpha=c(1,5,10), entropy_threshold=.05, popsize=25, lr = .2, prop_ignored=.50, latent_var=NULL, search_criterion="AICc", n_cluster=3, eps=.01, maxiter=100, family=gaussian, ylim=NULL, seed=NULL, progress=TRUE, cv_iter=5, cv_folds=5, folds=NULL, Huber_p=1.345, classification=FALSE, print=FALSE){
+	
+	if (search_criterion == "cv_AUC") classification = TRUE
+
 	k = length(latent_var)
 	## Removing missing data and checks
 	# Retaining only the needed variables from the dataset (need to set G and E variables for this to work, they will be replaced with their proper values later)
