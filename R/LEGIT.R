@@ -2700,10 +2700,10 @@ LEGIT_cv = function (data, genes, env, formula, cv_iter=5, cv_folds=10, folds=NU
 
 		#Cross-validated confusion matrix and ROC curve
 		if (classification){
-			roc_curve_n = pROC::roc(y_test,pred)
+			roc_curve_n = pROC::roc(y_test,pred, quiet=TRUE)
 			roc_curve = append(roc_curve, list(roc_curve_n))
 			AUC = c(AUC, pROC::auc(roc_curve_n))
-			best_threshold =  rbind(pROC::coords(roc_curve_n, "best"),best_threshold)
+			best_threshold =  rbind(pROC::coords(roc_curve_n, "best",transpose=TRUE),best_threshold)
 		}
 
 		#Residuals (To detect outliers)
