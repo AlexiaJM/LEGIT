@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alexia Jolicoeur-Martineau" />
+
+<meta name="date" content="2019-08-29" />
+
+<title>Elastic Net</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Elastic Net</h1>
+<h4 class="author">Alexia Jolicoeur-Martineau</h4>
+<h4 class="date">2019-08-29</h4>
+
+
+
+<p><strong>Note that you can cite this work as: </strong></p>
+<p><em>Jolicoeur-Martineau, A., Wazana, A., Szekely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., Meaney M. J. &amp; Greenwood, C.M. (2017). Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study. arXiv preprint arXiv:1703.08111.</em></p>
+<p><em>Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K. F., Pluess, M., Greenwood, C., &amp; Wazana, A. (2017). Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model. arXiv preprint arXiv:1712.04058.</em></p>
+<div id="elastic-net" class="section level2">
+<h2>Elastic Net</h2>
+<p>From version 1.3.0 of the LEGIT package, we introduce a function to do variable selection with elastic net within the alternating optimization framework of LEGIT. Elastic net is a regression model with a penalty term (<span class="math inline">\(\lambda\)</span>) which penalize parameters so that they don’t become too big. As <span class="math inline">\(\lambda\)</span> becomes bigger, certain parameters become zero which means that their corresponding variables are dropped from the model. The order in which variables are removed from the model can be interpreted as the reversed order of variable importance. Variables that are less important are removed early (when <span class="math inline">\(\lambda\)</span> is small) and variables that are more important are removed later (only when <span class="math inline">\(\lambda\)</span> is large). Please research “lasso” and “elastic net” if you are interested in the details of this method.</p>
+<p>In this package, we implement Elastic Net for use <strong>on the exogenous variables inside the latent variables</strong> (e.g., in a LEGIT model, these are the genetic variants inside <span class="math inline">\(G\)</span> and the environmental variables inside <span class="math inline">\(E\)</span>). We also give the option to only apply Elastic Net on certain latent variables (e.g., only searching for genes in <span class="math inline">\(G\)</span>).</p>
+<p>Elastic Net gives us two main benefits:</p>
+<ol style="list-style-type: decimal">
+<li>the order of importance of each variable</li>
+<li>Given a criterion (AIC, BIC, cross-validation <span class="math inline">\(R^2\)</span>), it can be used to automatically chose the best model very quickly (only comparing <span class="math inline">\(p\)</span> models, where <span class="math inline">\(p\)</span> is the number of variables, as opposed to <span class="math inline">\(2^p\)</span> models).</li>
+</ol>
+<p>It is very fast and it works much better than other approaches; we highly recommend using it. With Elastic Net, the task of choosing the genes and environments of a LEGIT model can be fully automatized.</p>
+</div>
+<div id="example" class="section level2">
+<h2>Example</h2>
+<p>Let’s take a quick look at a two-way example with continuous outcome:</p>
+<p><span class="math display">\[\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4\]</span> <span class="math display">\[\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3\]</span> <span class="math display">\[\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 \]</span> <span class="math display">\[ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3\]</span> <span class="math display">\[y = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} + \epsilon \]</span> where <span class="math inline">\(\epsilon \sim Normal(0,.5)\)</span>.</p>
+<p>This is a standard GxE model.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">set.seed</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="kw">library</span>(LEGIT)</a></code></pre></div>
+<pre><code>## Loading required package: formula.tools</code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">N =<span class="st"> </span><span class="dv">500</span></a>
+<a class="sourceLine" id="cb3-2" title="2">train =<span class="st"> </span><span class="kw">example_2way</span>(N, <span class="dt">sigma=</span>.<span class="dv">5</span>, <span class="dt">logit=</span><span class="ot">FALSE</span>, <span class="dt">seed=</span><span class="dv">1</span>)</a></code></pre></div>
+<p>Now we will add 5 genes which are irrelevant. We expect Elastic Net to delete them first. However, note that <span class="math inline">\(\mathbf{g}_1\mathbf{g}_3\)</span> has a very small parameter (<span class="math inline">\(.05\)</span>) so it’s possible that it will be removed early. Let’s add the irrelevant genes and try it out.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">g1_bad =<span class="st"> </span><span class="kw">rbinom</span>(N,<span class="dv">1</span>,.<span class="dv">30</span>)</a>
+<a class="sourceLine" id="cb4-2" title="2">g2_bad =<span class="st"> </span><span class="kw">rbinom</span>(N,<span class="dv">1</span>,.<span class="dv">30</span>)</a>
+<a class="sourceLine" id="cb4-3" title="3">g3_bad =<span class="st"> </span><span class="kw">rbinom</span>(N,<span class="dv">1</span>,.<span class="dv">30</span>)</a>
+<a class="sourceLine" id="cb4-4" title="4">g4_bad =<span class="st"> </span><span class="kw">rbinom</span>(N,<span class="dv">1</span>,.<span class="dv">30</span>)</a>
+<a class="sourceLine" id="cb4-5" title="5">g5_bad =<span class="st"> </span><span class="kw">rbinom</span>(N,<span class="dv">1</span>,.<span class="dv">30</span>)</a>
+<a class="sourceLine" id="cb4-6" title="6">train<span class="op">$</span>G =<span class="st"> </span><span class="kw">cbind</span>(train<span class="op">$</span>G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)</a>
+<a class="sourceLine" id="cb4-7" title="7">lv =<span class="st"> </span><span class="kw">list</span>(<span class="dt">G=</span>train<span class="op">$</span>G, <span class="dt">E=</span>train<span class="op">$</span>E)</a>
+<a class="sourceLine" id="cb4-8" title="8"><span class="co"># Elastic Net</span></a>
+<a class="sourceLine" id="cb4-9" title="9">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E)</a>
+<a class="sourceLine" id="cb4-10" title="10"><span class="kw">summary</span>(fit)</a></code></pre></div>
+<pre><code>##            Lambda Model index       AIC      AICc       BIC g1 g2 g3 g4
+##  [1,] 0.684846307           1 1302.6229 1302.8505 1332.1252  1  0  0  0
+##  [2,] 0.568571435           3 1077.8936 1078.1869 1111.6105  1  0  1  0
+##  [3,] 0.357079432           8  991.7229  992.0903 1029.6544  1  0  1  1
+##  [4,] 0.296453617          10  799.7562  800.2061  841.9023  1  1  1  1
+##  [5,] 0.140839486          18  801.6849  802.2259  848.0456  1  1  1  1
+##  [6,] 0.116927415          20  762.6244  763.2650  813.1997  1  1  1  1
+##  [7,] 0.097075195          22  764.2622  765.0112  819.0521  1  1  1  1
+##  [8,] 0.088451302          23  766.2378  767.1038  825.2423  1  1  1  1
+##  [9,] 0.060966051          27  767.5665  768.5582  830.7856  1  1  1  1
+## [10,] 0.003105695          59  769.3589  770.4852  836.7927  1  1  1  1
+## [11,] 0.002578402          61  769.3213  770.5910  840.9696  1  1  1  1
+##       g1_g3 g2_g3 g1_bad g2_bad g3_bad g4_bad g5_bad e1 e2 e3
+##  [1,]     0     0      0      0      0      0      0  1  1  1
+##  [2,]     0     0      0      0      0      0      0  1  1  1
+##  [3,]     0     0      0      0      0      0      0  1  1  1
+##  [4,]     0     0      0      0      0      0      0  1  1  1
+##  [5,]     0     0      0      0      0      0      1  1  1  1
+##  [6,]     0     1      0      0      0      0      1  1  1  1
+##  [7,]     0     1      0      1      0      0      1  1  1  1
+##  [8,]     1     1      0      1      0      0      1  1  1  1
+##  [9,]     1     1      1      1      0      0      1  1  1  1
+## [10,]     1     1      1      1      1      0      1  1  1  1
+## [11,]     1     1      1      1      1      1      1  1  1  1</code></pre>
+<p>We see that the order of variable importance is almost correct with the exception of <span class="math inline">\(\mathbf{g}_1\mathbf{g}_3\)</span>. The model with the lowest BIC and AIC is the one without the irrelevant genes and <span class="math inline">\(\mathbf{g}_1\mathbf{g}_3\)</span>.</p>
+<p>Rather than looking in the summary, one can simply grab the best model using the function “best_model”.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">best_model</span>(fit, <span class="dt">criterion=</span><span class="st">&quot;BIC&quot;</span>)</a></code></pre></div>
+<pre><code>## $results
+##      AIC     AICc      BIC 
+## 762.6244 763.2650 813.1997 
+## 
+## $fit
+## $fit_main
+## 
+## Call:  stats::glm(formula = formula, family = family, data = data, model = FALSE, 
+##     y = FALSE)
+## 
+## Coefficients:
+## (Intercept)            G            E          G:E  
+##     -0.8848       0.7765       5.0907       2.5355  
+## 
+## Degrees of Freedom: 499 Total (i.e. Null);  496 Residual
+## Null Deviance:       5295 
+## Residual Deviance: 128.2     AIC: 748.6
+## 
+## $fit_latent_var
+## $fit_latent_var$G
+## 
+## Call:  stats::glm(formula = formula_step[[i]], family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Coefficients:
+##        g1         g2         g3         g4      g2_g3     g5_bad  
+##  0.223638   0.167358  -0.345294   0.130949   0.129199   0.003562  
+## 
+## Degrees of Freedom: 500 Total (i.e. Null);  494 Residual
+## Null Deviance:       493.2 
+## Residual Deviance: 128.2     AIC: 752.6
+## 
+## $fit_latent_var$E
+## 
+## Call:  stats::glm(formula = formula_step[[i]], family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Coefficients:
+##      e1       e2       e3  
+## -0.4337   0.3651   0.2012  
+## 
+## Degrees of Freedom: 500 Total (i.e. Null);  497 Residual
+## Null Deviance:       5105 
+## Residual Deviance: 128.2     AIC: 746.6
+## 
+## 
+## $true_model_parameters
+## $true_model_parameters$AIC
+## [1] 762.6244
+## 
+## $true_model_parameters$AICc
+## [1] 763.265
+## 
+## $true_model_parameters$BIC
+## [1] 813.1997
+## 
+## $true_model_parameters$rank
+## [1] 11
+## 
+## $true_model_parameters$df.residual
+## [1] 489
+## 
+## $true_model_parameters$null.deviance
+## [1] 5295.306
+## 
+## 
+## attr(,&quot;class&quot;)
+## [1] &quot;IMLEGIT&quot;
+## 
+## $coef
+##     g1     g2     g3     g4  g1_g3  g2_g3 g1_bad g2_bad g3_bad g4_bad 
+##      1      1      1      1      0      1      0      0      0      0 
+## g5_bad     e1     e2     e3 
+##      1      1      1      1 
+## 
+## $lambda
+## [1] 0.1065399
+## 
+## $index
+## [1] 21</code></pre>
+<p>We can also plot the coefficients of the variables over different values of <span class="math inline">\(\lambda\)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw">plot</span>(fit)</a></code></pre></div>
+<pre><code>## Warning in RColorBrewer::brewer.pal(n_var_total, &quot;Paired&quot;): n too large, allowed maximum for palette Paired is 12
+## Returning the palette you asked for with that many colors
+
+## Warning in RColorBrewer::brewer.pal(n_var_total, &quot;Paired&quot;): n too large, allowed maximum for palette Paired is 12
+## Returning the palette you asked for with that many colors</code></pre>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>Now, we might want to look at the model with the highest cross-validation <span class="math inline">\(R^2\)</span> (or equivalently lowest cross-validation error). We can do this easily.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="dt">cross_validation=</span><span class="ot">TRUE</span>, <span class="dt">cv_iter=</span><span class="dv">5</span>, <span class="dt">cv_folds=</span><span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb10-2" title="2"><span class="kw">summary</span>(fit)</a></code></pre></div>
+<pre><code>##            Lambda Model index       AIC      AICc       BIC     cv_R2
+##  [1,] 0.684846307           1 1302.6229 1302.8505 1332.1252 0.9247714
+##  [2,] 0.568571435           3 1077.8936 1078.1869 1111.6105 0.9517290
+##  [3,] 0.357079432           8  991.7229  992.0903 1029.6544 0.9593556
+##  [4,] 0.296453617          10  799.7562  800.2061  841.9023 0.9725837
+##  [5,] 0.140839486          18  801.6849  802.2259  848.0456 0.9723918
+##  [6,] 0.116927415          20  762.6244  763.2650  813.1997 0.9745983
+##  [7,] 0.097075195          22  764.2622  765.0112  819.0521 0.9745322
+##  [8,] 0.088451302          23  766.2378  767.1038  825.2423 0.9744191
+##  [9,] 0.060966051          27  767.5665  768.5582  830.7856 0.9742493
+## [10,] 0.003105695          59  769.3589  770.4852  836.7927 0.9742365
+## [11,] 0.002578402          61  769.3213  770.5910  840.9696 0.9743340
+##        cv_Huber     cv_L1 g1 g2 g3 g4 g1_g3 g2_g3 g1_bad g2_bad g3_bad
+##  [1,] 0.3611200 0.6597858  1  0  0  0     0     0      0      0      0
+##  [2,] 0.2460008 0.5521173  1  0  1  0     0     0      0      0      0
+##  [3,] 0.2118323 0.5137225  1  0  1  1     0     0      0      0      0
+##  [4,] 0.1451204 0.4268961  1  1  1  1     0     0      0      0      0
+##  [5,] 0.1461010 0.4282841  1  1  1  1     0     0      0      0      0
+##  [6,] 0.1344683 0.4085758  1  1  1  1     0     1      0      0      0
+##  [7,] 0.1348191 0.4099835  1  1  1  1     0     1      0      1      0
+##  [8,] 0.1354044 0.4105897  1  1  1  1     1     1      0      1      0
+##  [9,] 0.1363103 0.4121100  1  1  1  1     1     1      1      1      0
+## [10,] 0.1363674 0.4125861  1  1  1  1     1     1      1      1      1
+## [11,] 0.1358586 0.4110778  1  1  1  1     1     1      1      1      1
+##       g4_bad g5_bad e1 e2 e3
+##  [1,]      0      0  1  1  1
+##  [2,]      0      0  1  1  1
+##  [3,]      0      0  1  1  1
+##  [4,]      0      0  1  1  1
+##  [5,]      0      1  1  1  1
+##  [6,]      0      1  1  1  1
+##  [7,]      0      1  1  1  1
+##  [8,]      0      1  1  1  1
+##  [9,]      0      1  1  1  1
+## [10,]      0      1  1  1  1
+## [11,]      1      1  1  1  1</code></pre>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw">best_model</span>(fit, <span class="dt">criterion=</span><span class="st">&quot;cv_R2&quot;</span>)</a></code></pre></div>
+<pre><code>## $results
+##         AIC        AICc         BIC       cv_R2    cv_Huber       cv_L1 
+## 762.6243569 763.2650140 813.1996541   0.9745983   0.1344683   0.4085758 
+## 
+## $fit
+## $fit_main
+## 
+## Call:  stats::glm(formula = formula, family = family, data = data, model = FALSE, 
+##     y = FALSE)
+## 
+## Coefficients:
+## (Intercept)            G            E          G:E  
+##     -0.8848       0.7765       5.0907       2.5355  
+## 
+## Degrees of Freedom: 499 Total (i.e. Null);  496 Residual
+## Null Deviance:       5295 
+## Residual Deviance: 128.2     AIC: 748.6
+## 
+## $fit_latent_var
+## $fit_latent_var$G
+## 
+## Call:  stats::glm(formula = formula_step[[i]], family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Coefficients:
+##        g1         g2         g3         g4      g2_g3     g5_bad  
+##  0.223638   0.167358  -0.345294   0.130949   0.129199   0.003562  
+## 
+## Degrees of Freedom: 500 Total (i.e. Null);  494 Residual
+## Null Deviance:       493.2 
+## Residual Deviance: 128.2     AIC: 752.6
+## 
+## $fit_latent_var$E
+## 
+## Call:  stats::glm(formula = formula_step[[i]], family = family, data = data, 
+##     model = FALSE, y = FALSE)
+## 
+## Coefficients:
+##      e1       e2       e3  
+## -0.4337   0.3651   0.2012  
+## 
+## Degrees of Freedom: 500 Total (i.e. Null);  497 Residual
+## Null Deviance:       5105 
+## Residual Deviance: 128.2     AIC: 746.6
+## 
+## 
+## $true_model_parameters
+## $true_model_parameters$AIC
+## [1] 762.6244
+## 
+## $true_model_parameters$AICc
+## [1] 763.265
+## 
+## $true_model_parameters$BIC
+## [1] 813.1997
+## 
+## $true_model_parameters$rank
+## [1] 11
+## 
+## $true_model_parameters$df.residual
+## [1] 489
+## 
+## $true_model_parameters$null.deviance
+## [1] 5295.306
+## 
+## 
+## attr(,&quot;class&quot;)
+## [1] &quot;IMLEGIT&quot;
+## 
+## $coef
+##     g1     g2     g3     g4  g1_g3  g2_g3 g1_bad g2_bad g3_bad g4_bad 
+##      1      1      1      1      0      1      0      0      0      0 
+## g5_bad     e1     e2     e3 
+##      1      1      1      1 
+## 
+## $lambda
+## [1] 0.1169274
+## 
+## $index
+## [1] 20</code></pre>
+<p>We see that there is little difference in cross-validation <span class="math inline">\(R^2\)</span> for most models, so in this case, it is not particularly meaningful.</p>
+<p>Let say that you do not want the model selected by “best_model”, but instead want the model with index 8 instead. You can simply do:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">fit_mychoice =<span class="st"> </span>fit<span class="op">$</span>fit[[<span class="dv">8</span>]]</a></code></pre></div>
+<p>Note that you can apply Elastic only on <span class="math inline">\(G\)</span> or <span class="math inline">\(E\)</span> if desired.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="co"># Elastic net only applied on G</span></a>
+<a class="sourceLine" id="cb15-2" title="2">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="kw">c</span>(<span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb15-3" title="3"><span class="co"># Elastic net only applied on E</span></a>
+<a class="sourceLine" id="cb15-4" title="4">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="kw">c</span>(<span class="dv">2</span>))</a></code></pre></div>
+<p>Finally, another thing to keep in mind is that the <span class="math inline">\(\lambda\)</span> (penalty term) chosen may be badly chosen or may not be enough (if you have more than 100 variables, with the default of 100 <span class="math inline">\(\lambda\)</span>’s, you will not see all variables being dropped one by one). There are ways to fix these issues.</p>
+<p>If not all variables are dropped, even at high <span class="math inline">\(\lambda\)</span>, increase <span class="math inline">\(\lambda_{max}\)</span> in the following way:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1"><span class="co"># Most E variables not removed, use lambda_mult &gt; 1 to remove more</span></a>
+<a class="sourceLine" id="cb16-2" title="2">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="kw">c</span>(<span class="dv">2</span>), <span class="dt">lambda_mult=</span><span class="dv">5</span>)</a></code></pre></div>
+<p>If you have too many variables and want more <span class="math inline">\(\lambda\)</span>’s, do the following:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="co"># Want more lambdas (useful if # of variables is large)</span></a>
+<a class="sourceLine" id="cb17-2" title="2">fit =<span class="st"> </span><span class="kw">elastic_net_var_select</span>(train<span class="op">$</span>data, lv, y <span class="op">~</span><span class="st"> </span>G<span class="op">*</span>E, <span class="dt">n_lambda =</span> <span class="dv">200</span>)</a></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
