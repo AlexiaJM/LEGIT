@@ -43,15 +43,15 @@ $$f(\mathbf{g},\mathbf{e},X|\beta) = \beta_0+\beta_e \mathbf{e}+\beta_g \mathbf{
 
 ## Examples of LEGIT models
 
-Here is an example with 2 latent variables and a 2-way interaction (see [arxiv](arxiv.org/abs/1703.08111)) :
+Here is an example with 2 latent variables and a 2-way interaction (see [arxiv](https://arxiv.org/abs/1703.08111)) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_2way.png)
 
-Here is an example with 3 latent variables and a 3-way interaction (see [arxiv](arxiv.org/abs/1703.08111)) :
+Here is an example with 3 latent variables and a 3-way interaction (see [arxiv](https://arxiv.org/abs/1703.08111)) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_3way.png)
 
 ## Algorithm
 
-Full details of the algorithm are available on [arXiv](arxiv.org/abs/1703.08111).
+Full details of the algorithm are available on [arXiv](https://arxiv.org/abs/1703.08111).
 
 ## Implementation
 

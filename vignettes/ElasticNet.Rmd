@@ -1,0 +1,121 @@
+---
+title: "Elastic Net"
+author: "Alexia Jolicoeur-Martineau"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Elastic Net}
+  %\VignetteEncoding{UTF-8}
+---
+
+**Note that you can cite this work as: **
+
+*Jolicoeur-Martineau, A., Wazana, A., Szekely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., Meaney M. J. & Greenwood, C.M. (2017). Alternating optimization for GxE modelling with weighted genetic and environmental scores: examples from the MAVAN study. arXiv preprint arXiv:1703.08111.*
+
+*Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K. F., Pluess, M., Greenwood, C., & Wazana, A. (2017). Distinguishing differential susceptibility, diathesis-stress and vantage sensitivity: beyond the single gene and environment model. arXiv preprint arXiv:1712.04058.*
+
+## Elastic Net
+
+From version 1.3.0 of the LEGIT package, we introduce a function to do variable selection with elastic net within the alternating optimization framework of LEGIT. Elastic net is a regression model with a penalty term ($\lambda$) which penalize parameters so that they don't become too big. As $\lambda$ becomes bigger, certain parameters become zero which means that their corresponding variables are dropped from the model. The order in which variables are removed from the model can be interpreted as the reversed order of variable importance. Variables that are less important are removed early (when $\lambda$ is small) and variables that are more important are removed later (only when $\lambda$ is large). Please research "lasso" and "elastic net" if you are interested in the details of this method.
+
+In this package, we implement Elastic Net for use **on the exogenous variables inside the latent variables** (e.g., in a LEGIT model, these are the genetic variants inside $G$ and the environmental variables inside $E$). We also give the option to only apply Elastic Net on certain latent variables (e.g., only searching for genes in $G$).
+
+Elastic Net gives us two main benefits:
+
+1. the order of importance of each variable
+2. Given a criterion (AIC, BIC, cross-validation $R^2$), it can be used to automatically chose the best model very quickly (only comparing $p$ models, where $p$ is the number of variables, as opposed to $2^p$ models).
+
+It is very fast and it works much better than other approaches; we highly recommend using it. With Elastic Net, the task of choosing the genes and environments of a LEGIT model can be fully automatized.
+
+## Example
+
+Let's take a quick look at a two-way example with continuous outcome:
+
+$$\mathbf{g}_j \sim Binomial(n=1,p=.30) \\ j = 1, 2, 3, 4$$
+$$\mathbf{e}_l \sim Normal(\mu=0,\sigma=1.5) \\ l = 1, 2, 3$$
+$$\mathbf{g} = .2\mathbf{g}_1 + .15\mathbf{g}_2 - .3\mathbf{g}_3 + .1\mathbf{g}_4 + .05\mathbf{g}_1\mathbf{g}_3 + .2\mathbf{g}_2\mathbf{g}_3 $$ 
+$$ \mathbf{e} = -.45\mathbf{e}_1 + .35\mathbf{e}_2 + .2\mathbf{e}_3$$
+$$y = -1 + 2\mathbf{g} + 3\mathbf{e} + 4\mathbf{ge} + \epsilon $$
+where $\epsilon \sim Normal(0,.5)$.
+
+
+This is a standard GxE model.
+
+```{r}
+set.seed(1)
+library(LEGIT)
+N = 500
+train = example_2way(N, sigma=.5, logit=FALSE, seed=1)
+```
+
+Now we will add 5 genes which are irrelevant. We expect Elastic Net to delete them first. However, note that $\mathbf{g}_1\mathbf{g}_3$ has a very small parameter ($.05$) so it's possible that it will be removed early. Let's add the irrelevant genes and try it out.
+
+```{r}
+g1_bad = rbinom(N,1,.30)
+g2_bad = rbinom(N,1,.30)
+g3_bad = rbinom(N,1,.30)
+g4_bad = rbinom(N,1,.30)
+g5_bad = rbinom(N,1,.30)
+train$G = cbind(train$G, g1_bad, g2_bad, g3_bad, g4_bad, g5_bad)
+lv = list(G=train$G, E=train$E)
+# Elastic Net
+fit = elastic_net_var_select(train$data, lv, y ~ G*E)
+summary(fit)
+```
+
+We see that the order of variable importance is almost correct with the exception of $\mathbf{g}_1\mathbf{g}_3$. The model with the lowest BIC and AIC is the one without the irrelevant genes and $\mathbf{g}_1\mathbf{g}_3$.
+
+Rather than looking in the summary, one can simply grab the best model using the function "best_model".
+
+
+```{r}
+best_model(fit, criterion="BIC")
+```
+
+We can also plot the coefficients of the variables over different values of $\lambda$. 
+
+```{r}{r fig1, fig.height = 5, fig.width = 5}
+plot(fit)
+```
+
+Now, we might want to look at the model with the highest cross-validation $R^2$ (or equivalently lowest cross-validation error). We can do this easily.
+
+```{r}
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, cross_validation=TRUE, cv_iter=5, cv_folds=10)
+summary(fit)
+best_model(fit, criterion="cv_R2")
+```
+
+We see that there is little difference in cross-validation $R^2$ for most models, so in this case, it is not particularly meaningful.
+
+Let say that you do not want the model selected by "best_model", but instead want the model with index 8 instead. You can simply do:
+```{r}
+fit_mychoice = fit$fit[[8]]
+```
+
+Note that you can apply Elastic only on $G$ or $E$ if desired.
+
+```{r}
+# Elastic net only applied on G
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(1))
+# Elastic net only applied on E
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2))
+```
+
+Finally, another thing to keep in mind is that the $\lambda$ (penalty term) chosen may be badly chosen or may not be enough (if you have more than 100 variables, with the default of 100 $\lambda$'s, you will not see all variables being dropped one by one). There are ways to fix these issues. 
+
+If not all variables are dropped, even at high $\lambda$, increase $\lambda_{max}$ in the following way:
+
+```{r}
+# Most E variables not removed, use lambda_mult > 1 to remove more
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, c(2), lambda_mult=5)
+```
+
+If you have too many variables and want more $\lambda$'s, do the following:
+
+```{r}
+# Want more lambdas (useful if # of variables is large)
+fit = elastic_net_var_select(train$data, lv, y ~ G*E, n_lambda = 200)
+```
+
