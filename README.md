@@ -28,7 +28,7 @@ To install the latest GitHub development version which could contain new or expe
 * install.packages("devtools")
 * devtools::install_github("AlexiaJM/LEGIT")
 
-If you are getting "Cannot remove prior package X" errors when trying to install from GitHub, there is a way to fix it. Download and install the latest version of R. If this doesn't fix your issue, do ".libPaths()", go in the directory of your previous R version and delete all packages.
+Regarding the GitHub installation. When it ask "Enter one or more numbers, or an empty line to skip updates:", just write nothing and press enter. Otherwise, you risk getting a "Cannot remove prior package X" error.
 
 **Examples**
 
