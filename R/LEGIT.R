@@ -2114,11 +2114,11 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	glmnet_coef = vector("list", length(lambda_path))
 	n_var_zero_prev = -Inf
 	for (i in 1:length(lambda_path)){
-		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
-		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, classification = classification, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE)
+		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, classification = classification, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 		n_var_zero_prev = n_var_zero
 
 		if (!is.null(result$fit)) fit[[i]] = result$fit

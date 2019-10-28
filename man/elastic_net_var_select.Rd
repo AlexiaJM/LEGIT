@@ -5,7 +5,7 @@
 \title{Elastic net for variable selection in IMLEGIT model}
 \usage{
 elastic_net_var_select(data, latent_var, formula,
-  latent_var_searched = NULL, cross_validation = FALSE, alpha = 0.75,
+  latent_var_searched = NULL, cross_validation = FALSE, alpha = 0.5,
   standardize = TRUE, lambda_path = NULL, lambda_mult = 1,
   lambda_min = 1e-04, n_lambda = 100, start_latent_var = NULL,
   eps = 0.001, maxiter = 100, family = gaussian, ylim = NULL,
