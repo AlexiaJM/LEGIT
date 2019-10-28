@@ -2012,7 +2012,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	return(result)
 }
 
-elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.75, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
+elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.5, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
 {
 
 	if (!is.null(ylim)){
@@ -2185,6 +2185,10 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 		}
 	}
 	if (class(data) != "data.frame" && class(data) != "matrix") stop("data must be a data.frame")
+
+	# remove quasi for glmnet
+	if (family_string == "quasibinomial") family_string = "binomial"
+	if (family_string == "quasipoisson") family_string = "poisson"
 
 	# getting right formats
 	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
