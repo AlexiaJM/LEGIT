@@ -1983,9 +1983,14 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	}
 
 	# Make sure data make sense for user (and for plot function)
-	fit_a$data = data
+	#fit_a$data = data
 	for (i in 1:k){
-		fit_[[i]]$data = data
+		fit_a$data[,colnames(latent_var[[i]])] = latent_var[[i]]
+		fit_[[i]]$data[,colnames(latent_var[[i]])] = latent_var[[i]]
+
+		weights = stats::coef(fit_[[i]])
+		fit_a$data[,names(latent_var)[i]] = latent_var[[i]] %*% weights
+		for (j in 1:k) fit_[[j]]$data[,names(latent_var)[i]] = latent_var[[i]] %*% weights
 	}
 
 	#Change some arguments so that we get the right AIC, BIC and dispersion for the model
@@ -2095,6 +2100,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 		lambda_path = round(exp(seq(log(lambda_max), log(lambda_max*lambda_min), length.out = n_lambda)), digits = 10)
 	}
 
+	latent_var_unsd = latent_var
 	if (standardize){
 		for (i in 1:k){
 			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
@@ -2114,7 +2120,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	glmnet_coef = vector("list", length(lambda_path))
 	n_var_zero_prev = -Inf
 	for (i in 1:length(lambda_path)){
-		result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
+		result = IMLEGIT_net(data=data, latent_var_unsd = latent_var_unsd, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
@@ -2151,7 +2157,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	return(out)
 }
 
-IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+IMLEGIT_net = function(data, latent_var_unsd, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
@@ -2166,9 +2172,11 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	}
 	for (i in 1:k){
 		latent_var[[i]] = as.matrix(data.frame(latent_var[[i]],fix.empty.names=FALSE))
+		latent_var_unsd[[i]] = as.matrix(data.frame(latent_var_unsd[[i]],fix.empty.names=FALSE))
 		if (sum(colnames(latent_var[[i]])=="") > 0){
 			if (print) cat(paste0("You have not specified column names for certain elements in ",names(latent_var)[i], ", elements of this latent variable will be named ",names(latent_var)[i],1,", ",names(latent_var)[i],2," ...\n"))
 			colnames(latent_var[[i]]) = paste0(names(latent_var)[i],1:NCOL(latent_var[[i]]))
+			colnames(latent_var_unsd[[i]]) = paste0(names(latent_var_unsd)[i],1:NCOL(latent_var_unsd[[i]]))
 		}
 	}
 
@@ -2189,7 +2197,7 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	# remove quasi for glmnet
 	if (family_string == "quasibinomial") family_string = "binomial"
 	if (family_string == "quasipoisson") family_string = "poisson"
-	
+
 	# getting right formats
 	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
 	data=data.frame(data)
@@ -2206,6 +2214,7 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	if (k > 1) for (i in 2:k) comp = comp & stats::complete.cases(latent_var[[i]])
 	data = data[comp,, drop=FALSE]
 	for (i in 1:k) latent_var[[i]] = latent_var[[i]][comp,, drop=FALSE]
+	for (i in 1:k) latent_var_unsd[[i]] = latent_var_unsd[[i]][comp,, drop=FALSE]
 	if (dim(data)[1] <= 0) stop("no valid observation without missing values")
 
 	#Adding empty variables in main dataset for latent_var
@@ -2338,11 +2347,11 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	weights_latent_var_backup = weights_latent_var
 	for (i in 1:k){
 		names(weights_latent_var_backup[[i]]) = colnames(latent_var[[i]]) # backup names
-		latent_var[[i]] = latent_var[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0],drop=FALSE] # Returns only the elements of each latent var which has weight non-zero
+		latent_var_unsd[[i]] = latent_var_unsd[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0],drop=FALSE] # Returns only the elements of each latent var which has weight non-zero
 		weights_latent_var[[i]] = weights_latent_var[[i]][weights_latent_var[[i]]!=0]
 	}
-	result = IMLEGIT(data=data, latent_var=latent_var, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
-	if (cross_validation) result_cv = IMLEGIT_cv(data=data, latent_var=latent_var, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification)
+	result = IMLEGIT(data=data, latent_var=latent_var_unsd, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, print=print)
+	if (cross_validation) result_cv = IMLEGIT_cv(data=data, latent_var=latent_var_unsd, formula=formula, start_latent_var=weights_latent_var, eps=eps, maxiter=maxiter, family=family, ylim=ylim, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds, Huber_p=Huber_p, classification=classification)
 	else result_cv = NULL
 	# print convergences stuff;
 	if (conv_latent_var){
