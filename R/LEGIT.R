@@ -2351,7 +2351,7 @@ IMLEGIT_net = function(data, latent_var_unsd, scale_, latent_var, formula, laten
 	removed = rep(FALSE,k)
 	weights_latent_var_backup = weights_latent_var
 	for (i in 1:k){
-		weights_latent_var = weights_latent_var[[i]]/scale_[[i]] # Divide each weight by the variables sd to ensure that weights are correct
+		weights_latent_var[[i]] = weights_latent_var[[i]]/scale_[[i]] # Divide each weight by the variables sd to ensure that weights are correct
 		names(weights_latent_var_backup[[i]]) = colnames(latent_var[[i]]) # backup names
 		latent_var_unsd[[i]] = latent_var_unsd[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0],drop=FALSE] # Returns only the elements of each latent var which has weight non-zero
 		weights_latent_var[[i]] = weights_latent_var[[i]][weights_latent_var[[i]]!=0]
