@@ -2190,6 +2190,7 @@ IMLEGIT_net = function(data, latent_var, formula, latent_var_searched=NULL, cros
 	if (family_string == "quasibinomial") family_string = "binomial"
 	if (family_string == "quasipoisson") family_string = "poisson"
 
+	
 	# getting right formats
 	# Retaining only the needed variables from the dataset (need to set elements in latent_var for this to work, they will be replaced with their proper values later)
 	data=data.frame(data)
