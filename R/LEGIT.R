@@ -2101,11 +2101,16 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	}
 
 	latent_var_unsd = latent_var
+	scale_ = vector("list", k)
 	if (standardize){
 		for (i in 1:k){
-			sx = scale(latent_var[[i]], scale = apply(latent_var[[i]], 2, mysd))
+			scale_[[i]] = apply(latent_var[[i]], 2, mysd)
+			sx = scale(latent_var[[i]], scale = scale_[[i]])
 			latent_var[[i]] = as.matrix(sx, ncol = NCOL(latent_var[[i]]), nrow = dim(data)[1])
 		}
+	}
+	else{
+		for (i in 1:k) scale_[[i]] = rep(1, length(latent_var[[i]]))
 	}
 
 	if (cross_validation){
@@ -2120,7 +2125,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	glmnet_coef = vector("list", length(lambda_path))
 	n_var_zero_prev = -Inf
 	for (i in 1:length(lambda_path)){
-		result = IMLEGIT_net(data=data, latent_var_unsd = latent_var_unsd, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
+		result = IMLEGIT_net(data=data, latent_var_unsd = latent_var_unsd, scale_=scale_, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
@@ -2157,7 +2162,7 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	return(out)
 }
 
-IMLEGIT_net = function(data, latent_var_unsd, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
+IMLEGIT_net = function(data, latent_var_unsd, scale_, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=1, lambda=.0001, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, warn=TRUE, family_string=NULL)
 {
 	if (!is.null(ylim)){
 		if (!is.numeric(ylim) || length(ylim) !=2) stop("ylim must either be NULL or a numeric vector of size two")
@@ -2346,6 +2351,7 @@ IMLEGIT_net = function(data, latent_var_unsd, latent_var, formula, latent_var_se
 	removed = rep(FALSE,k)
 	weights_latent_var_backup = weights_latent_var
 	for (i in 1:k){
+		weights_latent_var = weights_latent_var[[i]]/scale_[[i]] # Divide each weight by the variables sd to ensure that weights are correct
 		names(weights_latent_var_backup[[i]]) = colnames(latent_var[[i]]) # backup names
 		latent_var_unsd[[i]] = latent_var_unsd[[i]][,colnames(latent_var[[i]])[weights_latent_var[[i]]!=0],drop=FALSE] # Returns only the elements of each latent var which has weight non-zero
 		weights_latent_var[[i]] = weights_latent_var[[i]][weights_latent_var[[i]]!=0]

@@ -4,7 +4,7 @@
 \alias{IMLEGIT_net}
 \title{Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model with Elastic Net on the latent variables. Do not use on it's own, use elastic_net_var_select instead.}
 \usage{
-IMLEGIT_net(data, latent_var_unsd, latent_var, formula,
+IMLEGIT_net(data, latent_var_unsd, scale_, latent_var, formula,
   latent_var_searched = NULL, cross_validation = FALSE, alpha = 1,
   lambda = 1e-04, start_latent_var = NULL, eps = 0.001,
   maxiter = 100, family = gaussian, ylim = NULL, cv_iter = 5,
