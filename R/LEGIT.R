@@ -380,7 +380,7 @@
 #' @param latent_var_searched Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.
 #' @param cross_validation (Optional) If TRUE, will return cross-validation criterion (slower, but very good criterion).
 #' @param alpha The elasticnet mixing parameter (between 0 and 1). 1 leads to lasso, 0 leads to ridge. See glmnet package manual for more information. We recommend somewhere betwen .50 and 1.
-#' @param standardize If TRUE, standardize all variables inside every latent_var component. Note that if FALSE, glmnet will still standardize and unstandardize, but it will do so for each model (i.e., when at the step of estimating the parameters of latent variable G it standardize them, apply glmnet, then unstandarize them). This means that fixed parameters in the alternating steps are not standardized when standardize=FALSE. In practice, we found that standardize=FALSE leads to weird paths that do not always make sense. In the end, we only care about the order of the variable removal from the glmnet. We highly recommend standardize=TRUE for best results.
+#' @param standardize If TRUE, standardize all variables inside every latent_var component during training (but we still output LEGIT models with unstandardized variables). Note that if FALSE, glmnet will still standardize and unstandardize, but it will do so for each model (i.e., when at the step of estimating the parameters of latent variable G it standardize them, apply glmnet, then unstandardize them). This means that fixed parameters in the alternating steps are not standardized when standardize=FALSE. In practice, we found that standardize=FALSE leads to weird paths that do not always make sense. In the end, we only care about the order of the variable removal from the glmnet. We highly recommend standardize=TRUE for best results.
 #' @param lambda_path Optional vector of all lambda (penalty term for elastic net, see glmnet package manual). By default, we automatically determine it.
 #' @param lambda_mult scalar which multiplies the maximum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path determined automatically. Sometimes, the maximum lambda found automatically is too big or too small and you may not want to spend the effort to manually set your own lambda path. This is where this comes in, you can simply scale lambda max up or down. (Default = 1)
 #' @param lambda_min minimum lambda (penalty term for elastic net, see glmnet package manual) from the lambda path. (Default = .0001)
@@ -396,6 +396,7 @@
 #' @param classification Set to TRUE if you are doing classification (binary outcome).
 #' @param Huber_p Parameter controlling the Huber cross-validation error (Default = 1.345).
 #' @param print If FALSE, nothing except warnings will be printed. (Default = TRUE).
+#' @param get_main_reg If TRUE, we also return the fits which have the L1-normalized main models. Normally, LEGIT L1-normalize (enforce that the absolute value of the weights of the parameters) the weights of the G and E models, but not the main effect model. For Elastic net, we do it for the main effect model, but at the very end of training, we convert back the models to only L1-normalize the G and E models. This option gives the L1-normalized main effect models. It can be useful. (Default = FALSE).
 #' @return Returns an object of the class "elastic_net_var_select" which is list containing, in the following order: the criterion at each lambda, the coefficients of the latent variables at each lambda, the fits of each IMLEGIT models for each variable retained at each lambda, and the vector of lambda used.
 #' @examples
 #'	\dontrun{
@@ -437,7 +438,9 @@
 #' @title Independent Multiple Latent Environmental & Genetic InTeraction (IMLEGIT) model with Elastic Net on the latent variables. Do not use on it's own, use elastic_net_var_select instead.
 #' @description Constructs a generalized linear model (glm) with latent variables using alternating optimization. This is an extension of the LEGIT model to accommodate more than 2 latent variables. Note that, as opposed to LEGIT/IMLEGIT, the parameters of variables inside the latent variables are not L1-normalized; instead, its the main model parameters which are L1-normalized. This is needed to make elastic net works. It doesn't matter in the end, because we only care about which variables were removed and we only give the IMLEGIT models without elastic net penalization.
 #' @param data data.frame of the dataset to be used. 
-#' @param latent_var list of data.frame. The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
+#' @param latent_var_unsd list of data.frame. Same as latent_var but with unstandardized. Make sure that latent_var is standardized.
+#' @param scale_ Sacling factor (Default = 1). Do not change.
+#' @param latent_var list of data.frame. Make sure that all variables in this list are standardized! The elements of the list are the datasets used to construct each latent variable. For interpretability and proper convergence, not using the same variable in more than one latent variable is highly recommended. It is recommended to set names to the list elements to prevent confusion because otherwise, the latent variables will be named L1, L2, ... (See examples below for more details)
 #' @param formula Model formula. The names of \code{latent_var} can be used in the formula to represent the latent variables. If names(\code{latent_var}) is NULL, then L1, L2, ... can be used in the formula to represent the latent variables. Do not manually code interactions, write them in the formula instead (ex: G*E1*E2 or G:E1:E2).
 #' @param latent_var_searched Optional If not null, you must specify a vector containing all indexes of the latent variables you want to use elastic net on. Ex: If latent_var=list(G=genes, E=env), specifying latent_var_search=c(1,2) will use both, latent_var_search=1 will only do it for G, and latent_var_search=2 will only do it for E.
 #' @param cross_validation If TRUE, will return cross-validation criterion (slower)
@@ -2017,7 +2020,7 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 	return(result)
 }
 
-elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.5, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE)
+elastic_net_var_select = function(data, latent_var, formula, latent_var_searched=NULL, cross_validation=FALSE, alpha=.5, standardize=TRUE, lambda_path=NULL, lambda_mult=1, lambda_min = .0001, n_lambda = 100, start_latent_var=NULL, eps=.001, maxiter=100, family=gaussian, ylim=NULL, cv_iter=5, cv_folds=10, folds=NULL, Huber_p=1.345, classification=FALSE, print=TRUE, get_main_reg = FALSE)
 {
 
 	if (!is.null(ylim)){
@@ -2124,12 +2127,13 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 	fit = vector("list", length(lambda_path))
 	glmnet_coef = vector("list", length(lambda_path))
 	n_var_zero_prev = -Inf
+	fit_main_regularized = vector("list", length(lambda_path))
 	for (i in 1:length(lambda_path)){
 		result = IMLEGIT_net(data=data, latent_var_unsd = latent_var_unsd, scale_=scale_, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, cross_validation = FALSE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 
 		# Only do cross-validation, if worth it (i.e., if a variable has been now been added to the list of the ones used). This reduces computation.
 		n_var_zero = sum(ceiling(abs(result$glmnet_coef))==0)
-		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, classification = classification, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
+		if (cross_validation & n_var_zero_prev != n_var_zero & !is.null(result$fit)) result = IMLEGIT_net(data=data, latent_var_unsd = latent_var_unsd, scale_=scale_, latent_var=latent_var, formula=formula, latent_var_searched=latent_var_searched, classification = classification, cross_validation = TRUE, alpha=alpha, lambda=lambda_path[i], start_latent_var=start_latent_var, eps=eps, maxiter=maxiter, family=family, family_string=as.character(substitute(family)), ylim=ylim, print=FALSE, warn=FALSE, cv_iter=cv_iter, cv_folds=cv_folds, folds=folds)
 		n_var_zero_prev = n_var_zero
 
 		if (!is.null(result$fit)) fit[[i]] = result$fit
@@ -2156,8 +2160,10 @@ elastic_net_var_select = function(data, latent_var, formula, latent_var_searched
 			else if (cross_validation & !classification) results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC, R2_cv,R2_h, R2_l1)
 			else results[i,] = c(fit[[i]]$true_model_parameters$AIC, fit[[i]]$true_model_parameters$AICc, fit[[i]]$true_model_parameters$BIC)
 		}
+		fit_main_regularized[[i]] = result$fit_main_regularized
 	}
-	out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambda_path=lambda_path)
+	if (get_main_reg) out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambda_path=lambda_path, fit_main_regularized=fit_main_regularized)
+	else out = list(results=results, fit=fit, glmnet_coef=glmnet_coef, lambda_path=lambda_path)
 	class(out) = "elastic_net_var_select"
 	return(out)
 }
@@ -2300,7 +2306,7 @@ IMLEGIT_net = function(data, latent_var_unsd, scale_, latent_var, formula, laten
 		fit_a = stats::glm(formula, data=data, family=family, y=FALSE, model=FALSE)
 		# L1 standardize the parameters of the main model
 		weights_a = stats::coef(fit_a)
-		weights_a = weights_a/sum(abs(weights_a))
+		weights_a[-1] = weights_a[-1]/sum(abs(weights_a[-1]))
 
 		conv_latent_var = TRUE
 		for (i in 1:k){
@@ -2366,7 +2372,7 @@ IMLEGIT_net = function(data, latent_var_unsd, scale_, latent_var, formula, laten
 	else{
 		warning(paste0("Did not reach convergence in maxiter iterations. Try increasing maxiter or make eps smaller."))
 	}
-	return(list(fit=result, glmnet_coef=unlist(weights_latent_var_backup), fit_cv=result_cv))
+	return(list(fit=result, glmnet_coef=unlist(weights_latent_var_backup), fit_cv=result_cv, fit_main_regularized=list(fit_a,fit_)))
 }
 
 summary.elastic_net_var_select = function(object, ...){

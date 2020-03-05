@@ -1,3 +1,10 @@
+LEGIT v1.3.2 (Release date: 2020-03-05)
+==============
+
+Changes:
+
+* Fixed bug in Elastic Net variable selection; it was wrongly including the intercept when L1-normalizing the weights of the main model. This may changes results slightly.
+
 LEGIT v1.3 (Release date: 2019-07-16)
 ==============
 
