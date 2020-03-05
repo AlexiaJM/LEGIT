@@ -1379,6 +1379,10 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 				data[,colnames(genes)]=R1_b_genes
 				fit_b = stats::glm(formula_b, data=data, family=family, y=FALSE, model=FALSE)
 				weights_genes_ = stats::coef(fit_b)
+				if (sum(is.na(weights_genes_))>0){
+					print(weights_genes_)
+					stop('NAs found in the weights of genes model, this could be due to very tiny sample or multicollinearity. Please check printed weights to see which variable is causing the NAs.')
+				}
 			}
 
 			# Updating G estimates and checking convergence
@@ -1410,6 +1414,10 @@ LEGIT = function(data, genes, env, formula, start_genes=NULL, start_env=NULL, ep
 			## Step c : fit model for E
 			fit_c = stats::glm(formula_c, data=data, family=family, y=FALSE, model=FALSE)
 			weights_env_ = stats::coef(fit_c)
+			if (sum(is.na(weights_env_))>0){
+				print(weights_env_)
+				stop('NAs found in the weights of env model, this could be due to very tiny sample or multicollinearity. Please check printed weights to see which variable is causing the NAs.')
+			}
 
 			# Updating E estimates and checking convergence
 			weights_env_old = weights_env
@@ -1944,6 +1952,10 @@ IMLEGIT = function(data, latent_var, formula, start_latent_var=NULL, eps=.001, m
 				fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
 				weights_latent_var_ = stats::coef(fit_[[i]])
 
+				if (sum(is.na(weights_latent_var_))>0){
+					print(weights_latent_var_)
+					stop('NAs found in the weights of a latent var, this could be due to very tiny sample or multicollinearity. Please check printed weights to see which variable is causing the NAs.')
+				}
 				# Updating latent_var estimates and checking convergence
 				weights_latent_var_old[[i]] = weights_latent_var[[i]]
 				weights_latent_var[[i]] = weights_latent_var_/sum(abs(weights_latent_var_))
@@ -2335,6 +2347,10 @@ IMLEGIT_net = function(data, latent_var_unsd, scale_, latent_var, formula, laten
 					else{ #glm
 						fit_[[i]] = stats::glm(formula_step[[i]], data=data, family=family, y=FALSE, model=FALSE)
 						weights_latent_var_ = stats::coef(fit_[[i]])
+					}
+					if (sum(is.na(weights_latent_var_))>0){
+						print(weights_latent_var_)
+						stop('NAs found in the weights of a latent var, this could be due to very tiny sample or multicollinearity. Please check printed weights to see which variable is causing the NAs.')
 					}
 
 					# Updating latent_var estimates and checking convergence
