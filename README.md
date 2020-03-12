@@ -7,6 +7,20 @@ This is a R implementation of the *Latent Environmental &amp; Genetic InTeractio
 
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT.png)
 
+## Citation
+
+If you use this software, please cite:
+
+``
+Jolicoeur-Martineau, A., Wazana, A., Szekely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., ... & Greenwood, C. M. (2018). Alternating optimization for G× E modelling with weighted genetic and environmental scores: Examples from the MAVAN study. Psychological methods.
+``
+
+If you use the function for GxE interaction testing, please also cite:
+
+``
+Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K., Pluess, M., Greenwood, C., & Wazana, A. (2020). Distinguishing differential susceptibility, diathesis-stress, and vantage sensitivity: Beyond the single gene and environment model. Development and Psychopathology, 32(1), 73-83. doi:10.1017/S0954579418001438
+``
+
 **Description**
 
 The LEGIT model is an interaction model with two latent variables: a weighted sum of genetic variants (genetic score) and a weighted sum of environmental variables (environmental score). Alternating optimization is used to estimate the model parameters (https://arxiv.org/abs/1703.08111). This approach has greatly enhanced predictive power over traditional GxE models which include only a single genetic variant and a single environmental exposure. Although this approach was originally made for GxE modelling, it is flexible and does not require the use of genetic and environmental variables. It can also handle more than 2 latent variables (rather than just G and E) and 3-way interactions or more. The LEGIT model produces highly interpretable results and is very parameter-efficient thus it can even be used with small sample sizes (n < 250). Tools to determine the type of interaction (vantage sensitivity, diathesis-stress or differential susceptibility), with any number of genetic variants or environments, are available (https://psyarxiv.com/27uw8).
