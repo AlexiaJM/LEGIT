@@ -1,4 +1,4 @@
-# Latent Environmental and Genetic InTeraction model (LEGIT) with tools for GxE testing
+# Latent Environmental and Genetic InTeraction model (LEGIT) and tools for GxE testing
 
 [![](http://cranlogs.r-pkg.org/badges/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
@@ -15,11 +15,15 @@ If you use this software, please cite:
 Jolicoeur-Martineau, A., Wazana, A., Szekely, E., Steiner, M., Fleming, A. S., Kennedy, J. L., ... & Greenwood, C. M. (2018). Alternating optimization for G× E modelling with weighted genetic and environmental scores: Examples from the MAVAN study. Psychological methods.
 ``
 
+Paper: https://www.dropbox.com/s/swkwcnc4b4bvx8f/Jolicoeur-Martineau%20et%20al.%2C%202019_alt.pdf?dl=0
+
 If you use the function for GxE interaction testing, please also cite:
 
 ``
 Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K., Pluess, M., Greenwood, C., & Wazana, A. (2020). Distinguishing differential susceptibility, diathesis-stress, and vantage sensitivity: Beyond the single gene and environment model. Development and Psychopathology, 32(1), 73-83. doi:10.1017/S0954579418001438
 ``
+
+Paper: https://www.dropbox.com/s/py5r3ye5cyl3prw/Jolicoeur-Martineau%20et%20al.%2C%202019.pdf?dl=0
 
 ##  Description
 
