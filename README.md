@@ -21,11 +21,11 @@ If you use the function for GxE interaction testing, please also cite:
 Jolicoeur-Martineau, A., Belsky, J., Szekely, E., Widaman, K., Pluess, M., Greenwood, C., & Wazana, A. (2020). Distinguishing differential susceptibility, diathesis-stress, and vantage sensitivity: Beyond the single gene and environment model. Development and Psychopathology, 32(1), 73-83. doi:10.1017/S0954579418001438
 ``
 
-**Description**
+##  Description
 
 The LEGIT model is an interaction model with two latent variables: a weighted sum of genetic variants (genetic score) and a weighted sum of environmental variables (environmental score). Alternating optimization is used to estimate the model parameters (https://arxiv.org/abs/1703.08111). This approach has greatly enhanced predictive power over traditional GxE models which include only a single genetic variant and a single environmental exposure. Although this approach was originally made for GxE modelling, it is flexible and does not require the use of genetic and environmental variables. It can also handle more than 2 latent variables (rather than just G and E) and 3-way interactions or more. The LEGIT model produces highly interpretable results and is very parameter-efficient thus it can even be used with small sample sizes (n < 250). Tools to determine the type of interaction (vantage sensitivity, diathesis-stress or differential susceptibility), with any number of genetic variants or environments, are available (https://psyarxiv.com/27uw8).
 
-**How to use**
+## How to use
 
 There are a few vignettes available to help in using the package:
 
@@ -35,7 +35,7 @@ There are a few vignettes available to help in using the package:
 
 For the rest, please refer to the reference manual: https://cran.r-project.org/web/packages/LEGIT/LEGIT.pdf
 
-**Important note: What if I only have one gene and environment?**
+## Important note: What if I only have one gene and environment?
 
 Many are interested in using the package only for GxE testing with a standard GxE model with only one gene and one environment (so non-LEGIT). To make it work with one gene and one environment, you can simply use the GxE_interaction_test function and set ``genes=data.frame(G=mydata$mygene)`` and ``env=data.frame(E=mydata$myenvironment)``. Same goes for the LEGIT function.
 
@@ -46,7 +46,7 @@ Furthermore:
 3. It allows testing for rGE (gene-by-environment correlation) with the rGE function.
 
 
-**How to install**
+## How to install
 
 To install the latest stable version, run in R :
 
@@ -59,7 +59,7 @@ To install the latest GitHub development version which could contain new or expe
 
 Regarding the GitHub installation. When it ask "Enter one or more numbers, or an empty line to skip updates:", just write nothing and press enter. Otherwise, you risk getting a "Cannot remove prior package X" error.
 
-**Examples**
+## Examples
 
 Here is an example with 2 latent variables and a 2-way interaction (see https://arxiv.org/abs/1703.08111) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_2way.png)
@@ -67,7 +67,7 @@ Here is an example with 2 latent variables and a 2-way interaction (see https://
 Here is an example with 3 latent variables and a 3-way interaction (see https://arxiv.org/abs/1703.08111) :
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT_3way.png)
 
-**References**
+## References
 
 * https://arxiv.org/abs/1703.08111
 * https://psyarxiv.com/27uw8
