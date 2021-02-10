@@ -3,7 +3,7 @@
 [![](http://cranlogs.r-pkg.org/badges/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
 
-This is a R implementation of the *Latent Environmental &amp; Genetic InTeraction* (LEGIT) model. 
+This package contains the official R implementation of the *Latent Environmental &amp; Genetic InTeraction* (LEGIT) model and additional tools for gene-by-environment (GxE) testing. 
 
 ![](https://raw.githubusercontent.com/AlexiaJM/LEGIT/master/images/LEGIT.png)
 
