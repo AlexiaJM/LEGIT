@@ -1,4 +1,4 @@
-# LEGIT
+# Latent Environmental and Genetic InTeraction model (LEGIT) with tools for GxE testing
 
 [![](http://cranlogs.r-pkg.org/badges/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/LEGIT)](http://cran.rstudio.com/web/packages/LEGIT/index.html)
@@ -27,9 +27,22 @@ The LEGIT model is an interaction model with two latent variables: a weighted su
 
 **How to use**
 
-A vignette explaining how to use the software is available here : https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/LEGIT.html
+There are a few vignettes available to help in using the package.
 
-An additional vignette explaining how it can be used for GxE testing as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013) is available here: https://rawgit.com/AlexiaJM/LEGIT/master/inst/doc/GxE_testing.html
+For usage of the LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/LEGIT.html
+For usage of the GxE testing as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013), see: https://cran.r-project.org/web/packages/LEGIT/vignettes/GxE_testing.html
+For usage of elastic net with LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/ElasticNet.html
+
+**Important note: What if you have only one gene and environment?**
+
+Many are interested in using the package only for GxE testing with a standard GxE model with only one gene and one environment (so non-LEGIT). To make it work with one gene and one environment, you can simply use the GxE_interaction_test function and set ``genes=data.frame(G=mydata$mygene)`` and ``env=data.frame(E=mydata$myenvironment)``.
+
+The benefits of using this package for GxE testing is that it has more functionalities and output information than other SAS/SPSS software. 
+Furthermore:
+1. It also tests for vantage sensitivity, while most software doesn't.
+2. It allows plotting the GxE easily.
+3. It allows testing for rGE (gene-by-environment correlation) with the rGE function.
+
 
 **How to install**
 
