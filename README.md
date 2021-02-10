@@ -35,7 +35,7 @@ For usage of the GxE testing as per [Belsky et al. (2013)](https://www.researchg
 
 For usage of elastic net with LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/ElasticNet.html
 
-For the rest, please refer to the reference manual: https://cran.r-project.org/web/packages/LEGIT/LEGIT.pdf.
+For the rest, please refer to the reference manual: https://cran.r-project.org/web/packages/LEGIT/LEGIT.pdf
 
 **Important note: What if I only have one gene and environment?**
 
