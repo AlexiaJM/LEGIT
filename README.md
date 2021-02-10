@@ -30,7 +30,9 @@ The LEGIT model is an interaction model with two latent variables: a weighted su
 There are a few vignettes available to help in using the package.
 
 For usage of the LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/LEGIT.html
+
 For usage of the GxE testing as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013), see: https://cran.r-project.org/web/packages/LEGIT/vignettes/GxE_testing.html
+
 For usage of elastic net with LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/ElasticNet.html
 
 **Important note: What if I only have one gene and environment?**
