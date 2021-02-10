@@ -33,9 +33,9 @@ For usage of the LEGIT models, see: https://cran.r-project.org/web/packages/LEGI
 For usage of the GxE testing as per [Belsky et al. (2013)](https://www.researchgate.net/publication/256600905_FormalGXEtestJCPP2013), see: https://cran.r-project.org/web/packages/LEGIT/vignettes/GxE_testing.html
 For usage of elastic net with LEGIT models, see: https://cran.r-project.org/web/packages/LEGIT/vignettes/ElasticNet.html
 
-**Important note: What if you have only one gene and environment?**
+**Important note: What if I only have one gene and environment?**
 
-Many are interested in using the package only for GxE testing with a standard GxE model with only one gene and one environment (so non-LEGIT). To make it work with one gene and one environment, you can simply use the GxE_interaction_test function and set ``genes=data.frame(G=mydata$mygene)`` and ``env=data.frame(E=mydata$myenvironment)``.
+Many are interested in using the package only for GxE testing with a standard GxE model with only one gene and one environment (so non-LEGIT). To make it work with one gene and one environment, you can simply use the GxE_interaction_test function and set ``genes=data.frame(G=mydata$mygene)`` and ``env=data.frame(E=mydata$myenvironment)``. Same goes for the LEGIT function.
 
 The benefits of using this package for GxE testing is that it has more functionalities and output information than other SAS/SPSS software. 
 Furthermore:
