@@ -46,8 +46,8 @@ Many are interested in using the package only for GxE testing with a standard Gx
 The benefits of using this package for GxE testing is that it has more functionalities and output information than other SAS/SPSS software. 
 Furthermore:
 1. It also tests for vantage sensitivity, while most software doesn't.
-2. It allows plotting the GxE easily.
-3. It allows testing for rGE (gene-by-environment correlation) with the rGE function.
+2. It allows plotting the GxE easily with the [plot function](https://www.rdocumentation.org/packages/LEGIT/versions/1.3.1/topics/plot.LEGIT).
+3. It allows testing for rGE (gene-by-environment correlation) with the [rGE function](https://www.rdocumentation.org/packages/LEGIT/versions/1.3.1/topics/rGE.LEGIT).
 
 
 ## How to install
